@@ -26,12 +26,16 @@
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
+  html, body {
+    height: 100%;
+    overflow: hidden; /* no scrollbar ever */
+  }
+
   body {
     font-family: 'Raleway', sans-serif;
     background: var(--abyss);
     color: var(--text);
-    min-height: 100vh;
-    overflow-x: hidden;
+    overflow: hidden;
   }
 
   /* ── HEADER + NAV ── */
@@ -496,18 +500,22 @@
   .shop-coming-soon h3 { font-family: 'Cinzel Decorative', serif; font-size: 1rem; color: rgba(0,212,255,0.4); margin-bottom: 8px; }
   .fish-card {
     background: rgba(0,20,50,0.6); border: 1px solid rgba(0,100,200,0.2);
-    border-radius: 14px; padding: 18px; text-align: center;
+    border-radius: 14px; padding: 16px 12px; text-align: center;
     transition: all 0.3s; cursor: pointer; position: relative;
+    display: flex; flex-direction: column; align-items: center;
+    height: 280px; /* fixed height — all cards equal */
   }
   .fish-card:hover { border-color: var(--glow); transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,212,255,0.2); }
-  .fish-card-preview { height: 75px; display: flex; align-items: center; justify-content: center; }
-  .fish-card h3 { font-size: 0.95rem; color: var(--text); margin: 8px 0 3px; font-weight: 500; }
-  .fish-card .rarity { font-size: 0.65rem; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 7px; font-weight: 600; }
-  .fish-card .desc { font-size: 0.74rem; color: var(--text-dim); line-height: 1.4; margin-bottom: 12px; }
-  .fish-card .price { font-size: 1rem; color: var(--gold); font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 5px; }
-  .fish-card .price-sub { font-size: 0.68rem; color: var(--text-dim); }
-  .owned-badge { position: absolute; top: 10px; right: 10px; background: rgba(0,200,100,0.2); border: 1px solid rgba(0,200,100,0.4); border-radius: 10px; padding: 2px 8px; font-size: 0.62rem; color: #00cc88; }
-  .btn-buy { width: 100%; margin-top: 10px; padding: 9px; background: linear-gradient(135deg, #004488, #0077cc); color: #fff; border-radius: 8px; font-size: 0.82rem; border: none; cursor: pointer; transition: all 0.3s; font-family: 'Raleway', sans-serif; }
+  .fish-card-preview { height: 75px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .fish-card h3 { font-size: 0.88rem; color: var(--text); margin: 6px 0 2px; font-weight: 500; line-height: 1.2;
+    max-height: 2.4em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; flex-shrink: 0; }
+  .fish-card .rarity { font-size: 0.62rem; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; font-weight: 600; flex-shrink: 0; }
+  .fish-card .desc { font-size: 0.72rem; color: var(--text-dim); line-height: 1.3; margin-bottom: 8px;
+    flex: 1; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .fish-card .price { font-size: 0.95rem; color: var(--gold); font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 4px; flex-shrink: 0; }
+  .fish-card .price-sub { font-size: 0.65rem; color: var(--text-dim); }
+  .owned-badge { position: absolute; top: 8px; right: 8px; background: rgba(0,200,100,0.2); border: 1px solid rgba(0,200,100,0.4); border-radius: 10px; padding: 2px 7px; font-size: 0.6rem; color: #00cc88; }
+  .btn-buy { width: 100%; margin-top: 8px; padding: 8px; background: linear-gradient(135deg, #004488, #0077cc); color: #fff; border-radius: 8px; font-size: 0.8rem; border: none; cursor: pointer; transition: all 0.3s; font-family: 'Raleway', sans-serif; flex-shrink: 0; }
   .btn-buy:hover { background: linear-gradient(135deg, #005599, #0099ff); transform: translateY(-1px); }
   .btn-buy:disabled { background: rgba(0,60,120,0.3); color: var(--text-dim); cursor: not-allowed; transform: none; }
 
@@ -684,7 +692,7 @@
 
 <!-- HEADER -->
 <header>
-  <div class="logo"><svg width="22" height="22" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle;margin-right:6px"><path fill="#e31337" d="M155 60 L75 200 L155 340 L195 340 L115 200 L195 60 Z"/><path fill="#e31337" d="M205 60 L125 200 L205 340 L245 340 L165 200 L245 60 Z"/><path fill="#e31337" d="M255 60 L175 200 L255 340 L320 340 L240 200 L320 60 Z"/></svg>Hive <span>Aquarium</span></div>
+  <div class="logo"><svg width="22" height="22" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle;margin-right:6px"><polygon fill="#e31337" points="155,60 60,250 155,440 210,440 115,250 210,60"/><polygon fill="#e31337" points="220,60 125,250 220,440 270,440 175,250 270,60"/><polygon fill="#e31337" points="285,60 190,250 285,440 440,440 345,250 440,60"/></svg>Hive <span>Aquarium</span></div>
   <nav class="nav-tabs" id="nav-tabs" style="display:none">
     <button class="nav-tab" onclick="openShop()" id="tab-shop">
       <span class="tab-icon">🛒</span><span class="tab-label">Loja</span>
@@ -693,7 +701,7 @@
       <span class="tab-icon">✏️</span><span class="tab-label">Edição</span>
     </button>
     <button class="nav-tab" onclick="openWallet()" id="tab-wallet">
-      <span class="tab-icon">💰</span><span class="tab-label">Carteira</span>
+      <span class="tab-icon">💳</span><span class="tab-label">Carteira</span>
     </button>
     <button class="nav-tab" onclick="openSettings()" id="tab-settings">
       <span class="tab-icon">⚙️</span><span class="tab-label">Configurações</span>
@@ -764,8 +772,8 @@
     <!-- Main tabs: Peixes | Decoração | Aquários -->
     <div class="shop-tabs-row" id="shop-main-tabs">
       <button class="shop-tab active" onclick="setShopMain('fish',this)">🐠 Peixes</button>
-      <button class="shop-tab" onclick="setShopMain('decor',this)">🌿 Decoração</button>
-      <button class="shop-tab" onclick="setShopMain('aquarium',this)">🐡 Aquários</button>
+      <button class="shop-tab" onclick="setShopMain('decor',this)">🌱 Decoração</button>
+      <button class="shop-tab" onclick="setShopMain('aquarium',this)">🔷 Aquários</button>
     </div>
     <!-- Sub-tabs row (changes per main tab) -->
     <div class="shop-subtabs-row" id="shop-subtabs"></div>
@@ -796,7 +804,7 @@
     <div class="modal-body wallet-body">
       <div class="wallet-cards">
         <div class="wallet-card">
-          <div class="wc-icon"><svg width="36" height="36" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg"><path fill="#e31337" d="M155 60 L75 200 L155 340 L195 340 L115 200 L195 60 Z"/><path fill="#e31337" d="M205 60 L125 200 L205 340 L245 340 L165 200 L245 60 Z"/><path fill="#e31337" d="M255 60 L175 200 L255 340 L320 340 L240 200 L320 60 Z"/></svg></div>
+          <div class="wc-icon"><svg width="36" height="36" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg"><polygon fill="#e31337" points="155,60 60,250 155,440 210,440 115,250 210,60"/><polygon fill="#e31337" points="220,60 125,250 220,440 270,440 175,250 270,60"/><polygon fill="#e31337" points="285,60 190,250 285,440 440,440 345,250 440,60"/></svg></div>
           <div class="wc-label">HIVE</div>
           <div class="wc-amount" id="wc-hive">—</div>
           <div class="wc-usd" id="wc-hive-usd">— USD</div>
@@ -809,7 +817,7 @@
         </div>
       </div>
       <div class="wallet-card" style="margin-bottom:16px">
-        <div class="wc-icon"><svg width="36" height="36" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg"><path fill="#00aaff" d="M155 60 L75 200 L155 340 L195 340 L115 200 L195 60 Z"/><path fill="#00aaff" d="M205 60 L125 200 L205 340 L245 340 L165 200 L245 60 Z"/><path fill="#00aaff" d="M255 60 L175 200 L255 340 L320 340 L240 200 L320 60 Z"/></svg></div>
+        <div class="wc-icon"><svg width="36" height="36" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg"><polygon fill="#00aaff" points="155,60 60,250 155,440 210,440 115,250 210,60"/><polygon fill="#00aaff" points="220,60 125,250 220,440 270,440 175,250 270,60"/><polygon fill="#00aaff" points="285,60 190,250 285,440 440,440 345,250 440,60"/></svg></div>
         <div class="wc-label">Hive Power</div>
         <div class="wc-amount" id="wc-hp">—</div>
         <div class="wc-hp" id="wc-hp-level">Nível de slots —</div>
@@ -959,22 +967,15 @@ const SHOP_ACCOUNT = 'hive-aquarium';
 const APP_ID = 'hive-aquarium/1.0';
 
 // ── HIVE OFFICIAL LOGO SVG ──
+// Paths traced from the official Hive logo: hexagonal shape with diamond + two chevrons
 function hiveLogo(size = 16, color = '#e31337') {
-  // Official Hive logo: hexagon with H-shaped cutout (3 chevrons / diamond + arrows)
-  return `<span class="hive-logo"><svg width="${size}" height="${size}" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
-    <path fill="${color}" d="
-      M200 20
-      L340 100 L340 260 L200 340 L60 260 L60 100 Z
-    " opacity="0"/>
-    <path fill="${color}" d="
-      M155 60 L75 200 L155 340 L195 340 L115 200 L195 60 Z
-    "/>
-    <path fill="${color}" d="
-      M205 60 L125 200 L205 340 L245 340 L165 200 L245 60 Z
-    "/>
-    <path fill="${color}" d="
-      M255 60 L175 200 L255 340 L320 340 L240 200 L320 60 Z
-    "/>
+  return `<span class="hive-logo"><svg width="${size}" height="${size}" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+    <!-- Diamond (left shape) -->
+    <polygon fill="${color}" points="155,60 60,250 155,440 210,440 115,250 210,60"/>
+    <!-- Middle chevron -->
+    <polygon fill="${color}" points="220,60 125,250 220,440 270,440 175,250 270,60"/>
+    <!-- Outer chevron (right) -->
+    <polygon fill="${color}" points="285,60 190,250 285,440 440,440 345,250 440,60"/>
   </svg></span>`;
 }
 
@@ -1310,27 +1311,27 @@ const HEART_COLORS = {
 const DECOR_CATALOG = [
   // ── LARGE PLANTS — common ──
   ...Object.entries(PLANT_COLORS).map(([k,v]) => ({
-    id: `plant_large_${k}`, name: `Planta Grande ${v.name}`, category: 'plants_art',
+    id: `plant_large_${k}`, name: `Grande ${v.name}`, category: 'plants_art',
     rarity: 'common', price: 1,
-    desc: `Planta artificial grande na cor ${v.name.toLowerCase()}.`,
+    desc: `Planta grande ${v.name.toLowerCase()}.`,
     memo: `buy:plant_large_${k}`,
     color: v.hex,
     svg: (s=1) => buildLargePlantSVG(v.hex, s),
   })),
   // ── SMALL PLANTS — common ──
   ...Object.entries(PLANT_COLORS).map(([k,v]) => ({
-    id: `plant_small_${k}`, name: `Planta Pequena ${v.name}`, category: 'plants_art',
+    id: `plant_small_${k}`, name: `Pequena ${v.name}`, category: 'plants_art',
     rarity: 'common', price: 1,
-    desc: `Planta artificial pequena na cor ${v.name.toLowerCase()}.`,
+    desc: `Planta pequena ${v.name.toLowerCase()}.`,
     memo: `buy:plant_small_${k}`,
     color: v.hex,
     svg: (s=1) => buildSmallPlantSVG(v.hex, s),
   })),
   // ── HEART PLANTS — rare ──
   ...Object.entries(HEART_COLORS).map(([k,v]) => ({
-    id: `plant_heart_${k}`, name: `Planta Coração ${v.name}`, category: 'plants_art',
+    id: `plant_heart_${k}`, name: `Coração ${v.name}`, category: 'plants_art',
     rarity: 'rare', price: 3,
-    desc: `Planta em formato de coração na cor ${v.name.toLowerCase()}.`,
+    desc: `Planta coração ${v.name.toLowerCase()}.`,
     memo: `buy:plant_heart_${k}`,
     color: v.hex,
     svg: (s=1) => buildHeartPlantSVG(v.hex, s),
@@ -2523,11 +2524,11 @@ let shopMainTab = 'fish', shopSubTab = 'classics', shopRarityFilter = 'all';
 
 const SHOP_SUBTABS = {
   fish:    [{ id:'classics',label:'🐠 Clássicos'},{ id:'exotic',label:'🦈 Exóticos'},{ id:'special',label:'✨ Especiais'}],
-  decor:   [{ id:'plants_art',label:'🌿 Plantas Artificiais'},
-            { id:'rocks',     label:'🪨 Rochas'},
-            { id:'logs',      label:'🪵 Troncos'},
-            { id:'ornaments', label:'🏰 Ornamentos'},
-            { id:'substrate', label:'🫧 Substrato'},
+  decor:   [{ id:'plants_art',label:'🌱 Plantas'},
+            { id:'rocks',     label:'⬡ Rochas'},
+            { id:'logs',      label:'🟫 Troncos'},
+            { id:'ornaments', label:'🏺 Ornamentos'},
+            { id:'substrate', label:'◉ Substrato'},
             { id:'lighting',  label:'💡 Iluminação'}],
   aquarium: [],
 };
@@ -2565,7 +2566,7 @@ function renderShopGrid() {
   const ro = { common:0, rare:1, epic:2, legendary:3 };
 
   if (shopMainTab === 'aquarium') {
-    grid.innerHTML = `<div class="shop-coming-soon"><div class="cs-icon">🐡</div><h3>Em Breve</h3><p>Novos aquários temáticos chegando em breve!</p></div>`;
+    grid.innerHTML = `<div class="shop-coming-soon"><div class="cs-icon">🔷</div><h3>Em Breve</h3><p>Novos aquários temáticos chegando em breve!</p></div>`;
     return;
   }
 
