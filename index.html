@@ -626,6 +626,10 @@
   }
   .eq-slot.occupied:hover .slot-remove-btn { display: flex; }
 
+  /* Decor slots — larger, free rarity placement */
+  .decor-eq-slot { width: 76px; min-height: 90px; }
+  .decor-eq-slot .slot-empty-label { font-size: 0.68rem; color: rgba(0,212,255,0.5); font-weight:500; }
+
   #item-picker {
     position: fixed; inset: 0; z-index: 200;
     background: rgba(0,5,15,0.88); backdrop-filter: blur(8px);
@@ -858,6 +862,7 @@
     <div class="slot-info" id="edit-slot-summary">Carregando slots...</div>
     <div class="slot-info" id="edit-hp-info">HP: —</div>
     <button class="edit-btn save" onclick="saveEdit()">💾 Salvar</button>
+    <button class="edit-btn" onclick="openHowToPlay()" style="color:#a0c4ff;border-color:rgba(100,180,255,0.3)">? Como Funciona</button>
     <button class="edit-btn" onclick="closeEdit()" style="color:#ff8080;border-color:rgba(255,80,80,0.3)">✕ Fechar</button>
   </div>
   <div id="fish-slots-area">
@@ -2423,30 +2428,55 @@ function renderEditSlots() {
   const totalDecorSlots = dSlots.common + dSlots.rare + dSlots.epic + dSlots.legendary;
   while (equippedDecor.length < totalDecorSlots) equippedDecor.push(null);
   equippedDecor = equippedDecor.slice(0, totalDecorSlots);
-  const decorDefs = [
-    ...Array(dSlots.legendary).fill({ rarity:'legendary', color:'#f0c040' }),
-    ...Array(dSlots.epic).fill({     rarity:'epic',       color:'#cc80ff' }),
-    ...Array(dSlots.rare).fill({     rarity:'rare',       color:'#60ccff' }),
-    ...Array(dSlots.common).fill({   rarity:'common',     color:'#80b0e0' }),
-  ];
-  decorDefs.forEach((def, i) => {
+
+  function getRarityColor(rarity) {
+    return { common:'#80b0e0', rare:'#60ccff', epic:'#cc80ff', legendary:'#f0c040' }[rarity] || '#80b0e0';
+  }
+  function countEquippedByRarity(rarity) {
+    return equippedDecor.filter(id => {
+      if (!id) return false;
+      const d = DECOR_CATALOG.find(x => x.id === id);
+      return d && d.rarity === rarity;
+    }).length;
+  }
+
+  for (let i = 0; i < totalDecorSlots; i++) {
     const equippedId = equippedDecor[i] || null;
     const catalog = equippedId ? DECOR_CATALOG.find(d => d.id === equippedId) : null;
+    const rc = catalog ? getRarityColor(catalog.rarity) : 'rgba(0,212,255,0.3)';
     const el = document.createElement('div');
-    el.className = 'eq-slot' + (catalog ? ' occupied' : '');
-    el.style.cssText = `width:56px;min-height:72px;border-color:${def.color+(catalog?'cc':'44')}`;
+    el.className = 'eq-slot decor-eq-slot' + (catalog ? ' occupied' : '');
+    el.style.borderColor = rc + (catalog ? 'cc' : '66');
     if (catalog) {
-      el.innerHTML = `<button class="slot-remove-btn" onclick="unequipDecor(${i},event)">✕</button>
-        <div class="slot-rarity-dot" style="background:${def.color}"></div>
-        <div class="slot-fish-preview">${catalog.svg(0.45)}</div>
-        <div class="slot-name" style="font-size:0.5rem">${catalog.name}</div>`;
+      el.innerHTML = `
+        <button class="slot-remove-btn" onclick="unequipDecor(${i},event)">✕</button>
+        <div class="slot-rarity-dot" style="background:${rc}"></div>
+        <div class="slot-fish-preview">${catalog.svg(0.5)}</div>
+        <div class="slot-name">${catalog.name}</div>`;
     } else {
-      el.innerHTML = `<div class="slot-rarity-dot" style="background:${def.color}"></div>
-        <div class="slot-empty-label">+<br><span style="color:${def.color};font-size:0.54rem">${def.rarity==='legendary'?'★ Lend.':def.rarity==='epic'?'✦✦ Épc':def.rarity==='rare'?'✦ Raro':'Comum'}</span></div>`;
+      el.innerHTML = `<div class="slot-empty-label">Equipar</div>`;
     }
-    el.onclick = (e) => { if (e.target.classList.contains('slot-remove-btn')) return; openDecorPicker(i, def.rarity); };
+    el.onclick = (e) => { if (e.target.classList.contains('slot-remove-btn')) return; openDecorPicker(i); };
     decorArea.appendChild(el);
-  });
+  }
+
+  // Rarity counter bar
+  const oldCounter = document.getElementById('decor-rarity-counter');
+  if (oldCounter) oldCounter.remove();
+  const counter = document.createElement('div');
+  counter.id = 'decor-rarity-counter';
+  counter.style.cssText = 'position:absolute;bottom:48px;left:50%;transform:translateX(-50%);display:flex;gap:10px;font-size:0.68rem;pointer-events:none;background:rgba(0,10,30,0.8);border:1px solid rgba(0,212,255,0.15);border-radius:12px;padding:5px 14px;backdrop-filter:blur(4px);white-space:nowrap;z-index:6;';
+  const rarityDefs = [
+    { key:'common',    label:'Comum',    color:'#80b0e0', max: dSlots.common    },
+    { key:'rare',      label:'Raro',     color:'#60ccff', max: dSlots.rare      },
+    { key:'epic',      label:'Épico',    color:'#cc80ff', max: dSlots.epic      },
+    { key:'legendary', label:'Lendário', color:'#f0c040', max: dSlots.legendary },
+  ];
+  counter.innerHTML = rarityDefs.map(r => {
+    const used = countEquippedByRarity(r.key);
+    return `<span><b style="color:${r.color}">${used}/${r.max}</b> <span style="color:rgba(150,180,220,0.6)">${r.label}</span></span>`;
+  }).join('<span style="color:rgba(0,212,255,0.2);padding:0 2px">·</span>');
+  document.getElementById('edit-overlay').appendChild(counter);
 
   renderEquippedDecorInAquarium();
 }
@@ -2529,55 +2559,84 @@ function unequipDecor(slotIndex, event) {
   saveEquippedLayout(); renderEditSlots(); renderEquippedDecorInAquarium();
 }
 
-function openDecorPicker(slotIndex, slotRarity) {
+function openDecorPicker(slotIndex) {
   pickerSlotIndex = slotIndex; pickerSlotType = 'decor';
   document.getElementById('picker-title').textContent = 'Escolher Decoração';
-  document.getElementById('picker-subtitle').textContent = `Slot ${slotRarity==='legendary'?'★ Lendário':slotRarity==='epic'?'✦✦ Épico':slotRarity==='rare'?'✦ Raro':'Comum'} — apenas itens comprados`;
-  buildDecorPickerGrid(slotRarity);
+  document.getElementById('picker-subtitle').textContent = 'Selecione do seu inventário — respeita os limites de raridade';
+  buildDecorPickerGrid();
   document.getElementById('item-picker').classList.add('open');
 }
 
-function buildDecorPickerGrid(slotRarity) {
+function buildDecorPickerGrid() {
   const grid = document.getElementById('picker-grid');
   grid.innerHTML = '';
   const ownedIds = myDecor.map(d => d.id);
+
   if (ownedIds.length === 0) {
-    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px 20px;color:var(--text-dim)"><div style="font-size:2rem;margin-bottom:10px">🌿</div><div>Você não tem decorações!</div><button class="edit-btn" style="margin-top:14px;pointer-events:all" onclick="closePicker();closeEdit();openShop()">Ir à Loja →</button></div>`;
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px 20px;color:var(--text-dim)">
+      <div style="font-size:2rem;margin-bottom:10px">🌿</div>
+      <div>Você não tem decorações!</div>
+      <div style="font-size:0.75rem;margin-top:6px">Visite Loja → Decoração.</div>
+      <button class="edit-btn" style="margin-top:14px;pointer-events:all" onclick="closePicker();closeEdit();openShop()">Ir à Loja →</button>
+    </div>`;
     return;
   }
+
+  // Compute current equipped counts and limits
+  const { slots: dSlots } = getDecorSlotsForHP(getHPFromAccount());
+  const limits = { common: dSlots.common, rare: dSlots.rare, epic: dSlots.epic, legendary: dSlots.legendary };
+  const used = { common: 0, rare: 0, epic: 0, legendary: 0 };
+  equippedDecor.forEach(id => {
+    if (!id) return;
+    const d = DECOR_CATALOG.find(x => x.id === id);
+    if (d) used[d.rarity] = (used[d.rarity] || 0) + 1;
+  });
   const rc = { common:'#80b0e0', rare:'#60ccff', epic:'#cc80ff', legendary:'#f0c040' };
-  const matching = DECOR_CATALOG.filter(d => ownedIds.includes(d.id) && d.rarity === slotRarity);
-  const others   = DECOR_CATALOG.filter(d => ownedIds.includes(d.id) && d.rarity !== slotRarity);
-  if (matching.length === 0) {
-    const rl = { common:'Comuns', rare:'Raras', epic:'Épicas', legendary:'Lendárias' };
-    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:30px 20px"><div style="font-size:2rem;margin-bottom:8px">🔍</div><div style="color:${rc[slotRarity]}">Nenhuma decoração ${rl[slotRarity]}</div><button class="edit-btn" style="margin-top:14px;pointer-events:all" onclick="closePicker();closeEdit();openShop()">Ir à Loja →</button></div>`;
-  } else {
-    matching.forEach(d => {
-      const isEquipped = equippedDecor.includes(d.id);
-      const card = document.createElement('div');
-      card.className = 'picker-card' + (isEquipped ? ' equipped' : '');
-      card.innerHTML = `<div class="pc-preview">${d.svg(0.6)}</div><div class="pc-name">${d.name}</div><div class="pc-rarity" style="color:${rc[d.rarity]}">${{common:'Comum',rare:'✦ Raro',epic:'✦✦ Épico',legendary:'★ Lendário'}[d.rarity]}</div>`;
- if (isEquipped) card.onclick = () => showToast('Já equipado',`${d.name} já está em uso.`,false);
-      else card.onclick = () => {
+  const rl = { common:'Comum', rare:'Raro', epic:'Épico', legendary:'Lendário' };
+
+  // Rarity counter header inside picker
+  const header = document.createElement('div');
+  header.style.cssText = 'grid-column:1/-1;display:flex;gap:12px;justify-content:center;padding:4px 0 12px;flex-wrap:wrap;';
+  header.innerHTML = Object.keys(limits).map(r => {
+    const full = used[r] >= limits[r];
+    return `<span style="font-size:0.72rem;background:rgba(0,20,50,0.6);border:1px solid ${rc[r]}44;border-radius:8px;padding:3px 10px;">
+      <b style="color:${full?'#ff8080':rc[r]}">${used[r]}/${limits[r]}</b>
+      <span style="color:rgba(150,180,220,0.6)"> ${rl[r]}</span>
+    </span>`;
+  }).join('');
+  grid.appendChild(header);
+
+  // Show all owned decor items
+  DECOR_CATALOG.filter(d => ownedIds.includes(d.id)).forEach(d => {
+    const isEquippedHere = equippedDecor[pickerSlotIndex] === d.id;
+    const isEquippedElsewhere = equippedDecor.some((id, i) => id === d.id && i !== pickerSlotIndex);
+    const atLimit = !isEquippedHere && (used[d.rarity] >= limits[d.rarity]);
+
+    const card = document.createElement('div');
+    card.className = 'picker-card' + (isEquippedHere ? ' equipped' : '');
+    if (atLimit) { card.style.opacity = '0.35'; card.style.cursor = 'not-allowed'; }
+
+    card.innerHTML = `
+      <div class="pc-preview">${d.svg(0.6)}</div>
+      <div class="pc-name">${d.name}</div>
+      <div class="pc-rarity" style="color:${rc[d.rarity]}">${rl[d.rarity]}</div>
+      ${atLimit ? `<div style="font-size:0.58rem;color:#ff8080;margin-top:3px">Limite ${used[d.rarity]}/${limits[d.rarity]}</div>` : ''}`;
+
+    if (atLimit) {
+      card.title = `Limite de ${rl[d.rarity]} atingido (${used[d.rarity]}/${limits[d.rarity]})`;
+    } else if (isEquippedElsewhere) {
+      card.onclick = () => showToast('Já equipado', `${d.name} está em outro slot.`, false);
+    } else {
+      card.onclick = () => {
+        // Remove previous item from this slot's rarity count if different rarity
+        const prev = equippedDecor[pickerSlotIndex];
         equippedDecor[pickerSlotIndex] = d.id;
         saveEquippedLayout(); closePicker(); renderEditSlots(); renderEquippedDecorInAquarium();
- showToast('Equipado!',`${d.name} adicionada.`,false);
+        showToast('Equipado!', `${d.name} adicionada ao aquário.`, false);
       };
-      grid.appendChild(card);
-    });
-  }
-  if (others.length > 0) {
-    const div = document.createElement('div');
-    div.style.cssText = 'grid-column:1/-1;font-size:0.68rem;color:var(--text-dim);text-align:center;padding:8px 0 4px;opacity:0.5';
-    div.textContent = 'Outros itens seus (incompatível):';
-    grid.appendChild(div);
-    others.forEach(d => {
-      const card = document.createElement('div');
-      card.className = 'picker-card'; card.style.opacity='0.3'; card.style.cursor='not-allowed';
-      card.innerHTML = `<div class="pc-preview">${d.svg(0.6)}</div><div class="pc-name">${d.name}</div>`;
-      grid.appendChild(card);
-    });
-  }
+    }
+    grid.appendChild(card);
+  });
 }
 
 function renderEquippedDecorInAquarium() {
@@ -2672,6 +2731,9 @@ function showToast(title, body, isError) {
   toastTimer = setTimeout(() => { toast.className=''; }, 4000);
 }
 
+function openHowToPlay() { document.getElementById('howtoplay-overlay').classList.add('open'); }
+function closeHowToPlay() { document.getElementById('howtoplay-overlay').classList.remove('open'); }
+
 ['shop-overlay','wallet-overlay','settings-overlay','item-picker'].forEach(id => {
   document.getElementById(id)?.addEventListener('click', e => {
     if (e.target.id === id) { closeShop(); closeWallet(); closeSettings(); closePicker(); }
@@ -2682,5 +2744,79 @@ document.getElementById('username-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') loginWithKeychain();
 });
 </script>
+<!-- HOW TO PLAY MODAL -->
+<div id="howtoplay-overlay" class="modal-overlay" onclick="if(event.target.id==='howtoplay-overlay')closeHowToPlay()">
+  <div class="modal-panel narrow" style="max-width:560px;max-height:85vh">
+    <div class="modal-top">
+      <div>
+        <div class="modal-title" style="font-size:1rem">Como Funciona</div>
+        <div class="modal-subtitle">Guia rápido do Hive Aquarium</div>
+      </div>
+      <button class="close-btn" onclick="closeHowToPlay()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:20px 24px;font-size:0.82rem;line-height:1.6;color:var(--text-dim)">
+
+      <div style="margin-bottom:18px">
+        <div style="color:var(--glow);font-weight:600;margin-bottom:6px;font-size:0.88rem">Peixes</div>
+        <p>Compre peixes na <b style="color:var(--text)">Loja</b> usando HIVE. Cada peixe é único e fica registrado permanentemente na blockchain. No <b style="color:var(--text)">Modo Edição</b>, clique em um slot para equipar o peixe no aquário. O número de slots depende do seu <b style="color:#60ccff">Hive Power (HP)</b>.</p>
+      </div>
+
+      <div style="margin-bottom:18px">
+        <div style="color:var(--glow);font-weight:600;margin-bottom:6px;font-size:0.88rem">Slots de Peixes por HP</div>
+        <table style="width:100%;border-collapse:collapse;font-size:0.75rem">
+          <tr style="color:var(--glow);border-bottom:1px solid rgba(0,212,255,0.15)">
+            <th style="text-align:left;padding:4px 8px">HP</th>
+            <th style="text-align:center;padding:4px;color:#80b0e0">Comum</th>
+            <th style="text-align:center;padding:4px;color:#60ccff">Raro</th>
+            <th style="text-align:center;padding:4px;color:#cc80ff">Épico</th>
+            <th style="text-align:center;padding:4px;color:#f0c040">Lend.</th>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(0,212,255,0.07)"><td style="padding:3px 8px">0 HP</td><td style="text-align:center">2</td><td style="text-align:center">0</td><td style="text-align:center">0</td><td style="text-align:center">0</td></tr>
+          <tr style="border-bottom:1px solid rgba(0,212,255,0.07)"><td style="padding:3px 8px">500 HP</td><td style="text-align:center">2</td><td style="text-align:center">1</td><td style="text-align:center">0</td><td style="text-align:center">0</td></tr>
+          <tr style="border-bottom:1px solid rgba(0,212,255,0.07)"><td style="padding:3px 8px">5.000 HP</td><td style="text-align:center">3</td><td style="text-align:center">2</td><td style="text-align:center">1</td><td style="text-align:center">0</td></tr>
+          <tr style="border-bottom:1px solid rgba(0,212,255,0.07)"><td style="padding:3px 8px">10.000 HP</td><td style="text-align:center">4</td><td style="text-align:center">2</td><td style="text-align:center">1</td><td style="text-align:center">1</td></tr>
+          <tr style="border-bottom:1px solid rgba(0,212,255,0.07)"><td style="padding:3px 8px">25.000 HP</td><td style="text-align:center">5</td><td style="text-align:center">4</td><td style="text-align:center">2</td><td style="text-align:center">1</td></tr>
+          <tr><td style="padding:3px 8px">100.000 HP</td><td style="text-align:center;color:#80b0e0"><b>8</b></td><td style="text-align:center;color:#60ccff"><b>6</b></td><td style="text-align:center;color:#cc80ff"><b>4</b></td><td style="text-align:center;color:#f0c040"><b>2</b></td></tr>
+        </table>
+      </div>
+
+      <div style="margin-bottom:18px">
+        <div style="color:var(--glow);font-weight:600;margin-bottom:6px;font-size:0.88rem">Decorações</div>
+        <p>As decorações funcionam diferente dos peixes: os <b style="color:var(--text)">16 slots</b> na parte inferior do aquário são livres — você pode colocar qualquer decoração em qualquer slot. O limite é por <b style="color:var(--text)">raridade total equipada</b>. Por exemplo, se seu limite é 6 Comuns, você pode equipar até 6 decorações comuns em qualquer combinação de slots.</p>
+      </div>
+
+      <div style="margin-bottom:18px">
+        <div style="color:var(--glow);font-weight:600;margin-bottom:6px;font-size:0.88rem">Slots de Decoração por HP</div>
+        <table style="width:100%;border-collapse:collapse;font-size:0.75rem">
+          <tr style="color:var(--glow);border-bottom:1px solid rgba(0,212,255,0.15)">
+            <th style="text-align:left;padding:4px 8px">HP</th>
+            <th style="text-align:center;padding:4px;color:#80b0e0">Comum</th>
+            <th style="text-align:center;padding:4px;color:#60ccff">Raro</th>
+            <th style="text-align:center;padding:4px;color:#cc80ff">Épico</th>
+            <th style="text-align:center;padding:4px;color:#f0c040">Lend.</th>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(0,212,255,0.07)"><td style="padding:3px 8px">0 HP</td><td style="text-align:center">2</td><td style="text-align:center">0</td><td style="text-align:center">0</td><td style="text-align:center">0</td></tr>
+          <tr style="border-bottom:1px solid rgba(0,212,255,0.07)"><td style="padding:3px 8px">500 HP</td><td style="text-align:center">2</td><td style="text-align:center">1</td><td style="text-align:center">0</td><td style="text-align:center">0</td></tr>
+          <tr style="border-bottom:1px solid rgba(0,212,255,0.07)"><td style="padding:3px 8px">6.000 HP</td><td style="text-align:center">4</td><td style="text-align:center">2</td><td style="text-align:center">1</td><td style="text-align:center">0</td></tr>
+          <tr style="border-bottom:1px solid rgba(0,212,255,0.07)"><td style="padding:3px 8px">13.000 HP</td><td style="text-align:center">5</td><td style="text-align:center">3</td><td style="text-align:center">2</td><td style="text-align:center">1</td></tr>
+          <tr style="border-bottom:1px solid rgba(0,212,255,0.07)"><td style="padding:3px 8px">35.000 HP</td><td style="text-align:center">6</td><td style="text-align:center">4</td><td style="text-align:center">3</td><td style="text-align:center">1</td></tr>
+          <tr><td style="padding:3px 8px">75.000 HP</td><td style="text-align:center;color:#80b0e0"><b>6</b></td><td style="text-align:center;color:#60ccff"><b>4</b></td><td style="text-align:center;color:#cc80ff"><b>4</b></td><td style="text-align:center;color:#f0c040"><b>2</b></td></tr>
+        </table>
+      </div>
+
+      <div style="margin-bottom:8px">
+        <div style="color:var(--glow);font-weight:600;margin-bottom:6px;font-size:0.88rem">Raridades</div>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <span><b style="color:#80b0e0">Comum</b> — peixes e decorações básicos, menor custo</span>
+          <span><b style="color:#60ccff">Raro</b> — visuais e animações diferenciados</span>
+          <span><b style="color:#cc80ff">Épico</b> — efeitos especiais únicos e brilho especial</span>
+          <span><b style="color:#f0c040">Lendário</b> — raridade máxima, glow pulsante e animações exclusivas</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
