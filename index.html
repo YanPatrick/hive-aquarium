@@ -671,7 +671,7 @@
       <span class="tab-icon">✏️</span><span class="tab-label">Edição</span>
     </button>
     <button class="nav-tab" onclick="openWallet()" id="tab-wallet">
-      <span class="tab-icon">💳</span><span class="tab-label">Carteira</span>
+      <span class="tab-icon">👛</span><span class="tab-label">Carteira</span>
     </button>
     <button class="nav-tab" onclick="openSettings()" id="tab-settings">
       <span class="tab-icon">⚙️</span><span class="tab-label">Configurações</span>
@@ -763,7 +763,7 @@
   <div class="modal-panel narrow">
     <div class="modal-top">
       <div>
-        <div class="modal-title">💰 Carteira</div>
+        <div class="modal-title">👛 Carteira</div>
         <div class="modal-subtitle">Seus saldos na blockchain Hive</div>
       </div>
       <button class="close-btn" onclick="closeWallet()">✕</button>
@@ -777,7 +777,13 @@
           <div class="wc-usd" id="wc-hive-usd">— USD</div>
         </div>
         <div class="wallet-card">
-          <div class="wc-icon">💵</div>
+          <!-- HBD logo: same Hive logo shape but green (#4BA543 tone matching the coin image) -->
+          <div class="wc-icon">
+            <svg width="36" height="31" viewBox="0 0 219 190" xmlns="http://www.w3.org/2000/svg">
+              <image href="hive-logo.png" width="219" height="190"
+                style="filter:sepia(1) saturate(4) hue-rotate(85deg) brightness(0.85)"/>
+            </svg>
+          </div>
           <div class="wc-label">HBD</div>
           <div class="wc-amount" id="wc-hbd">—</div>
           <div class="wc-usd">≈ 1 USD / HBD</div>
@@ -797,8 +803,7 @@
       </div>
       <div class="wallet-section-title">Gerenciar na blockchain</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <a href="https://wallet.hive.blog" target="_blank" class="wallet-link">🌐 Hive Wallet</a>
-        <a href="https://peakd.com/@me/wallet" target="_blank" class="wallet-link">📊 PeakD</a>
+        <a id="peakd-wallet-link" href="https://peakd.com/@me/wallet" target="_blank" class="wallet-link">📊 PeakD</a>
       </div>
     </div>
   </div>
@@ -2069,7 +2074,7 @@ function getSlotsForHP(hp) {
   for (let i = 0; i < tiers.length; i++) {
     if (hp >= tiers[i].hp) { current = tiers[i]; nextTier = tiers[i+1] || null; }
   }
-  return { slots: current, nextTier };
+  return { slots: current, nextTier, currentTierHp: current.hp };
 }
 
 function getHPFromAccount() {
@@ -2264,11 +2269,11 @@ function openWallet() {
     document.getElementById('wc-hbd').textContent  = acc.hbdAmt.toFixed(3);
     document.getElementById('wc-hp').textContent   = hp.toLocaleString();
     if (hiveUsdPrice) document.getElementById('wc-hive-usd').textContent = `≈ $${(acc.hiveAmt*hiveUsdPrice).toFixed(2)} USD`;
-    const { slots, nextTier } = getSlotsForHP(hp);
+    const { slots, nextTier, currentTierHp } = getSlotsForHP(hp);
     document.getElementById('wc-hp-level').textContent = `Slots: ${slots.common}C · ${slots.rare}R · ${slots.epic}E · ${slots.legendary}L`;
     document.getElementById('wc-hp-cur-label').textContent = `${hp.toLocaleString()} HP`;
     if (nextTier) {
-      const pct = Math.min(100, Math.max(0, ((hp - slots.hp) / (nextTier.hp - slots.hp)) * 100));
+      const pct = Math.min(100, Math.max(0, ((hp - currentTierHp) / (nextTier.hp - currentTierHp)) * 100));
       document.getElementById('wc-hp-bar').style.width = pct + '%';
       document.getElementById('wc-hp-next-label').textContent = `próx. nível: ${nextTier.hp.toLocaleString()} HP`;
     } else {
@@ -2276,6 +2281,9 @@ function openWallet() {
       document.getElementById('wc-hp-next-label').textContent = '★ Nível máximo!';
     }
   }
+  // Update PeakD link with current user
+  const peakdLink = document.getElementById('peakd-wallet-link');
+  if (peakdLink && currentUser) peakdLink.href = `https://peakd.com/@${currentUser}/wallet`;
   document.getElementById('wallet-overlay').classList.add('open');
 }
 function closeWallet() { document.getElementById('wallet-overlay').classList.remove('open'); setActiveTab(null); }
