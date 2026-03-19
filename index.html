@@ -33,29 +33,51 @@
     overflow-x: hidden;
   }
 
-  /* ── HEADER ── */
+  /* ── HEADER + NAV ── */
   header {
     position: fixed; top: 0; left: 0; right: 0; z-index: 100;
     display: flex; align-items: center; justify-content: space-between;
-    padding: 16px 32px;
-    background: linear-gradient(180deg, rgba(1,8,16,0.98) 0%, transparent 100%);
+    padding: 10px 24px;
+    background: rgba(1,8,16,0.97);
     border-bottom: 1px solid var(--border);
+    gap: 12px;
   }
   .logo {
     font-family: 'Cinzel Decorative', serif;
-    font-size: 1.4rem;
-    color: var(--glow);
+    font-size: 1.1rem; color: var(--glow);
     text-shadow: 0 0 20px rgba(0,212,255,0.6);
-    letter-spacing: 2px;
+    letter-spacing: 2px; white-space: nowrap; flex-shrink: 0;
   }
   .logo span { color: var(--gold); }
-  .header-right { display: flex; align-items: center; gap: 16px; }
+
+  /* Nav tabs */
+  .nav-tabs {
+    display: flex; align-items: center; gap: 4px;
+    flex: 1; justify-content: center;
+  }
+  .nav-tab {
+    cursor: pointer; border: 1px solid transparent;
+    border-radius: 8px; padding: 7px 16px;
+    font-family: 'Raleway', sans-serif; font-size: 0.82rem; font-weight: 500;
+    color: var(--text-dim); background: transparent;
+    transition: all 0.2s; letter-spacing: 0.5px; white-space: nowrap;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .nav-tab:hover { color: var(--glow); border-color: var(--border); background: rgba(0,212,255,0.06); }
+  .nav-tab.active { color: var(--glow); border-color: rgba(0,212,255,0.35); background: rgba(0,212,255,0.08); }
+  .nav-tab .tab-icon { font-size: 1rem; }
+  @media (max-width: 500px) {
+    .nav-tab .tab-label { display: none; }
+    .nav-tab { padding: 7px 10px; }
+    header { padding: 8px 12px; }
+    .logo { font-size: 0.85rem; }
+  }
+
+  .header-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
   .hive-balance {
-    font-size: 0.8rem; color: var(--gold);
-    background: rgba(240,192,64,0.1);
-    border: 1px solid rgba(240,192,64,0.3);
-    padding: 6px 14px; border-radius: 20px;
-    display: none;
+    font-size: 0.75rem; color: var(--gold);
+    background: rgba(240,192,64,0.1); border: 1px solid rgba(240,192,64,0.3);
+    padding: 5px 12px; border-radius: 20px; display: none; white-space: nowrap;
   }
   .btn {
     cursor: pointer; border: none; border-radius: 8px;
@@ -70,19 +92,16 @@
   .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 30px rgba(0,170,255,0.5); }
   .btn-logout {
     background: rgba(255,80,80,0.15); color: #ff8080;
-    border: 1px solid rgba(255,80,80,0.3); padding: 8px 16px; font-size: 0.85rem;
+    border: 1px solid rgba(255,80,80,0.3); padding: 6px 14px; font-size: 0.8rem;
   }
   .btn-logout:hover { background: rgba(255,80,80,0.25); }
   .user-pill {
     display: none; align-items: center; gap: 8px;
     background: rgba(0,212,255,0.08); border: 1px solid var(--border);
-    border-radius: 24px; padding: 6px 16px;
+    border-radius: 24px; padding: 5px 14px; cursor: pointer;
   }
-  .user-avatar {
-    width: 28px; height: 28px; border-radius: 50%;
-    border: 2px solid var(--glow); object-fit: cover;
-  }
-  .user-name { font-size: 0.85rem; color: var(--glow); font-weight: 500; }
+  .user-avatar { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--glow); object-fit: cover; }
+  .user-name { font-size: 0.8rem; color: var(--glow); font-weight: 500; }
 
   /* ── AQUARIUM ── */
   #aquarium {
@@ -474,6 +493,183 @@
   }
   #fish-hud span { color: var(--glow); font-weight: 600; }
 
+  /* ── MODAL OVERLAY (shared by all panels) ── */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 150;
+    background: rgba(0,5,15,0.82); backdrop-filter: blur(8px);
+    display: none; align-items: center; justify-content: center;
+    animation: fadeIn 0.2s ease;
+  }
+  .modal-overlay.open { display: flex; }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+  .modal-panel {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 20px; width: 95%; max-width: 860px;
+    max-height: 90vh; overflow: hidden; display: flex; flex-direction: column;
+    box-shadow: 0 0 100px rgba(0,80,160,0.4);
+    animation: cardIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+  .modal-panel.wide { max-width: 1100px; }
+  .modal-panel.narrow { max-width: 480px; }
+  .modal-top {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 28px; border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .modal-title {
+    font-family: 'Cinzel Decorative', serif; font-size: 1.2rem; color: var(--glow);
+  }
+  .modal-subtitle { font-size: 0.78rem; color: var(--text-dim); margin-top: 3px; }
+  .modal-body { overflow-y: auto; flex: 1; }
+  .close-btn {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: rgba(255,80,80,0.1); border: 1px solid rgba(255,80,80,0.2);
+    color: #ff8080; font-size: 1.1rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+  }
+  .close-btn:hover { background: rgba(255,80,80,0.25); }
+
+  /* ── SHOP TABS ── */
+  .shop-tabs-row {
+    display: flex; gap: 8px; padding: 16px 28px 0;
+    border-bottom: 1px solid var(--border); flex-shrink: 0;
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .shop-tabs-row::-webkit-scrollbar { display: none; }
+  .shop-tab {
+    padding: 8px 18px; border-radius: 8px 8px 0 0;
+    border: 1px solid transparent; border-bottom: none;
+    font-family: 'Raleway', sans-serif; font-size: 0.82rem; font-weight: 500;
+    color: var(--text-dim); cursor: pointer; background: transparent;
+    transition: all 0.2s; white-space: nowrap;
+  }
+  .shop-tab:hover { color: var(--glow); }
+  .shop-tab.active { color: var(--glow); background: rgba(0,212,255,0.07); border-color: var(--border); }
+  .shop-subtabs-row {
+    display: flex; gap: 6px; padding: 12px 28px;
+    flex-wrap: wrap; border-bottom: 1px solid rgba(0,212,255,0.08);
+  }
+  .shop-subtab {
+    padding: 5px 14px; border-radius: 20px;
+    border: 1px solid rgba(0,212,255,0.15);
+    font-size: 0.75rem; color: var(--text-dim); cursor: pointer; background: transparent;
+    transition: all 0.2s; white-space: nowrap;
+  }
+  .shop-subtab:hover { border-color: var(--glow); color: var(--glow); }
+  .shop-subtab.active { background: rgba(0,212,255,0.12); border-color: var(--glow); color: var(--glow); }
+  .shop-filter-row {
+    display: flex; gap: 6px; padding: 10px 28px;
+    border-bottom: 1px solid rgba(0,212,255,0.06);
+    flex-wrap: wrap;
+  }
+  .rarity-filter {
+    padding: 4px 12px; border-radius: 20px; border: 1px solid transparent;
+    font-size: 0.7rem; font-weight: 600; letter-spacing: 0.5px; cursor: pointer;
+    transition: all 0.2s; background: transparent; text-transform: uppercase;
+  }
+  .rarity-filter.all { color: var(--text-dim); border-color: rgba(255,255,255,0.1); }
+  .rarity-filter.common { color: #80b0e0; border-color: rgba(128,176,224,0.2); }
+  .rarity-filter.rare   { color: #60ccff; border-color: rgba(96,204,255,0.2); }
+  .rarity-filter.epic   { color: #cc80ff; border-color: rgba(204,128,255,0.2); }
+  .rarity-filter.legendary { color: var(--gold); border-color: rgba(240,192,64,0.2); }
+  .rarity-filter.active, .rarity-filter:hover { background: rgba(255,255,255,0.06); }
+  .shop-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
+    gap: 16px; padding: 20px 28px;
+  }
+  .shop-coming-soon {
+    grid-column: 1/-1; text-align: center; padding: 60px 20px; color: var(--text-dim);
+  }
+  .shop-coming-soon .cs-icon { font-size: 3rem; margin-bottom: 12px; }
+  .shop-coming-soon h3 { font-family: 'Cinzel Decorative', serif; font-size: 1rem; color: rgba(0,212,255,0.4); margin-bottom: 8px; }
+  .fish-card {
+    background: rgba(0,20,50,0.6); border: 1px solid rgba(0,100,200,0.2);
+    border-radius: 14px; padding: 18px; text-align: center;
+    transition: all 0.3s; cursor: pointer; position: relative;
+  }
+  .fish-card:hover { border-color: var(--glow); transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,212,255,0.2); }
+  .fish-card-preview { height: 75px; display: flex; align-items: center; justify-content: center; }
+  .fish-card h3 { font-size: 0.95rem; color: var(--text); margin: 8px 0 3px; font-weight: 500; }
+  .fish-card .rarity { font-size: 0.65rem; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 7px; font-weight: 600; }
+  .fish-card .desc { font-size: 0.74rem; color: var(--text-dim); line-height: 1.4; margin-bottom: 12px; }
+  .fish-card .price { font-size: 1rem; color: var(--gold); font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 5px; }
+  .fish-card .price-sub { font-size: 0.68rem; color: var(--text-dim); }
+  .owned-badge { position: absolute; top: 10px; right: 10px; background: rgba(0,200,100,0.2); border: 1px solid rgba(0,200,100,0.4); border-radius: 10px; padding: 2px 8px; font-size: 0.62rem; color: #00cc88; }
+  .btn-buy { width: 100%; margin-top: 10px; padding: 9px; background: linear-gradient(135deg, #004488, #0077cc); color: #fff; border-radius: 8px; font-size: 0.82rem; border: none; cursor: pointer; transition: all 0.3s; font-family: 'Raleway', sans-serif; }
+  .btn-buy:hover { background: linear-gradient(135deg, #005599, #0099ff); transform: translateY(-1px); }
+  .btn-buy:disabled { background: rgba(0,60,120,0.3); color: var(--text-dim); cursor: not-allowed; transform: none; }
+
+  /* ── WALLET PANEL ── */
+  .wallet-body { padding: 28px; }
+  .wallet-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  @media(max-width:500px){ .wallet-cards { grid-template-columns: 1fr; } }
+  .wallet-card {
+    background: rgba(0,20,50,0.7); border: 1px solid var(--border);
+    border-radius: 14px; padding: 22px; text-align: center;
+  }
+  .wallet-card .wc-icon { font-size: 2.2rem; margin-bottom: 8px; }
+  .wallet-card .wc-label { font-size: 0.72rem; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+  .wallet-card .wc-amount { font-size: 1.8rem; font-weight: 300; color: var(--gold); font-family: 'Cinzel Decorative', serif; }
+  .wallet-card .wc-usd { font-size: 0.75rem; color: var(--text-dim); margin-top: 4px; }
+  .wallet-card .wc-hp { font-size: 0.75rem; color: #60ccff; margin-top: 4px; }
+  .wallet-section-title { font-size: 0.78rem; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px; }
+  .wallet-link { display: inline-flex; align-items: center; gap: 6px; color: var(--glow); font-size: 0.82rem; text-decoration: none; border: 1px solid var(--border); border-radius: 8px; padding: 8px 16px; transition: all 0.2s; }
+  .wallet-link:hover { border-color: var(--glow); background: rgba(0,212,255,0.06); }
+
+  /* ── EDIT MODE ── */
+  #edit-overlay {
+    position: fixed; inset: 0; z-index: 140;
+    display: none; flex-direction: column;
+  }
+  #edit-overlay.open { display: flex; }
+  #edit-toolbar {
+    position: absolute; top: 62px; left: 0; right: 0;
+    background: rgba(1,8,16,0.96); border-bottom: 1px solid var(--border);
+    padding: 10px 20px; display: flex; align-items: center; gap: 12px;
+    z-index: 10; flex-wrap: wrap;
+  }
+  .edit-toolbar-label { font-size: 0.75rem; color: var(--text-dim); letter-spacing: 0.5px; }
+  .slot-info { font-size: 0.78rem; color: var(--glow); background: rgba(0,212,255,0.08); border: 1px solid var(--border); border-radius: 8px; padding: 5px 12px; }
+  .slot-info strong { color: var(--gold); }
+  .edit-btn { padding: 7px 16px; border-radius: 8px; border: 1px solid var(--border); background: rgba(0,212,255,0.06); color: var(--glow); font-size: 0.8rem; cursor: pointer; font-family: 'Raleway', sans-serif; transition: all 0.2s; }
+  .edit-btn:hover { background: rgba(0,212,255,0.14); }
+  .edit-btn.save { background: linear-gradient(135deg,#004488,#0077cc); border-color: transparent; color:#fff; }
+  .edit-btn.save:hover { background: linear-gradient(135deg,#005599,#0099ff); }
+  .edit-slots-area { position: absolute; bottom: 90px; left: 0; right: 0; display: flex; align-items: flex-end; justify-content: center; gap: 10px; padding: 0 20px; flex-wrap: wrap; z-index: 5; pointer-events: none; }
+  .decor-slot {
+    width: 60px; height: 60px; border-radius: 12px;
+    border: 2px dashed rgba(0,212,255,0.3); background: rgba(0,20,50,0.5);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; pointer-events: all; transition: all 0.2s; position: relative;
+    backdrop-filter: blur(2px);
+  }
+  .decor-slot:hover { border-color: var(--glow); background: rgba(0,212,255,0.1); }
+  .decor-slot .slot-label { font-size: 0.5rem; color: var(--text-dim); text-align: center; }
+  .decor-slot .slot-item { font-size: 1.4rem; }
+  .decor-slot .slot-rarity-dot { width: 8px; height: 8px; border-radius: 50%; position: absolute; top: 4px; right: 4px; }
+  .hp-progress { background: rgba(0,20,50,0.7); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; }
+  .hp-bar-track { background: rgba(0,212,255,0.08); border-radius: 4px; height: 8px; margin-top: 6px; }
+  .hp-bar-fill { background: linear-gradient(90deg, #0055aa, #00aaff); border-radius: 4px; height: 8px; transition: width 0.5s ease; }
+
+  /* ── SETTINGS PANEL ── */
+  .settings-body { padding: 28px; display: flex; flex-direction: column; gap: 20px; }
+  .settings-group { background: rgba(0,20,50,0.5); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
+  .settings-group-title { font-size: 0.7rem; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 14px; }
+  .settings-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(0,212,255,0.06); }
+  .settings-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .settings-label { font-size: 0.88rem; color: var(--text); }
+  .settings-desc { font-size: 0.72rem; color: var(--text-dim); margin-top: 2px; }
+  /* Toggle switch */
+  .toggle { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-track { position: absolute; inset: 0; background: rgba(0,50,100,0.6); border: 1px solid var(--border); border-radius: 12px; cursor: pointer; transition: 0.3s; }
+  .toggle-track::after { content:''; position:absolute; width:18px; height:18px; border-radius:50%; background:#fff; top:2px; left:2px; transition:0.3s; }
+  .toggle input:checked + .toggle-track { background: rgba(0,136,255,0.4); border-color: var(--glow); }
+  .toggle input:checked + .toggle-track::after { transform: translateX(20px); background: var(--glow); }
+  .lang-btns { display: flex; gap: 8px; }
+  .lang-btn { padding: 6px 16px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-dim); font-size: 0.82rem; cursor: pointer; font-family: 'Raleway', sans-serif; transition: all 0.2s; }
+  .lang-btn.active { border-color: var(--glow); color: var(--glow); background: rgba(0,212,255,0.08); }
+
   /* Scrollbar */
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -485,6 +681,20 @@
 <!-- HEADER -->
 <header>
   <div class="logo">🐠 Hive <span>Aquarium</span></div>
+  <nav class="nav-tabs" id="nav-tabs" style="display:none">
+    <button class="nav-tab" onclick="openShop()" id="tab-shop">
+      <span class="tab-icon">🛒</span><span class="tab-label">Loja</span>
+    </button>
+    <button class="nav-tab" onclick="openEdit()" id="tab-edit">
+      <span class="tab-icon">✏️</span><span class="tab-label">Edição</span>
+    </button>
+    <button class="nav-tab" onclick="openWallet()" id="tab-wallet">
+      <span class="tab-icon">💰</span><span class="tab-label">Carteira</span>
+    </button>
+    <button class="nav-tab" onclick="openSettings()" id="tab-settings">
+      <span class="tab-icon">⚙️</span><span class="tab-label">Configurações</span>
+    </button>
+  </nav>
   <div class="header-right">
     <div class="hive-balance" id="hive-balance">⚡ 0 HIVE</div>
     <div class="user-pill" id="user-pill">
@@ -537,21 +747,176 @@
 <!-- FISH HUD -->
 <div id="fish-hud">🐠 <span id="fish-count">0</span> peixes no aquário</div>
 
-<!-- SHOP BUTTON -->
-<div id="shop-btn-label">Loja de Peixes</div>
-<button id="shop-btn" onclick="openShop()" title="Loja">🛒</button>
-
-<!-- SHOP OVERLAY -->
-<div id="shop-overlay">
-  <div class="shop-panel">
-    <div class="shop-header">
+<!-- ── SHOP MODAL ── -->
+<div id="shop-overlay" class="modal-overlay">
+  <div class="modal-panel wide">
+    <div class="modal-top">
       <div>
-        <h2>🛒 Loja de Peixes</h2>
-        <p>Compre peixes com HIVE. Cada peixe fica salvo na blockchain para sempre.</p>
+        <div class="modal-title">🛒 Loja</div>
+        <div class="modal-subtitle">Compre peixes e decorações com HIVE — salvos para sempre na blockchain</div>
       </div>
       <button class="close-btn" onclick="closeShop()">✕</button>
     </div>
-    <div class="shop-grid" id="shop-grid"></div>
+    <!-- Main tabs: Peixes | Decoração | Aquários -->
+    <div class="shop-tabs-row" id="shop-main-tabs">
+      <button class="shop-tab active" onclick="setShopMain('fish',this)">🐠 Peixes</button>
+      <button class="shop-tab" onclick="setShopMain('decor',this)">🌿 Decoração</button>
+      <button class="shop-tab" onclick="setShopMain('aquarium',this)">🪣 Aquários</button>
+    </div>
+    <!-- Sub-tabs row (changes per main tab) -->
+    <div class="shop-subtabs-row" id="shop-subtabs"></div>
+    <!-- Rarity filter -->
+    <div class="shop-filter-row" id="shop-filter-row">
+      <button class="rarity-filter all active" onclick="setRarityFilter('all',this)">Todos</button>
+      <button class="rarity-filter common" onclick="setRarityFilter('common',this)">Comum</button>
+      <button class="rarity-filter rare" onclick="setRarityFilter('rare',this)">Raro</button>
+      <button class="rarity-filter epic" onclick="setRarityFilter('epic',this)">Épico</button>
+      <button class="rarity-filter legendary" onclick="setRarityFilter('legendary',this)">Lendário</button>
+    </div>
+    <div class="modal-body">
+      <div class="shop-grid" id="shop-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── WALLET MODAL ── -->
+<div id="wallet-overlay" class="modal-overlay">
+  <div class="modal-panel narrow">
+    <div class="modal-top">
+      <div>
+        <div class="modal-title">💰 Carteira</div>
+        <div class="modal-subtitle">Seus saldos na blockchain Hive</div>
+      </div>
+      <button class="close-btn" onclick="closeWallet()">✕</button>
+    </div>
+    <div class="modal-body wallet-body">
+      <div class="wallet-cards">
+        <div class="wallet-card">
+          <div class="wc-icon">🐝</div>
+          <div class="wc-label">HIVE</div>
+          <div class="wc-amount" id="wc-hive">—</div>
+          <div class="wc-usd" id="wc-hive-usd">— USD</div>
+        </div>
+        <div class="wallet-card">
+          <div class="wc-icon">💵</div>
+          <div class="wc-label">HBD</div>
+          <div class="wc-amount" id="wc-hbd">—</div>
+          <div class="wc-usd">≈ 1 USD / HBD</div>
+        </div>
+      </div>
+      <div class="wallet-card" style="margin-bottom:16px">
+        <div class="wc-icon">⚡</div>
+        <div class="wc-label">Hive Power</div>
+        <div class="wc-amount" id="wc-hp">—</div>
+        <div class="wc-hp" id="wc-hp-level">Nível de slots —</div>
+        <div style="margin-top:12px">
+          <div class="hp-bar-track"><div class="hp-bar-fill" id="wc-hp-bar" style="width:0%"></div></div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:0.68rem;color:var(--text-dim)">
+            <span id="wc-hp-cur-label">—</span><span id="wc-hp-next-label">próx. nível: —</span>
+          </div>
+        </div>
+      </div>
+      <div class="wallet-section-title">Gerenciar na blockchain</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <a href="https://wallet.hive.blog" target="_blank" class="wallet-link">🌐 Hive Wallet</a>
+        <a href="https://peakd.com/@me/wallet" target="_blank" class="wallet-link">📊 PeakD</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── EDIT MODE OVERLAY ── -->
+<div id="edit-overlay">
+  <div id="edit-toolbar">
+    <span class="edit-toolbar-label">MODO EDIÇÃO</span>
+    <div class="slot-info" id="edit-slot-summary">Carregando slots...</div>
+    <div class="slot-info" id="edit-hp-info">HP: —</div>
+    <button class="edit-btn" onclick="openShopFromEdit()">+ Adicionar item</button>
+    <button class="edit-btn save" onclick="saveEdit()">💾 Salvar</button>
+    <button class="edit-btn" onclick="closeEdit()" style="color:#ff8080;border-color:rgba(255,80,80,0.3)">✕ Fechar</button>
+  </div>
+  <!-- Decoration slots will be injected here -->
+  <div class="edit-slots-area" id="edit-slots-area"></div>
+</div>
+
+<!-- ── SETTINGS MODAL ── -->
+<div id="settings-overlay" class="modal-overlay">
+  <div class="modal-panel narrow">
+    <div class="modal-top">
+      <div><div class="modal-title">⚙️ Configurações</div></div>
+      <button class="close-btn" onclick="closeSettings()">✕</button>
+    </div>
+    <div class="modal-body settings-body">
+
+      <div class="settings-group">
+        <div class="settings-group-title">Idioma</div>
+        <div class="settings-row">
+          <div><div class="settings-label">Idioma da interface</div></div>
+          <div class="lang-btns">
+            <button class="lang-btn active" onclick="setLang('pt',this)">🇧🇷 PT</button>
+            <button class="lang-btn" onclick="setLang('en',this)">🇺🇸 EN</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <div class="settings-group-title">Performance</div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Animações dos peixes</div>
+            <div class="settings-desc">Desativar pode melhorar performance em celulares</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="toggle-anim" checked onchange="toggleAnimations(this.checked)">
+            <div class="toggle-track"></div>
+          </label>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Animações especiais</div>
+            <div class="settings-desc">Efeitos únicos de cada peixe (inflate, fogo, etc)</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="toggle-special" checked onchange="toggleSpecialAnims(this.checked)">
+            <div class="toggle-track"></div>
+          </label>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Partículas e bolhas</div>
+            <div class="settings-desc">Bolhas de fundo e efeitos de partículas</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="toggle-particles" checked onchange="toggleParticles(this.checked)">
+            <div class="toggle-track"></div>
+          </label>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="settings-label">Qualidade</div>
+            <div class="settings-desc">Reduz decorações para telas menores</div>
+          </div>
+          <div class="lang-btns">
+            <button class="lang-btn active" id="q-auto" onclick="setQuality('auto',this)">Auto</button>
+            <button class="lang-btn" id="q-low" onclick="setQuality('low',this)">Baixa</button>
+            <button class="lang-btn" id="q-high" onclick="setQuality('high',this)">Alta</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <div class="settings-group-title">Sobre</div>
+        <div class="settings-row">
+          <div><div class="settings-label">Versão</div><div class="settings-desc">Hive Aquarium Alpha</div></div>
+          <div style="font-size:0.75rem;color:var(--text-dim)">v0.1.0</div>
+        </div>
+        <div class="settings-row">
+          <div><div class="settings-label">Desenvolvedor</div></div>
+          <a href="https://peakd.com/@shiftrox/posts" target="_blank" style="color:var(--glow);font-size:0.82rem;text-decoration:none">@shiftrox</a>
+        </div>
+      </div>
+
+    </div>
   </div>
 </div>
 
@@ -1815,54 +2180,37 @@ function spawnParticleAtOffset(f, aq, offX, offY, opts) {
 function renderMyFish() {
   clearFish();
   const empty = document.getElementById('empty-state');
-  if (myFish.length === 0) {
-    empty.style.display = 'block';
-  } else {
-    empty.style.display = 'none';
-    myFish.forEach(f => spawnFish(f.id));
-  }
+  if (myFish.length === 0) { empty.style.display = 'block'; }
+  else { empty.style.display = 'none'; myFish.forEach(f => spawnFish(f.id)); }
   updateHUD();
   updateShopOwned();
 }
 
 function updateHUD() {
-  const hud = document.getElementById('fish-hud');
   document.getElementById('fish-count').textContent = fishElements.length;
-  hud.style.display = currentUser ? 'block' : 'none';
+  document.getElementById('fish-hud').style.display = currentUser ? 'block' : 'none';
 }
 
 // ── BLOCKCHAIN: LOAD MY FISH ──
 async function loadMyFishFromChain(username) {
   try {
     const response = await fetch(HIVE_API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0', method: 'condenser_api.get_account_history',
-        params: [username, -1, 500], id: 1
-      })
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', method: 'condenser_api.get_account_history', params: [username, -1, 500], id: 1 })
     });
     const data = await response.json();
-    const history = data.result || [];
     const owned = {};
-    history.forEach(([, op]) => {
+    (data.result || []).forEach(([, op]) => {
       if (op.op[0] === 'custom_json' && op.op[1].id === APP_ID) {
         try {
           const json = JSON.parse(op.op[1].json);
-          if (json.action === 'add_fish' && json.fish_id) {
-            owned[json.fish_id] = { id: json.fish_id, ts: op.timestamp };
-          }
-          if (json.action === 'remove_fish' && json.fish_id) {
-            delete owned[json.fish_id];
-          }
+          if (json.action === 'add_fish'    && json.fish_id) owned[json.fish_id] = { id: json.fish_id, ts: op.timestamp };
+          if (json.action === 'remove_fish' && json.fish_id) delete owned[json.fish_id];
         } catch(e) {}
       }
     });
     return Object.values(owned);
-  } catch(e) {
-    console.warn('Could not load fish from chain, using local cache:', e);
-    return [];
-  }
+  } catch(e) { return []; }
 }
 
 // ── LOGIN ──
@@ -1870,250 +2218,342 @@ async function loginWithKeychain() {
   const username = document.getElementById('username-input').value.trim().replace('@','').toLowerCase();
   const errEl = document.getElementById('login-error');
   errEl.style.display = 'none';
-
   if (!username) { showLoginError('Digite seu usuário Hive.'); return; }
-
   showToast('🔑 Keychain', 'Conectando com a extensão...', false);
-
   let keychain;
-  try {
-    keychain = await waitForKeychain(5000);
-  } catch(e) {
-    showLoginError('Hive Keychain não encontrado. Verifique se a extensão está instalada e a página está sendo servida via https://');
-    return;
-  }
-
-  keychain.requestSignBuffer(
-    username,
-    `Login no Hive Aquarium — ${Date.now()}`,
-    'Posting',
-    async (response) => {
-      if (response.success) {
-        currentUser = username;
-        localStorage.setItem('hive_aquarium_user', JSON.stringify({ username }));
-        await afterLogin(username);
-      } else {
-        showLoginError('Login cancelado: ' + (response.message || 'erro desconhecido'));
-      }
+  try { keychain = await waitForKeychain(5000); }
+  catch(e) { showLoginError('Hive Keychain não encontrado. Verifique se a extensão está instalada e a página está sendo servida via https://'); return; }
+  keychain.requestSignBuffer(username, `Login no Hive Aquarium — ${Date.now()}`, 'Posting', async (response) => {
+    if (response.success) {
+      currentUser = username;
+      localStorage.setItem('hive_aquarium_user', JSON.stringify({ username }));
+      await afterLogin(username);
+    } else {
+      showLoginError('Login cancelado: ' + (response.message || 'erro desconhecido'));
     }
-  );
+  });
 }
 
 async function afterLogin(username) {
-  // Hide login overlay
   document.getElementById('login-overlay').style.display = 'none';
-
-  // Show UI elements
   document.getElementById('user-pill').style.display = 'flex';
   document.getElementById('user-name-display').textContent = '@' + username;
   document.getElementById('logout-btn').style.display = 'block';
-  document.getElementById('shop-btn').style.display = 'flex';
-  document.getElementById('shop-btn-label').style.display = 'block';
   document.getElementById('fish-hud').style.display = 'block';
-
-  // Avatar
-  document.getElementById('user-avatar').src =
-    `https://images.hive.blog/u/${username}/avatar`;
-
-  // Load HIVE balance
+  document.getElementById('nav-tabs').style.display = 'flex';
+  document.getElementById('user-avatar').src = `https://images.hive.blog/u/${username}/avatar`;
   loadBalance(username);
-
   showToast('✅ Bem-vindo!', `Carregando seu aquário, @${username}...`, false);
-
-  // Load fish from blockchain
   const fishFromChain = await loadMyFishFromChain(username);
   myFish = fishFromChain;
-
-  // Fallback to localStorage if chain returned nothing
-  if (myFish.length === 0) {
-    const cached = localStorage.getItem(`fish_${username}`);
-    if (cached) myFish = JSON.parse(cached);
-  }
-
+  if (myFish.length === 0) { const c = localStorage.getItem(`fish_${username}`); if (c) myFish = JSON.parse(c); }
   renderMyFish();
-
-  if (myFish.length > 0) {
-    showToast('🐠 Aquário carregado!', `${myFish.length} peixe(s) encontrado(s) na blockchain.`, false);
-  }
+  if (myFish.length > 0) showToast('🐠 Aquário carregado!', `${myFish.length} peixe(s) na blockchain.`, false);
 }
 
 async function loadBalance(username) {
   try {
-    const res = await fetch(HIVE_API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0', method: 'condenser_api.get_accounts',
-        params: [[username]], id: 1
-      })
-    });
+    const res = await fetch(HIVE_API, { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ jsonrpc:'2.0', method:'condenser_api.get_accounts', params:[[username]], id:1 }) });
     const data = await res.json();
     if (data.result && data.result[0]) {
-      const bal = data.result[0].balance;
-      const balEl = document.getElementById('hive-balance');
-      balEl.textContent = '⚡ ' + bal;
-      balEl.style.display = 'block';
+      const acc = data.result[0];
+      document.getElementById('hive-balance').textContent = '⚡ ' + acc.balance;
+      document.getElementById('hive-balance').style.display = 'block';
+      window._accountData = {
+        hiveAmt: parseFloat(acc.balance),
+        hbdAmt:  parseFloat(acc.hbd_balance),
+        raw: acc
+      };
     }
   } catch(e) {}
 }
 
 function logout() {
-  currentUser = null;
-  myFish = [];
-  clearFish();
+  currentUser = null; myFish = []; clearFish();
   document.getElementById('login-overlay').style.display = 'flex';
   document.getElementById('user-pill').style.display = 'none';
   document.getElementById('logout-btn').style.display = 'none';
-  document.getElementById('shop-btn').style.display = 'none';
-  document.getElementById('shop-btn-label').style.display = 'none';
   document.getElementById('hive-balance').style.display = 'none';
   document.getElementById('fish-hud').style.display = 'none';
+  document.getElementById('nav-tabs').style.display = 'none';
   document.getElementById('empty-state').style.display = 'block';
+  closeShop(); closeWallet(); closeSettings(); closeEdit();
 }
 
 function showLoginError(msg) {
   const el = document.getElementById('login-error');
-  el.textContent = msg;
-  el.style.display = 'block';
+  el.textContent = msg; el.style.display = 'block';
 }
 
-// ── SHOP ──
-function buildShopGrid() {
+// ── HP → SLOTS SYSTEM ──
+function getSlotsForHP(hp) {
+  // Progression: logarithmic difficulty — harder at high HP tiers.
+  // Max: 8 common + 6 rare + 4 epic + 2 legendary = 20 total slots.
+  // Most users (< 10k HP) stay in the 5–8 slot range, which is cozy and not overwhelming.
+  const tiers = [
+    { hp:      0, common:2, rare:0, epic:0, legendary:0 }, // 2 total
+    { hp:    500, common:2, rare:1, epic:0, legendary:0 }, // 3
+    { hp:   1500, common:3, rare:1, epic:0, legendary:0 }, // 4
+    { hp:   3000, common:3, rare:1, epic:1, legendary:0 }, // 5
+    { hp:   5000, common:3, rare:2, epic:1, legendary:0 }, // 6
+    { hp:   7500, common:4, rare:2, epic:1, legendary:0 }, // 7
+    { hp:  10000, common:4, rare:2, epic:1, legendary:1 }, // 8 ← primeira lendária!
+    { hp:  13000, common:4, rare:3, epic:1, legendary:1 }, // 9
+    { hp:  16000, common:5, rare:3, epic:1, legendary:1 }, // 10
+    { hp:  20000, common:5, rare:3, epic:2, legendary:1 }, // 11
+    { hp:  25000, common:5, rare:4, epic:2, legendary:1 }, // 12
+    { hp:  32000, common:6, rare:4, epic:2, legendary:1 }, // 13
+    { hp:  40000, common:6, rare:4, epic:3, legendary:1 }, // 14
+    { hp:  50000, common:6, rare:5, epic:3, legendary:1 }, // 15
+    { hp:  62000, common:7, rare:5, epic:3, legendary:1 }, // 16
+    { hp:  75000, common:7, rare:5, epic:3, legendary:2 }, // 17 ← segunda lendária!
+    { hp:  88000, common:7, rare:6, epic:4, legendary:2 }, // 19
+    { hp: 100000, common:8, rare:6, epic:4, legendary:2 }, // 20 ← máximo
+  ];
+  let current = tiers[0], nextTier = null;
+  for (let i = 0; i < tiers.length; i++) {
+    if (hp >= tiers[i].hp) { current = tiers[i]; nextTier = tiers[i+1] || null; }
+  }
+  return { slots: current, nextTier };
+}
+
+function getHPFromAccount() {
+  const acc = window._accountData?.raw;
+  if (!acc) return 0;
+  const rawVests = parseFloat(acc.vesting_shares);
+  const delegated = parseFloat(acc.delegated_vesting_shares);
+  const received  = parseFloat(acc.received_vesting_shares);
+  return Math.round((rawVests - delegated + received) / 2000);
+}
+
+// ── SHOP STATE ──
+let shopMainTab = 'fish', shopSubTab = 'classics', shopRarityFilter = 'all';
+
+const SHOP_SUBTABS = {
+  fish:    [{ id:'classics',label:'🐠 Clássicos'},{ id:'exotic',label:'🦈 Exóticos'},{ id:'special',label:'✨ Especiais'}],
+  decor:   [{ id:'plants_live',label:'🌿 Plantas Vivas'},{ id:'plants_art',label:'🌱 Plantas Artificiais'},
+            { id:'rocks',label:'🪨 Rochas'},{ id:'logs',label:'🪵 Troncos'},{ id:'ornaments',label:'🏰 Ornamentos'},
+            { id:'substrate',label:'🪸 Substrato'},{ id:'lighting',label:'💡 Iluminação'}],
+  aquarium: [],
+};
+
+function setShopMain(tab, btn) {
+  shopMainTab = tab; shopRarityFilter = 'all';
+  document.querySelectorAll('.shop-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderShopSubtabs(); renderShopFilterRow(); renderShopGrid();
+}
+function setShopSub(sub, btn) {
+  shopSubTab = sub;
+  document.querySelectorAll('.shop-subtab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderShopGrid();
+}
+function setRarityFilter(r, btn) {
+  shopRarityFilter = r;
+  document.querySelectorAll('.rarity-filter').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderShopGrid();
+}
+function renderShopSubtabs() {
+  const subs = SHOP_SUBTABS[shopMainTab] || [];
+  document.getElementById('shop-subtabs').innerHTML = subs.map((s,i) =>
+    `<button class="shop-subtab${i===0?' active':''}" onclick="setShopSub('${s.id}',this)">${s.label}</button>`).join('');
+  shopSubTab = subs[0]?.id || null;
+}
+function renderShopFilterRow() {
+  document.getElementById('shop-filter-row').style.display = shopMainTab === 'aquarium' ? 'none' : 'flex';
+}
+function renderShopGrid() {
   const grid = document.getElementById('shop-grid');
   grid.innerHTML = '';
-  FISH_CATALOG.forEach(fish => {
+  if (shopMainTab === 'aquarium') {
+    grid.innerHTML = `<div class="shop-coming-soon"><div class="cs-icon">🪣</div><h3>Em Breve</h3><p>Novos aquários temáticos chegando em breve!</p></div>`;
+    return;
+  }
+  if (shopMainTab === 'decor') {
+    grid.innerHTML = `<div class="shop-coming-soon"><div class="cs-icon">🌿</div><h3>Em Breve</h3><p>Plantas, rochas, troncos e ornamentos em breve!</p></div>`;
+    return;
+  }
+  const subMap = { classics:['clownfish','tang'], exotic:['angelfish','pufferfish'], special:['jellyfish','seahorse','dragon'] };
+  let items = FISH_CATALOG.filter(f => (subMap[shopSubTab] || FISH_CATALOG.map(x=>x.id)).includes(f.id));
+  if (shopRarityFilter !== 'all') items = items.filter(f => f.rarity === shopRarityFilter);
+  const ro = { common:0, rare:1, epic:2, legendary:3 };
+  items.sort((a,b) => ro[a.rarity] - ro[b.rarity]);
+  if (items.length === 0) { grid.innerHTML = `<div class="shop-coming-soon"><div class="cs-icon">🔍</div><h3>Nenhum item</h3><p>Tente outro filtro.</p></div>`; return; }
+  items.forEach(fish => {
     const card = document.createElement('div');
-    card.className = 'fish-card';
-    card.id = 'card-' + fish.id;
-    const alreadyOwned = myFish.some(f => f.id === fish.id);
-    card.innerHTML = `
-      ${alreadyOwned ? '<div class="owned-badge">✓ Seu</div>' : ''}
+    card.className = 'fish-card'; card.id = 'card-' + fish.id;
+    const owned = myFish.some(f => f.id === fish.id);
+    const rl = { common:'Comum', rare:'✦ Raro', epic:'✦✦ Épico', legendary:'★ Lendário' }[fish.rarity];
+    card.innerHTML = `${owned?'<div class="owned-badge">✓ Seu</div>':''}
       <div class="fish-card-preview">${fish.svg(0.9)}</div>
       <h3>${fish.name}</h3>
-      <div class="rarity ${fish.rarity}">${
-        fish.rarity === 'common'    ? 'Comum' :
-        fish.rarity === 'rare'      ? '✦ Raro' :
-        fish.rarity === 'epic'      ? '✦✦ Épico' :
-                                      '★ Lendário'
-      }</div>
+      <div class="rarity ${fish.rarity}">${rl}</div>
       <p class="desc">${fish.desc}</p>
-      <div class="price">🐝 ${fish.price} HIVE <span class="price-sub" data-hive="${fish.price}">${hiveUsdPrice ? '≈ $' + (fish.price * hiveUsdPrice).toFixed(2) + ' USD' : '...'}</span></div>
-      <button class="btn-buy" id="btn-${fish.id}" onclick="buyFish('${fish.id}')" ${alreadyOwned ? 'disabled' : ''}>
-        ${alreadyOwned ? '✓ Já no aquário' : '🛒 Comprar'}
-      </button>
-    `;
+      <div class="price">🐝 ${fish.price} HIVE <span class="price-sub" data-hive="${fish.price}">${hiveUsdPrice?'≈ $'+(fish.price*hiveUsdPrice).toFixed(2)+' USD':'...'}</span></div>
+      <button class="btn-buy" id="btn-${fish.id}" onclick="buyFish('${fish.id}')" ${owned?'disabled':''}>
+        ${owned?'✓ Já no aquário':'🛒 Comprar'}</button>`;
     grid.appendChild(card);
   });
 }
-
 function updateShopOwned() {
   FISH_CATALOG.forEach(fish => {
-    const card = document.getElementById('card-' + fish.id);
-    const btn = document.getElementById('btn-' + fish.id);
-    if (!card || !btn) return;
-    const owned = myFish.some(f => f.id === fish.id);
-    btn.disabled = owned;
-    btn.textContent = owned ? '✓ Já no aquário' : '🛒 Comprar';
-    const existing = card.querySelector('.owned-badge');
-    if (owned && !existing) {
-      const badge = document.createElement('div');
-      badge.className = 'owned-badge';
-      badge.textContent = '✓ Seu';
-      card.insertBefore(badge, card.firstChild);
-    } else if (!owned && existing) {
-      existing.remove();
-    }
+    const card = document.getElementById('card-'+fish.id), btn = document.getElementById('btn-'+fish.id);
+    if (!card||!btn) return;
+    const owned = myFish.some(f => f.id===fish.id);
+    btn.disabled = owned; btn.textContent = owned?'✓ Já no aquário':'🛒 Comprar';
+    const ex = card.querySelector('.owned-badge');
+    if (owned && !ex) { const b=document.createElement('div'); b.className='owned-badge'; b.textContent='✓ Seu'; card.insertBefore(b,card.firstChild); }
+    else if (!owned && ex) ex.remove();
   });
 }
 
 async function buyFish(fishId) {
   if (!currentUser) return;
-  const catalog = FISH_CATALOG.find(f => f.id === fishId);
+  const catalog = FISH_CATALOG.find(f => f.id===fishId);
   if (!catalog) return;
-
-  const btn = document.getElementById('btn-' + fishId);
-  btn.disabled = true;
-  btn.textContent = '⏳ Conectando...';
-
+  const btn = document.getElementById('btn-'+fishId);
+  btn.disabled=true; btn.textContent='⏳ Conectando...';
   let keychain;
-  try {
-    keychain = await waitForKeychain(5000);
-  } catch(e) {
-    showToast('❌ Keychain não encontrado', 'Verifique se a extensão está ativa nesta aba.', true);
-    btn.disabled = false;
-    btn.textContent = '🛒 Comprar';
-    return;
-  }
-
-  const usdStr = hiveUsdPrice ? ` (≈ $${(catalog.price * hiveUsdPrice).toFixed(2)})` : '';
-  showToast('🔑 Keychain', `Confirme o pagamento de ${catalog.price} HIVE${usdStr} para comprar ${catalog.name}`, false);
-  btn.textContent = '⏳ Aguardando...';
-
-  // Timeout: se o Keychain não responder em 60s, desbloqueia o botão
-  const transferTimeout = setTimeout(() => {
-    console.warn('[HiveAquarium] requestTransfer timeout — sem resposta do Keychain');
-    showToast('⏱️ Timeout', 'O Keychain não respondeu. Tente novamente.', true);
-    btn.disabled = false;
-    btn.textContent = '🛒 Comprar';
-  }, 60000);
-
-  // Correct signature: requestTransfer(username, to, amount, memo, currency, callback)
-  keychain.requestTransfer(
-    currentUser,
-    SHOP_ACCOUNT,
-    catalog.price.toFixed(3),
-    catalog.memo,
-    'HIVE',
-    async (txResponse) => {
-      clearTimeout(transferTimeout);
-      console.log('[Hive Aquarium] Transfer response:', txResponse);
-      if (!txResponse.success) {
-        showToast('❌ Cancelado', txResponse.message || 'Transação cancelada.', true);
-        btn.disabled = false;
-        btn.textContent = '🛒 Comprar';
-        return;
-      }
-
-      showToast('✅ Pagamento enviado!', `Registrando ${catalog.name} na blockchain...`, false);
-
-      const fishJson = JSON.stringify({
-        action: 'add_fish',
-        fish_id: fishId,
-        fish_name: catalog.name,
-        tx: txResponse.result?.id || 'unknown',
-        app: APP_ID
-      });
-
-      keychain.requestCustomJson(
-        currentUser,
-        APP_ID,
-        'Posting',
-        fishJson,
-        `Hive Aquarium: Adicionar ${catalog.name}`,
-        (jsonResponse) => {
-          console.log('[Hive Aquarium] custom_json response:', jsonResponse);
-          myFish.push({ id: fishId, name: catalog.name, boughtAt: new Date().toISOString() });
-          localStorage.setItem(`fish_${currentUser}`, JSON.stringify(myFish));
-          renderMyFish();
-          closeShop();
-          if (jsonResponse.success) {
-            showToast('🎉 ' + catalog.name + ' adquirido!', 'Seu novo peixe já está nadando no aquário!', false);
-          } else {
-            showToast('⚠️ ' + catalog.name + ' adquirido!', 'Peixe no aquário! (registro on-chain com aviso)', false);
-          }
-          loadBalance(currentUser);
-        }
-      );
-    }
-  );
+  try { keychain = await waitForKeychain(5000); }
+  catch(e) { showToast('❌ Keychain não encontrado','Verifique se a extensão está ativa.',true); btn.disabled=false; btn.textContent='🛒 Comprar'; return; }
+  const usdStr = hiveUsdPrice ? ` (≈ $${(catalog.price*hiveUsdPrice).toFixed(2)})` : '';
+  showToast('🔑 Keychain',`Confirme o pagamento de ${catalog.price} HIVE${usdStr} para comprar ${catalog.name}`,false);
+  btn.textContent='⏳ Aguardando...';
+  const tt = setTimeout(()=>{ showToast('⏱️ Timeout','Keychain não respondeu. Tente novamente.',true); btn.disabled=false; btn.textContent='🛒 Comprar'; },60000);
+  keychain.requestTransfer(currentUser, SHOP_ACCOUNT, catalog.price.toFixed(3), catalog.memo, 'HIVE', async (tx) => {
+    clearTimeout(tt);
+    if (!tx.success) { showToast('❌ Cancelado',tx.message||'Transação cancelada.',true); btn.disabled=false; btn.textContent='🛒 Comprar'; return; }
+    showToast('✅ Pagamento enviado!',`Registrando ${catalog.name} na blockchain...`,false);
+    const j = JSON.stringify({ action:'add_fish', fish_id:fishId, fish_name:catalog.name, tx:tx.result?.id||'unknown', app:APP_ID });
+    keychain.requestCustomJson(currentUser, APP_ID, 'Posting', j, `Hive Aquarium: Adicionar ${catalog.name}`, (jr) => {
+      myFish.push({ id:fishId, name:catalog.name, boughtAt:new Date().toISOString() });
+      localStorage.setItem(`fish_${currentUser}`, JSON.stringify(myFish));
+      renderMyFish(); closeShop();
+      showToast(jr.success?`🎉 ${catalog.name} adquirido!`:`⚠️ ${catalog.name} adquirido!`,
+        jr.success?'Seu novo peixe já está nadando!':'Peixe no aquário! (on-chain com aviso)',false);
+      loadBalance(currentUser);
+    });
+  });
 }
 
 function openShop() {
-  buildShopGrid();
+  setActiveTab('tab-shop');
+  renderShopSubtabs(); renderShopFilterRow(); renderShopGrid();
   document.getElementById('shop-overlay').classList.add('open');
 }
-function closeShop() {
-  document.getElementById('shop-overlay').classList.remove('open');
+function closeShop() { document.getElementById('shop-overlay').classList.remove('open'); setActiveTab(null); }
+
+// ── WALLET ──
+function openWallet() {
+  setActiveTab('tab-wallet');
+  const hp = getHPFromAccount();
+  const acc = window._accountData;
+  if (acc) {
+    document.getElementById('wc-hive').textContent = acc.hiveAmt.toFixed(3);
+    document.getElementById('wc-hbd').textContent  = acc.hbdAmt.toFixed(3);
+    document.getElementById('wc-hp').textContent   = hp.toLocaleString();
+    if (hiveUsdPrice) document.getElementById('wc-hive-usd').textContent = `≈ $${(acc.hiveAmt*hiveUsdPrice).toFixed(2)} USD`;
+    const { slots, nextTier } = getSlotsForHP(hp);
+    document.getElementById('wc-hp-level').textContent = `Slots: ${slots.common}C · ${slots.rare}R · ${slots.epic}E · ${slots.legendary}L`;
+    document.getElementById('wc-hp-cur-label').textContent = `${hp.toLocaleString()} HP`;
+    if (nextTier) {
+      const pct = Math.min(100, Math.max(0, ((hp - slots.hp) / (nextTier.hp - slots.hp)) * 100));
+      document.getElementById('wc-hp-bar').style.width = pct + '%';
+      document.getElementById('wc-hp-next-label').textContent = `próx. nível: ${nextTier.hp.toLocaleString()} HP`;
+    } else {
+      document.getElementById('wc-hp-bar').style.width = '100%';
+      document.getElementById('wc-hp-next-label').textContent = '★ Nível máximo!';
+    }
+  }
+  document.getElementById('wallet-overlay').classList.add('open');
+}
+function closeWallet() { document.getElementById('wallet-overlay').classList.remove('open'); setActiveTab(null); }
+
+// ── EDIT MODE ──
+function openEdit() {
+  setActiveTab('tab-edit');
+  document.getElementById('edit-overlay').classList.add('open');
+  renderEditSlots();
+}
+function closeEdit() { document.getElementById('edit-overlay').classList.remove('open'); setActiveTab(null); }
+function openShopFromEdit() { closeEdit(); openShop(); }
+
+function renderEditSlots() {
+  const hp = getHPFromAccount();
+  const { slots } = getSlotsForHP(hp);
+  document.getElementById('edit-hp-info').textContent = `HP: ${hp.toLocaleString()}`;
+  document.getElementById('edit-slot-summary').innerHTML =
+    `Slots: <strong>${slots.common}</strong>C · <strong>${slots.rare}</strong>R · <strong>${slots.epic}</strong>E · <strong>${slots.legendary}</strong>L`;
+  const area = document.getElementById('edit-slots-area');
+  area.innerHTML = '';
+  const defs = [
+    ...Array(slots.legendary).fill({ rarity:'legendary', color:'#f0c040', label:'Lendário' }),
+    ...Array(slots.epic).fill({     rarity:'epic',       color:'#cc80ff', label:'Épico'    }),
+    ...Array(slots.rare).fill({     rarity:'rare',       color:'#60ccff', label:'Raro'     }),
+    ...Array(slots.common).fill({   rarity:'common',     color:'#80b0e0', label:'Comum'    }),
+  ];
+  defs.forEach(s => {
+    const slot = document.createElement('div');
+    slot.className = 'decor-slot';
+    slot.style.borderColor = s.color + '55';
+    slot.innerHTML = `<div class="slot-rarity-dot" style="background:${s.color}"></div><div class="slot-label">${s.label}</div>`;
+    slot.onclick = () => showToast('✏️ Em breve','Equipar itens nos slots estará disponível em breve!',false);
+    area.appendChild(slot);
+  });
+}
+function saveEdit() { showToast('💾 Salvo!','Configuração salva. Persistência on-chain em breve!',false); closeEdit(); }
+
+// ── SETTINGS ──
+let appSettings = JSON.parse(localStorage.getItem('hive_aquarium_settings')||'{"lang":"pt","anim":true,"special":true,"particles":true,"quality":"auto"}');
+
+function openSettings() {
+  setActiveTab('tab-settings');
+  document.getElementById('toggle-anim').checked     = appSettings.anim;
+  document.getElementById('toggle-special').checked  = appSettings.special;
+  document.getElementById('toggle-particles').checked= appSettings.particles;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent.trim().includes(appSettings.lang==='pt'?'PT':'EN')));
+  ['auto','low','high'].forEach(q => document.getElementById('q-'+q)?.classList.toggle('active', appSettings.quality===q));
+  document.getElementById('settings-overlay').classList.add('open');
+}
+function closeSettings() { document.getElementById('settings-overlay').classList.remove('open'); setActiveTab(null); }
+function saveSettings() { localStorage.setItem('hive_aquarium_settings', JSON.stringify(appSettings)); }
+
+function setLang(lang, btn) {
+  appSettings.lang = lang; saveSettings();
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  showToast('🌐 Idioma', lang==='pt'?'Português selecionado':'English selected', false);
+}
+function toggleAnimations(on) {
+  appSettings.anim = on; saveSettings();
+  if (!on && animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
+  else if (on && !animFrameId && fishInstances.length > 0) startFishLoop();
+  showToast(on?'✅ Animações ativadas':'⏸️ Animações pausadas', on?'Os peixes voltaram a nadar!':'Performance melhorada.',false);
+}
+function toggleSpecialAnims(on) {
+  appSettings.special = on; saveSettings();
+  if (!on) fishInstances.forEach(f => { f.specialActive=false; f.specialTimer=0; });
+  showToast(on?'✨ Efeitos especiais ON':'✨ Efeitos especiais OFF','',false);
+}
+function toggleParticles(on) {
+  appSettings.particles = on; saveSettings();
+  document.querySelectorAll('.bubble, .particle').forEach(el => { el.style.display = on?'':'none'; });
+  showToast(on?'🫧 Partículas ON':'🫧 Partículas OFF','',false);
+}
+function setQuality(q, btn) {
+  appSettings.quality = q; saveSettings();
+  ['auto','low','high'].forEach(id => document.getElementById('q-'+id)?.classList.remove('active'));
+  btn.classList.add('active');
+  showToast('🎨 Qualidade', {auto:'Automática',low:'Baixa',high:'Alta'}[q], false);
+}
+
+// ── ACTIVE TAB ──
+function setActiveTab(id) {
+  document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+  if (id) document.getElementById(id)?.classList.add('active');
 }
 
 // ── TOAST ──
@@ -2122,18 +2562,19 @@ function showToast(title, body, isError) {
   const toast = document.getElementById('toast');
   document.getElementById('toast-title').textContent = title;
   document.getElementById('toast-body').textContent = body;
-  toast.className = 'show' + (isError ? ' error' : '');
+  toast.className = 'show' + (isError?' error':'');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { toast.className = ''; }, 4000);
+  toastTimer = setTimeout(() => { toast.className=''; }, 4000);
 }
 
-// Close shop on overlay click
-document.getElementById('shop-overlay').addEventListener('click', (e) => {
-  if (e.target === document.getElementById('shop-overlay')) closeShop();
+// Close modals on backdrop click
+['shop-overlay','wallet-overlay','settings-overlay'].forEach(id => {
+  document.getElementById(id)?.addEventListener('click', e => {
+    if (e.target.id === id) { closeShop(); closeWallet(); closeSettings(); }
+  });
 });
 
-// Enter key on username input
-document.getElementById('username-input').addEventListener('keydown', (e) => {
+document.getElementById('username-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') loginWithKeychain();
 });
 </script>
