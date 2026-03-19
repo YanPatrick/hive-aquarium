@@ -669,7 +669,12 @@
   .lang-btn { padding: 6px 16px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-dim); font-size: 0.82rem; cursor: pointer; font-family: 'Raleway', sans-serif; transition: all 0.2s; }
   .lang-btn.active { border-color: var(--glow); color: var(--glow); background: rgba(0,212,255,0.08); }
 
-  /* Scrollbar */
+  /* ── HIVE LOGO ICON ── */
+  .hive-logo {
+    display: inline-flex; align-items: center; justify-content: center;
+    vertical-align: middle; flex-shrink: 0;
+  }
+  .hive-logo svg { display: block; }
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: rgba(0,212,255,0.2); border-radius: 3px; }
@@ -679,7 +684,7 @@
 
 <!-- HEADER -->
 <header>
-  <div class="logo">🐠 Hive <span>Aquarium</span></div>
+  <div class="logo"><svg width="22" height="22" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle;margin-right:6px"><path fill="#e31337" d="M155 60 L75 200 L155 340 L195 340 L115 200 L195 60 Z"/><path fill="#e31337" d="M205 60 L125 200 L205 340 L245 340 L165 200 L245 60 Z"/><path fill="#e31337" d="M255 60 L175 200 L255 340 L320 340 L240 200 L320 60 Z"/></svg>Hive <span>Aquarium</span></div>
   <nav class="nav-tabs" id="nav-tabs" style="display:none">
     <button class="nav-tab" onclick="openShop()" id="tab-shop">
       <span class="tab-icon">🛒</span><span class="tab-label">Loja</span>
@@ -695,7 +700,7 @@
     </button>
   </nav>
   <div class="header-right">
-    <div class="hive-balance" id="hive-balance">⚡ 0 HIVE</div>
+    <div class="hive-balance" id="hive-balance"></div>
     <div class="user-pill" id="user-pill">
       <img class="user-avatar" id="user-avatar" src="" alt="">
       <span class="user-name" id="user-name-display">@username</span>
@@ -760,7 +765,7 @@
     <div class="shop-tabs-row" id="shop-main-tabs">
       <button class="shop-tab active" onclick="setShopMain('fish',this)">🐠 Peixes</button>
       <button class="shop-tab" onclick="setShopMain('decor',this)">🌿 Decoração</button>
-      <button class="shop-tab" onclick="setShopMain('aquarium',this)">🪣 Aquários</button>
+      <button class="shop-tab" onclick="setShopMain('aquarium',this)">🐡 Aquários</button>
     </div>
     <!-- Sub-tabs row (changes per main tab) -->
     <div class="shop-subtabs-row" id="shop-subtabs"></div>
@@ -791,7 +796,7 @@
     <div class="modal-body wallet-body">
       <div class="wallet-cards">
         <div class="wallet-card">
-          <div class="wc-icon">🐝</div>
+          <div class="wc-icon"><svg width="36" height="36" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg"><path fill="#e31337" d="M155 60 L75 200 L155 340 L195 340 L115 200 L195 60 Z"/><path fill="#e31337" d="M205 60 L125 200 L205 340 L245 340 L165 200 L245 60 Z"/><path fill="#e31337" d="M255 60 L175 200 L255 340 L320 340 L240 200 L320 60 Z"/></svg></div>
           <div class="wc-label">HIVE</div>
           <div class="wc-amount" id="wc-hive">—</div>
           <div class="wc-usd" id="wc-hive-usd">— USD</div>
@@ -804,7 +809,7 @@
         </div>
       </div>
       <div class="wallet-card" style="margin-bottom:16px">
-        <div class="wc-icon">⚡</div>
+        <div class="wc-icon"><svg width="36" height="36" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg"><path fill="#00aaff" d="M155 60 L75 200 L155 340 L195 340 L115 200 L195 60 Z"/><path fill="#00aaff" d="M205 60 L125 200 L205 340 L245 340 L165 200 L245 60 Z"/><path fill="#00aaff" d="M255 60 L175 200 L255 340 L320 340 L240 200 L320 60 Z"/></svg></div>
         <div class="wc-label">Hive Power</div>
         <div class="wc-amount" id="wc-hp">—</div>
         <div class="wc-hp" id="wc-hp-level">Nível de slots —</div>
@@ -952,6 +957,26 @@
 const HIVE_API = 'https://api.hive.blog';
 const SHOP_ACCOUNT = 'hive-aquarium';
 const APP_ID = 'hive-aquarium/1.0';
+
+// ── HIVE OFFICIAL LOGO SVG ──
+function hiveLogo(size = 16, color = '#e31337') {
+  // Official Hive logo: hexagon with H-shaped cutout (3 chevrons / diamond + arrows)
+  return `<span class="hive-logo"><svg width="${size}" height="${size}" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+    <path fill="${color}" d="
+      M200 20
+      L340 100 L340 260 L200 340 L60 260 L60 100 Z
+    " opacity="0"/>
+    <path fill="${color}" d="
+      M155 60 L75 200 L155 340 L195 340 L115 200 L195 60 Z
+    "/>
+    <path fill="${color}" d="
+      M205 60 L125 200 L205 340 L245 340 L165 200 L245 60 Z
+    "/>
+    <path fill="${color}" d="
+      M255 60 L175 200 L255 340 L320 340 L240 200 L320 60 Z
+    "/>
+  </svg></span>`;
+}
 
 // ── HIVE PRICE ──
 let hiveUsdPrice = null;
@@ -1212,9 +1237,136 @@ const FISH_CATALOG = [
   }
 ];
 
+// ── DECOR CATALOG ──
+// SVG builders for each decoration item
+function buildLargePlantSVG(color, s=1) {
+  const h = 130*s, w = 30*s;
+  const d = shadeColor(color,-35), l = shadeColor(color,30);
+  let leaves = '';
+  for (let i=0;i<6;i++){
+    const y=h-10-i*(h*0.7/6), side=i%2===0?1:-1, lw=(11+i*0.5)*s, lh=(20+i)*s;
+    const cx=w/2+side*lw*0.45;
+    leaves+=`<ellipse cx="${cx}" cy="${y}" rx="${lw*0.5}" ry="${lh*0.32}" fill="${i%3===0?l:color}" opacity="0.88" transform="rotate(${side*22} ${cx} ${y})"/>`;
+  }
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="overflow:visible">
+    <path d="M${w/2} ${h} Q${w/2+2} ${h*0.55} ${w/2-2} ${h*0.25} Q${w/2+1} ${h*0.12} ${w/2} 8" stroke="${d}" stroke-width="${2.5*s}" fill="none" stroke-linecap="round"/>
+    ${leaves}
+    <ellipse cx="${w/2}" cy="6" rx="${6*s}" ry="${10*s}" fill="${l}" opacity="0.9"/>
+  </svg>`;
+}
+
+function buildSmallPlantSVG(color, s=1) {
+  const h = 70*s, w = 22*s;
+  const d = shadeColor(color,-35), l = shadeColor(color,30);
+  let leaves = '';
+  for (let i=0;i<4;i++){
+    const y=h-8-i*(h*0.65/4), side=i%2===0?1:-1, lw=(8+i*0.5)*s, lh=(14+i)*s;
+    const cx=w/2+side*lw*0.42;
+    leaves+=`<ellipse cx="${cx}" cy="${y}" rx="${lw*0.5}" ry="${lh*0.3}" fill="${i%2===0?l:color}" opacity="0.88" transform="rotate(${side*20} ${cx} ${y})"/>`;
+  }
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="overflow:visible">
+    <path d="M${w/2} ${h} Q${w/2+1.5} ${h*0.5} ${w/2-1} ${h*0.22} Q${w/2+1} ${h*0.1} ${w/2} 5" stroke="${d}" stroke-width="${2*s}" fill="none" stroke-linecap="round"/>
+    ${leaves}
+    <ellipse cx="${w/2}" cy="4" rx="${4*s}" ry="${7*s}" fill="${l}" opacity="0.9"/>
+  </svg>`;
+}
+
+function buildHeartPlantSVG(color, s=1) {
+  const h=90*s, w=40*s, d=shadeColor(color,-30);
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="overflow:visible">
+    <line x1="${w/2}" y1="${h}" x2="${w/2}" y2="${h*0.45}" stroke="${d}" stroke-width="${2.5*s}" stroke-linecap="round"/>
+    <path d="M${w/2} ${h*0.44}
+      C${w/2} ${h*0.25} ${w*0.1} ${h*0.15} ${w*0.1} ${h*0.28}
+      C${w*0.1} ${h*0.38} ${w/2} ${h*0.44} ${w/2} ${h*0.44}
+      C${w/2} ${h*0.44} ${w*0.9} ${h*0.38} ${w*0.9} ${h*0.28}
+      C${w*0.9} ${h*0.15} ${w/2} ${h*0.25} ${w/2} ${h*0.44}Z"
+      fill="${color}" stroke="${d}" stroke-width="${1.5*s}"/>
+    <path d="M${w/2} ${h*0.44}
+      C${w/2} ${h*0.25} ${w*0.1} ${h*0.15} ${w*0.1} ${h*0.28}
+      C${w*0.1} ${h*0.38} ${w/2} ${h*0.44} ${w/2} ${h*0.44}
+      C${w/2} ${h*0.44} ${w*0.9} ${h*0.38} ${w*0.9} ${h*0.28}
+      C${w*0.9} ${h*0.15} ${w/2} ${h*0.25} ${w/2} ${h*0.44}Z"
+      fill="${color}" opacity="0.4" transform="scale(0.65) translate(${w*0.175} ${h*0.14})"/>
+    <line x1="${w/2}" y1="${h*0.88}" x2="${w*0.25}" y2="${h*0.72}" stroke="${d}" stroke-width="${1.8*s}" stroke-linecap="round"/>
+    <line x1="${w/2}" y1="${h*0.78}" x2="${w*0.75}" y2="${h*0.62}" stroke="${d}" stroke-width="${1.8*s}" stroke-linecap="round"/>
+  </svg>`;
+}
+
+const PLANT_COLORS = {
+  red:    { name:'Vermelha',   hex:'#cc2222' },
+  cyan:   { name:'Ciano',      hex:'#22cccc' },
+  blue:   { name:'Azul Escuro',hex:'#1a44cc' },
+  purple: { name:'Roxa',       hex:'#8822dd' },
+  pink:   { name:'Rosa',       hex:'#ee44aa' },
+  green:  { name:'Verde',      hex:'#22aa44' },
+};
+const HEART_COLORS = {
+  red:    { name:'Vermelha',   hex:'#cc2222' },
+  purple: { name:'Roxa',       hex:'#aa22ee' },
+  orange: { name:'Laranja',    hex:'#ee7722' },
+  blue:   { name:'Azul',       hex:'#2255ee' },
+};
+
+const DECOR_CATALOG = [
+  // ── LARGE PLANTS — common ──
+  ...Object.entries(PLANT_COLORS).map(([k,v]) => ({
+    id: `plant_large_${k}`, name: `Planta Grande ${v.name}`, category: 'plants_art',
+    rarity: 'common', price: 1,
+    desc: `Planta artificial grande na cor ${v.name.toLowerCase()}.`,
+    memo: `buy:plant_large_${k}`,
+    color: v.hex,
+    svg: (s=1) => buildLargePlantSVG(v.hex, s),
+  })),
+  // ── SMALL PLANTS — common ──
+  ...Object.entries(PLANT_COLORS).map(([k,v]) => ({
+    id: `plant_small_${k}`, name: `Planta Pequena ${v.name}`, category: 'plants_art',
+    rarity: 'common', price: 1,
+    desc: `Planta artificial pequena na cor ${v.name.toLowerCase()}.`,
+    memo: `buy:plant_small_${k}`,
+    color: v.hex,
+    svg: (s=1) => buildSmallPlantSVG(v.hex, s),
+  })),
+  // ── HEART PLANTS — rare ──
+  ...Object.entries(HEART_COLORS).map(([k,v]) => ({
+    id: `plant_heart_${k}`, name: `Planta Coração ${v.name}`, category: 'plants_art',
+    rarity: 'rare', price: 3,
+    desc: `Planta em formato de coração na cor ${v.name.toLowerCase()}.`,
+    memo: `buy:plant_heart_${k}`,
+    color: v.hex,
+    svg: (s=1) => buildHeartPlantSVG(v.hex, s),
+  })),
+];
+
+// ── DECOR SLOT SYSTEM ──
+function getDecorSlotsForHP(hp) {
+  // Max: 6 common + 4 rare + 4 epic + 2 legendary = 16 total
+  const tiers = [
+    { hp:      0, common:2, rare:0, epic:0, legendary:0 }, // 2
+    { hp:    500, common:2, rare:1, epic:0, legendary:0 }, // 3
+    { hp:   2000, common:3, rare:1, epic:0, legendary:0 }, // 4
+    { hp:   4000, common:3, rare:2, epic:0, legendary:0 }, // 5
+    { hp:   6000, common:4, rare:2, epic:1, legendary:0 }, // 7
+    { hp:   8000, common:4, rare:2, epic:2, legendary:0 }, // 8
+    { hp:  10000, common:4, rare:3, epic:2, legendary:0 }, // 9
+    { hp:  13000, common:5, rare:3, epic:2, legendary:1 }, // 11 ← 1ª lend!
+    { hp:  18000, common:5, rare:3, epic:3, legendary:1 }, // 12
+    { hp:  25000, common:5, rare:4, epic:3, legendary:1 }, // 13
+    { hp:  35000, common:6, rare:4, epic:3, legendary:1 }, // 14
+    { hp:  50000, common:6, rare:4, epic:4, legendary:1 }, // 15
+    { hp:  75000, common:6, rare:4, epic:4, legendary:2 }, // 16 ← máx!
+  ];
+  let current = tiers[0], nextTier = null;
+  for (let i = 0; i < tiers.length; i++) {
+    if (hp >= tiers[i].hp) { current = tiers[i]; nextTier = tiers[i+1]||null; }
+  }
+  return { slots: current, nextTier };
+}
+
 // ── STATE ──
 let currentUser = null;
-let myFish = []; // [{id, name, boughtAt}]
+let myFish = [];
+let myDecor = []; // [{id, name, boughtAt}]
+let equippedDecor = []; // array of decorId|null, length = total decor slots
 let fishElements = [];
 
 // ── INIT ──
@@ -1259,13 +1411,9 @@ function buildAquariumDecor() {
   const aq = document.getElementById('aquarium');
   const W = aq.clientWidth;
   const H = aq.clientHeight;
-
-  // ── Responsive breakpoints ──
-  const isMobile  = W < 500;
-  const isTablet  = W >= 500 && W < 900;
-  // Scale factor: everything proportional to screen width vs a 1400px reference
+  const isMobile = W < 500;
+  const isTablet = W >= 500 && W < 900;
   const sc = Math.min(1, W / 1400);
-  // Floor height in px — proportional to screen height
   const floorH = Math.round(H * 0.10);
 
   // ── PEBBLES / GRAVEL ──
@@ -1277,104 +1425,28 @@ function buildAquariumDecor() {
   ];
   const pebbleCount      = isMobile ? 80  : isTablet ? 150 : 250;
   const pebbleLargeCount = isMobile ? 20  : isTablet ? 35  : 60;
-
   for (let i = 0; i < pebbleCount; i++) {
     const p = document.createElement('div');
     const sz = (3 + Math.random() * 9) * Math.max(0.5, sc);
-    const left = Math.random() * 100;
-    const bottom = 1 + Math.random() * floorH * 0.35;
-    const col = pebbleColors[Math.floor(Math.random() * pebbleColors.length)];
-    p.style.cssText = `position:absolute;bottom:${bottom}px;left:${left}%;width:${sz}px;height:${sz*0.62}px;background:${col};border-radius:50%;opacity:${0.5+Math.random()*0.6};box-shadow:inset -1px -1px 2px rgba(0,0,0,0.3);`;
+    p.style.cssText = `position:absolute;bottom:${1+Math.random()*floorH*0.35}px;left:${Math.random()*100}%;width:${sz}px;height:${sz*0.62}px;background:${pebbleColors[Math.floor(Math.random()*pebbleColors.length)]};border-radius:50%;opacity:${0.5+Math.random()*0.6};box-shadow:inset -1px -1px 2px rgba(0,0,0,0.3);`;
     aq.appendChild(p);
   }
   for (let i = 0; i < pebbleLargeCount; i++) {
     const p = document.createElement('div');
     const sz = (8 + Math.random() * 16) * Math.max(0.5, sc);
-    const left = Math.random() * 100;
-    const bottom = floorH * 0.2 + Math.random() * floorH * 0.22;
-    const col = pebbleColors[Math.floor(Math.random() * pebbleColors.length)];
-    p.style.cssText = `position:absolute;bottom:${bottom}px;left:${left}%;width:${sz}px;height:${sz*0.6}px;background:radial-gradient(ellipse at 35% 30%,${col},${shadeColor(col,-30)});border-radius:50%;opacity:${0.7+Math.random()*0.3};`;
+    const col = pebbleColors[Math.floor(Math.random()*pebbleColors.length)];
+    p.style.cssText = `position:absolute;bottom:${floorH*0.2+Math.random()*floorH*0.22}px;left:${Math.random()*100}%;width:${sz}px;height:${sz*0.6}px;background:radial-gradient(ellipse at 35% 30%,${col},${shadeColor(col,-30)});border-radius:50%;opacity:${0.7+Math.random()*0.3};`;
     aq.appendChild(p);
-  }
-
-  // ── SUNKEN BOAT ──
-  // Only show on non-tiny screens; scale it proportionally
-  if (!isMobile) {
-    const boatScale = isTablet ? 0.65 : 1;
-    const boat = document.createElement('div');
-    boat.style.cssText = `position:absolute;bottom:${floorH * 0.82}px;right:${isMobile ? 1 : 3}%;z-index:5;transform:scale(${boatScale});transform-origin:bottom right;`;
-    boat.innerHTML = buildBoatSVG();
-    aq.appendChild(boat);
-  }
-
-  // ── LOGS / DRIFTWOOD ──
-  if (!isMobile) {
-    const logW = Math.round(130 * sc);
-    const logs = [
-      { x: 18, w: logW,            h: Math.round(17*sc), rot: -7,  col: '#3d2810' },
-      { x: 52, w: Math.round(logW*0.75), h: Math.round(13*sc), rot:  4,  col: '#4a3218' },
-    ];
-    logs.forEach(l => {
-      if (l.h < 4) return;
-      const div = document.createElement('div');
-      div.style.cssText = `position:absolute;bottom:${floorH*0.98+Math.random()*8}px;left:${l.x}%;width:${l.w}px;height:${l.h}px;background:linear-gradient(180deg,${shadeColor(l.col,20)} 0%,${l.col} 40%,#1a1008 100%);border-radius:${l.h/2}px;transform:rotate(${l.rot}deg);opacity:0.88;z-index:3;`;
-      aq.appendChild(div);
-    });
-  }
-
-  // ── AQUATIC PLANTS ──
-  // Full plant list for desktop; fewer for tablet/mobile, with proportional heights
-  const allPlants = [
-    { x: 2,  color: '#cc2222', h: 140 },
-    { x: 7,  color: '#dd3322', h: 105 },
-    { x: 13, color: '#1a88ee', h: 150 },
-    { x: 19, color: '#22aa44', h: 125 },
-    { x: 26, color: '#2244ee', h: 155 },
-    { x: 33, color: '#22cc44', h: 115 },
-    { x: 39, color: '#aa22dd', h: 140 },
-    { x: 45, color: '#22cc88', h: 105 },
-    { x: 51, color: '#ee44aa', h: 145 },
-    { x: 57, color: '#22aa44', h: 120 },
-    { x: 63, color: '#ee44aa', h: 118 },
-    { x: 69, color: '#1a88ee', h: 138 },
-    { x: 75, color: '#aa22dd', h: 108 },
-    { x: 80, color: '#cc2222', h: 130 },
-  ];
-
-  // On mobile/tablet: pick every Nth plant to avoid crowding
-  const step   = isMobile ? 3 : isTablet ? 2 : 1;
-  const hScale = isMobile ? 0.55 : isTablet ? 0.72 : 1;
-  // Max plant height = 40% of aquarium height
-  const maxH   = H * 0.40;
-
-  allPlants.filter((_, i) => i % step === 0).forEach((pl) => {
-    const plantH = Math.min(maxH, pl.h * hScale);
-    const div = document.createElement('div');
-    div.style.cssText = `position:absolute;bottom:${floorH*0.95}px;left:${pl.x}%;transform-origin:bottom center;animation:plantSway ${2.5+Math.random()*2}s ease-in-out infinite;animation-delay:${Math.random()*3}s;z-index:4;`;
-    div.innerHTML = buildPlantSVG(pl.color, plantH);
-    aq.appendChild(div);
-  });
-
-  // ── CORALS — only show on tablet+ ──
-  if (!isMobile) {
-    const corals = [
-      { x: 44, color: '#ff5566', h: 72 },
-      { x: 62, color: '#ff3344', h: 58 },
-      { x: 48, color: '#ff7744', h: 52 },
-    ];
-    corals.forEach(c => {
-      const coralH = Math.min(H * 0.12, c.h * hScale);
-      const div = document.createElement('div');
-      div.style.cssText = `position:absolute;bottom:${floorH*0.95}px;left:${c.x}%;filter:drop-shadow(0 0 6px ${c.color}88);animation:plantSway ${3+Math.random()*2}s ease-in-out infinite;animation-delay:${Math.random()*2}s;z-index:4;`;
-      div.innerHTML = buildCoralSVG(c.color, coralH);
-      aq.appendChild(div);
-    });
   }
 
   // ── SAND BASE ──
   const sandBase = document.createElement('div');
   sandBase.style.cssText = `position:absolute;bottom:0;left:0;right:0;height:${floorH*1.1}px;background:linear-gradient(180deg,transparent 0%,rgba(40,30,15,0.5) 25%,rgba(20,15,8,0.95) 100%);pointer-events:none;z-index:2;`;
   aq.appendChild(sandBase);
+
+  // ── DECOR SLOTS (injected after login via renderDecorSlots) ──
+  // Slot positions are fixed along the bottom — 14 positions spread evenly
+  window._floorH = floorH;
 }
 
 function buildBoatSVG() {
@@ -2204,24 +2276,23 @@ function spawnParticleAtOffset(f, aq, offX, offY, opts) {
 function renderMyFish() {
   clearFish();
   const empty = document.getElementById('empty-state');
-
-  // If there's a saved layout, use it; otherwise show all owned fish freely
   const savedLayout = localStorage.getItem(`layout_${currentUser}`);
   let toSpawn = [];
   if (savedLayout) {
     try {
       const layout = JSON.parse(savedLayout);
-      equippedFish = layout.fish || [];
+      equippedFish  = layout.fish  || [];
+      equippedDecor = layout.decor || [];
       toSpawn = equippedFish.filter(id => id !== null);
     } catch(e) { toSpawn = myFish.map(f => f.id); }
   } else {
-    // No layout saved yet — auto-fill slots with owned fish
     toSpawn = myFish.map(f => f.id);
-    equippedFish = [...toSpawn]; // pre-fill equippedFish for edit mode
+    equippedFish = [...toSpawn];
+    equippedDecor = [];
   }
-
   if (toSpawn.length === 0) { empty.style.display = 'block'; }
   else { empty.style.display = 'none'; toSpawn.forEach(id => spawnFish(id)); }
+  renderEquippedDecorInAquarium();
   updateHUD();
   updateShopOwned();
 }
@@ -2378,7 +2449,7 @@ async function loadBalance(username) {
     const data = await res.json();
     if (data.result && data.result[0]) {
       const acc = data.result[0];
-      document.getElementById('hive-balance').textContent = '⚡ ' + acc.balance;
+      document.getElementById('hive-balance').innerHTML = hiveLogo(14, '#e31337') + ' ' + acc.balance;
       document.getElementById('hive-balance').style.display = 'block';
       window._accountData = {
         hiveAmt: parseFloat(acc.balance),
@@ -2452,9 +2523,12 @@ let shopMainTab = 'fish', shopSubTab = 'classics', shopRarityFilter = 'all';
 
 const SHOP_SUBTABS = {
   fish:    [{ id:'classics',label:'🐠 Clássicos'},{ id:'exotic',label:'🦈 Exóticos'},{ id:'special',label:'✨ Especiais'}],
-  decor:   [{ id:'plants_live',label:'🌿 Plantas Vivas'},{ id:'plants_art',label:'🌱 Plantas Artificiais'},
-            { id:'rocks',label:'🪨 Rochas'},{ id:'logs',label:'🪵 Troncos'},{ id:'ornaments',label:'🏰 Ornamentos'},
-            { id:'substrate',label:'🪸 Substrato'},{ id:'lighting',label:'💡 Iluminação'}],
+  decor:   [{ id:'plants_art',label:'🌿 Plantas Artificiais'},
+            { id:'rocks',     label:'🪨 Rochas'},
+            { id:'logs',      label:'🪵 Troncos'},
+            { id:'ornaments', label:'🏰 Ornamentos'},
+            { id:'substrate', label:'🫧 Substrato'},
+            { id:'lighting',  label:'💡 Iluminação'}],
   aquarium: [],
 };
 
@@ -2488,22 +2562,50 @@ function renderShopFilterRow() {
 function renderShopGrid() {
   const grid = document.getElementById('shop-grid');
   grid.innerHTML = '';
+  const ro = { common:0, rare:1, epic:2, legendary:3 };
+
   if (shopMainTab === 'aquarium') {
-    grid.innerHTML = `<div class="shop-coming-soon"><div class="cs-icon">🪣</div><h3>Em Breve</h3><p>Novos aquários temáticos chegando em breve!</p></div>`;
+    grid.innerHTML = `<div class="shop-coming-soon"><div class="cs-icon">🐡</div><h3>Em Breve</h3><p>Novos aquários temáticos chegando em breve!</p></div>`;
     return;
   }
+
   if (shopMainTab === 'decor') {
-    grid.innerHTML = `<div class="shop-coming-soon"><div class="cs-icon">🌿</div><h3>Em Breve</h3><p>Plantas, rochas, troncos e ornamentos em breve!</p></div>`;
+    // Filter by subtab category
+    let items = DECOR_CATALOG.filter(d => d.category === shopSubTab);
+    if (shopRarityFilter !== 'all') items = items.filter(d => d.rarity === shopRarityFilter);
+    items.sort((a,b) => ro[a.rarity] - ro[b.rarity]);
+
+    if (items.length === 0) {
+      const labels = { plants_art:'Plantas Artificiais', rocks:'Rochas', logs:'Troncos', ornaments:'Ornamentos', substrate:'Substrato', lighting:'Iluminação' };
+      grid.innerHTML = `<div class="shop-coming-soon"><div class="cs-icon">🌿</div><h3>Em Breve</h3><p>${labels[shopSubTab]||'Itens'} chegarão em breve!</p></div>`;
+      return;
+    }
+    items.forEach(decor => {
+      const card = document.createElement('div');
+      card.className = 'fish-card'; card.id = 'card-' + decor.id;
+      const owned = myDecor.some(d => d.id === decor.id);
+      const rl = { common:'Comum', rare:'✦ Raro', epic:'✦✦ Épico', legendary:'★ Lendário' }[decor.rarity];
+      card.innerHTML = `${owned?'<div class="owned-badge">✓ Seu</div>':''}
+        <div class="fish-card-preview">${decor.svg(0.75)}</div>
+        <h3>${decor.name}</h3>
+        <div class="rarity ${decor.rarity}">${rl}</div>
+        <p class="desc">${decor.desc}</p>
+        <div class="price">${hiveLogo(14,'#e31337')} ${decor.price} HIVE <span class="price-sub" data-hive="${decor.price}">${hiveUsdPrice?'≈ $'+(decor.price*hiveUsdPrice).toFixed(2)+' USD':'...'}</span></div>
+        <button class="btn-buy" id="btn-${decor.id}" onclick="buyDecor('${decor.id}')" ${owned?'disabled':''}>
+          ${owned?'✓ Já seu':'🛒 Comprar'}</button>`;
+      grid.appendChild(card);
+    });
     return;
   }
+
+  // ── FISH tab ──
   const subMap = {
     classics: ['clownfish','tang','angelfish','pufferfish','jellyfish','seahorse','dragon'],
-    exotic:   [], // future fish
-    special:  [], // future fish
+    exotic:   [],
+    special:  [],
   };
-  let items = FISH_CATALOG.filter(f => (subMap[shopSubTab] || FISH_CATALOG.map(x=>x.id)).includes(f.id));
+  let items = FISH_CATALOG.filter(f => (subMap[shopSubTab]||FISH_CATALOG.map(x=>x.id)).includes(f.id));
   if (shopRarityFilter !== 'all') items = items.filter(f => f.rarity === shopRarityFilter);
-  const ro = { common:0, rare:1, epic:2, legendary:3 };
   items.sort((a,b) => ro[a.rarity] - ro[b.rarity]);
   if (items.length === 0) { grid.innerHTML = `<div class="shop-coming-soon"><div class="cs-icon">🔍</div><h3>Nenhum item</h3><p>Tente outro filtro.</p></div>`; return; }
   items.forEach(fish => {
@@ -2516,7 +2618,7 @@ function renderShopGrid() {
       <h3>${fish.name}</h3>
       <div class="rarity ${fish.rarity}">${rl}</div>
       <p class="desc">${fish.desc}</p>
-      <div class="price">🐝 ${fish.price} HIVE <span class="price-sub" data-hive="${fish.price}">${hiveUsdPrice?'≈ $'+(fish.price*hiveUsdPrice).toFixed(2)+' USD':'...'}</span></div>
+      <div class="price">${hiveLogo(14,'#e31337')} ${fish.price} HIVE <span class="price-sub" data-hive="${fish.price}">${hiveUsdPrice?'≈ $'+(fish.price*hiveUsdPrice).toFixed(2)+' USD':'...'}</span></div>
       <button class="btn-buy" id="btn-${fish.id}" onclick="buyFish('${fish.id}')" ${owned?'disabled':''}>
         ${owned?'✓ Já no aquário':'🛒 Comprar'}</button>`;
     grid.appendChild(card);
@@ -2569,6 +2671,36 @@ function openShop() {
   document.getElementById('shop-overlay').classList.add('open');
 }
 function closeShop() { document.getElementById('shop-overlay').classList.remove('open'); setActiveTab(null); }
+
+// ── BUY DECOR ──
+async function buyDecor(decorId) {
+  if (!currentUser) return;
+  const catalog = DECOR_CATALOG.find(d => d.id === decorId);
+  if (!catalog) return;
+  const btn = document.getElementById('btn-' + decorId);
+  btn.disabled = true; btn.textContent = '⏳ Conectando...';
+  let keychain;
+  try { keychain = await waitForKeychain(5000); }
+  catch(e) { showToast('❌ Keychain não encontrado','Verifique se a extensão está ativa.',true); btn.disabled=false; btn.textContent='🛒 Comprar'; return; }
+  const usdStr = hiveUsdPrice ? ` (≈ $${(catalog.price*hiveUsdPrice).toFixed(2)})` : '';
+  showToast('🔑 Keychain',`Confirme ${catalog.price} HIVE${usdStr} para ${catalog.name}`,false);
+  btn.textContent = '⏳ Aguardando...';
+  const tt = setTimeout(()=>{ showToast('⏱️ Timeout','Keychain não respondeu.',true); btn.disabled=false; btn.textContent='🛒 Comprar'; },60000);
+  keychain.requestTransfer(currentUser, SHOP_ACCOUNT, catalog.price.toFixed(3), catalog.memo, 'HIVE', async (tx) => {
+    clearTimeout(tt);
+    if (!tx.success) { showToast('❌ Cancelado',tx.message||'Cancelado.',true); btn.disabled=false; btn.textContent='🛒 Comprar'; return; }
+    showToast('✅ Pago!',`Registrando ${catalog.name}...`,false);
+    const j = JSON.stringify({ action:'add_decor', decor_id:decorId, decor_name:catalog.name, tx:tx.result?.id||'unknown', app:APP_ID });
+    keychain.requestCustomJson(currentUser, APP_ID, 'Posting', j, `Hive Aquarium: ${catalog.name}`, (jr) => {
+      myDecor.push({ id:decorId, name:catalog.name, boughtAt:new Date().toISOString() });
+      localStorage.setItem(`decor_${currentUser}`, JSON.stringify(myDecor));
+      closeShop();
+      showToast(jr.success?`🎉 ${catalog.name} adquirida!`:`⚠️ ${catalog.name} adquirida!`,
+        jr.success?'Vá ao Modo Edição para equipar!':'Item seu! (on-chain com aviso)',false);
+      loadBalance(currentUser);
+    });
+  });
+}
 
 // ── WALLET ──
 function openWallet() {
@@ -2674,18 +2806,51 @@ function renderEditSlots() {
     fishArea.appendChild(el);
   });
 
-  // ── DECOR SLOTS (near the bottom — future use) ──
+  // ── DECOR SLOTS (bottom of aquarium — 14 fixed positions) ──
   const decorArea = document.getElementById('edit-slots-area');
   decorArea.innerHTML = '';
-  // For now show a small "coming soon" row of locked decor slots
-  const decorCount = Math.min(4, slots.common); // placeholder
-  for (let i = 0; i < decorCount; i++) {
+  const hp2 = getHPFromAccount();
+  const { slots: dSlots } = getDecorSlotsForHP(hp2);
+  const totalDecorSlots = dSlots.common + dSlots.rare + dSlots.epic + dSlots.legendary;
+
+  // Ensure equippedDecor array matches
+  while (equippedDecor.length < totalDecorSlots) equippedDecor.push(null);
+  equippedDecor = equippedDecor.slice(0, totalDecorSlots);
+
+  const decorDefs = [
+    ...Array(dSlots.legendary).fill({ rarity:'legendary', color:'#f0c040' }),
+    ...Array(dSlots.epic).fill({     rarity:'epic',       color:'#cc80ff' }),
+    ...Array(dSlots.rare).fill({     rarity:'rare',       color:'#60ccff' }),
+    ...Array(dSlots.common).fill({   rarity:'common',     color:'#80b0e0' }),
+  ];
+
+  decorDefs.forEach((def, i) => {
+    const equippedId = equippedDecor[i] || null;
+    const catalog = equippedId ? DECOR_CATALOG.find(d => d.id === equippedId) : null;
     const el = document.createElement('div');
-    el.className = 'eq-slot';
-    el.style.cssText = 'width:56px;min-height:56px;opacity:0.45;cursor:not-allowed;';
-    el.innerHTML = `<div class="slot-empty-label" style="font-size:0.55rem">🌿<br>Decor<br>Em breve</div>`;
+    el.className = 'eq-slot' + (catalog ? ' occupied' : '');
+    el.style.cssText = `width:56px;min-height:72px;border-color:${def.color+(catalog?'cc':'44')}`;
+
+    if (catalog) {
+      el.innerHTML = `
+        <button class="slot-remove-btn" onclick="unequipDecor(${i},event)">✕</button>
+        <div class="slot-rarity-dot" style="background:${def.color}"></div>
+        <div class="slot-fish-preview">${catalog.svg(0.45)}</div>
+        <div class="slot-name" style="font-size:0.5rem">${catalog.name}</div>`;
+    } else {
+      el.innerHTML = `
+        <div class="slot-rarity-dot" style="background:${def.color}"></div>
+        <div class="slot-empty-label">+<br><span style="color:${def.color};font-size:0.54rem">${def.rarity==='legendary'?'★ Lend.':def.rarity==='epic'?'✦✦ Épc':def.rarity==='rare'?'✦ Raro':'Comum'}</span></div>`;
+    }
+    el.onclick = (e) => {
+      if (e.target.classList.contains('slot-remove-btn')) return;
+      openDecorPicker(i, def.rarity);
+    };
     decorArea.appendChild(el);
-  }
+  });
+
+  // Render equipped decor in the aquarium itself
+  renderEquippedDecorInAquarium();
 }
 
 function unequipFish(slotIndex, event) {
@@ -2807,16 +2972,124 @@ function applyEquippedToAquarium() {
   updateHUD();
 }
 
+function unequipDecor(slotIndex, event) {
+  event.stopPropagation();
+  equippedDecor[slotIndex] = null;
+  saveEquippedLayout();
+  renderEditSlots();
+  renderEquippedDecorInAquarium();
+}
+
+function openDecorPicker(slotIndex, slotRarity) {
+  pickerSlotIndex = slotIndex;
+  pickerSlotType = 'decor';
+  document.getElementById('picker-title').textContent = 'Escolher Decoração';
+  document.getElementById('picker-subtitle').textContent =
+    `Slot ${slotRarity==='legendary'?'★ Lendário':slotRarity==='epic'?'✦✦ Épico':slotRarity==='rare'?'✦ Raro':'Comum'} — apenas itens comprados`;
+  buildDecorPickerGrid(slotRarity);
+  document.getElementById('item-picker').classList.add('open');
+}
+
+function buildDecorPickerGrid(slotRarity) {
+  const grid = document.getElementById('picker-grid');
+  grid.innerHTML = '';
+  const ownedIds = myDecor.map(d => d.id);
+
+  if (ownedIds.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px 20px;color:var(--text-dim)">
+      <div style="font-size:2rem;margin-bottom:10px">🌿</div>
+      <div>Você ainda não tem decorações!</div>
+      <div style="font-size:0.75rem;margin-top:6px">Visite a Loja → Decoração para comprar.</div>
+      <button class="edit-btn" style="margin-top:14px;pointer-events:all" onclick="closePicker();closeEdit();setShopMain('decor',document.querySelector('.shop-tab:nth-child(2)'));openShop()">Ir à Loja →</button>
+    </div>`;
+    return;
+  }
+
+  const matching = DECOR_CATALOG.filter(d => ownedIds.includes(d.id) && d.rarity === slotRarity);
+  const others   = DECOR_CATALOG.filter(d => ownedIds.includes(d.id) && d.rarity !== slotRarity);
+  const rc = { common:'#80b0e0', rare:'#60ccff', epic:'#cc80ff', legendary:'#f0c040' };
+
+  if (matching.length === 0) {
+    const rl = { common:'Comuns', rare:'Raras', epic:'Épicas', legendary:'Lendárias' };
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:30px 20px">
+      <div style="font-size:2rem;margin-bottom:8px">🔍</div>
+      <div style="color:${rc[slotRarity]}">Nenhuma decoração ${rl[slotRarity]}</div>
+      <div style="font-size:0.75rem;color:var(--text-dim);margin-top:6px">Compre na Loja → Decoração!</div>
+      <button class="edit-btn" style="margin-top:14px;pointer-events:all" onclick="closePicker();closeEdit();openShop()">Ir à Loja →</button>
+    </div>`;
+  } else {
+    matching.forEach(d => {
+      const isEquipped = equippedDecor.includes(d.id);
+      const card = document.createElement('div');
+      card.className = 'picker-card' + (isEquipped ? ' equipped' : '');
+      card.innerHTML = `<div class="pc-preview">${d.svg(0.6)}</div><div class="pc-name">${d.name}</div>
+        <div class="pc-rarity" style="color:${rc[d.rarity]}">${{common:'Comum',rare:'✦ Raro',epic:'✦✦ Épico',legendary:'★ Lendário'}[d.rarity]}</div>`;
+      if (isEquipped) card.onclick = () => showToast('ℹ️ Já equipado',`${d.name} já está em uso. Remova primeiro.`,false);
+      else card.onclick = () => {
+        equippedDecor[pickerSlotIndex] = d.id;
+        saveEquippedLayout();
+        closePicker();
+        renderEditSlots();
+        renderEquippedDecorInAquarium();
+        showToast('✅ Equipado!',`${d.name} adicionada ao aquário.`,false);
+      };
+      grid.appendChild(card);
+    });
+  }
+  if (others.length > 0) {
+    const div = document.createElement('div');
+    div.style.cssText = 'grid-column:1/-1;font-size:0.68rem;color:var(--text-dim);text-align:center;padding:8px 0 4px;opacity:0.5';
+    div.textContent = 'Outros itens seus (raridade incompatível):';
+    grid.appendChild(div);
+    others.forEach(d => {
+      const card = document.createElement('div');
+      card.className = 'picker-card'; card.style.opacity='0.3'; card.style.cursor='not-allowed';
+      card.innerHTML = `<div class="pc-preview">${d.svg(0.6)}</div><div class="pc-name">${d.name}</div>`;
+      grid.appendChild(card);
+    });
+  }
+}
+
+// Render equipped decorations as live SVG elements in the aquarium
+function renderEquippedDecorInAquarium() {
+  const aq = document.getElementById('aquarium');
+  // Remove any previously rendered decor items
+  aq.querySelectorAll('.live-decor').forEach(el => el.remove());
+
+  const equipped = equippedDecor.filter(id => id !== null);
+  if (equipped.length === 0) return;
+
+  const W = aq.clientWidth;
+  const H = aq.clientHeight;
+  const floorH = window._floorH || Math.round(H * 0.10);
+  const bottomY = floorH * 0.95;
+
+  // Distribute decor evenly across the width
+  const total = equipped.length;
+  equipped.forEach((decorId, i) => {
+    const catalog = DECOR_CATALOG.find(d => d.id === decorId);
+    if (!catalog) return;
+    const xPct = 3 + (i / Math.max(total - 1, 1)) * 94; // 3% to 97%
+    const div = document.createElement('div');
+    div.className = 'live-decor';
+    div.dataset.decorId = decorId;
+    const glowColor = catalog.color + '66';
+    div.style.cssText = `position:absolute;bottom:${bottomY}px;left:${xPct}%;transform-origin:bottom center;animation:plantSway ${2.5+Math.random()*2}s ease-in-out infinite;animation-delay:${Math.random()*3}s;z-index:4;filter:drop-shadow(0 0 5px ${glowColor});`;
+    div.innerHTML = catalog.svg(1);
+    aq.appendChild(div);
+  });
+}
+
 function saveEquippedLayout() {
   if (!currentUser) return;
-  const layout = { fish: equippedFish };
-  localStorage.setItem(`layout_${currentUser}`, JSON.stringify(layout));
+  localStorage.setItem(`layout_${currentUser}`, JSON.stringify({ fish: equippedFish, decor: equippedDecor }));
 }
 
 function saveEdit() {
   saveEquippedLayout();
   applyEquippedToAquarium();
-  showToast('💾 Aquário salvo!', 'Seus peixes foram equipados no aquário.', false);
+  renderEquippedDecorInAquarium();
+  showToast('💾 Aquário salvo!', 'Peixes e decorações equipados com sucesso!', false);
   closeEdit();
 }
 
