@@ -21,6 +21,7 @@
     --text-dim: #6a9bc0;
     --panel: rgba(2, 18, 38, 0.92);
     --border: rgba(0, 212, 255, 0.2);
+    --header-h: 56px;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -105,7 +106,9 @@
 
   /* ── AQUARIUM ── */
   #aquarium {
-    position: relative; width: 100%; height: 100vh;
+    position: relative; width: 100%;
+    height: calc(100vh - var(--header-h));
+    margin-top: var(--header-h);
     background: linear-gradient(180deg,
       #020d1a 0%, #051830 10%, #082040 25%, #0a2a55 50%,
       #0d3060 70%, #0a2545 85%, #051020 100%);
@@ -378,98 +381,7 @@
     border-radius: 8px; padding: 8px 12px; display: none;
   }
 
-  /* ── SHOP ── */
-  #shop-btn {
-    position: fixed; right: 24px; bottom: 32px; z-index: 90;
-    width: 60px; height: 60px; border-radius: 50%;
-    background: linear-gradient(135deg, #005599, #0088cc);
-    color: #fff; font-size: 1.6rem; cursor: pointer; border: none;
-    box-shadow: 0 0 30px rgba(0,136,204,0.5);
-    transition: all 0.3s; display: none; align-items: center; justify-content: center;
-  }
-  #shop-btn:hover { transform: scale(1.1) rotate(10deg); box-shadow: 0 0 50px rgba(0,136,204,0.7); }
-  #shop-btn-label {
-    position: fixed; right: 92px; bottom: 46px; z-index: 90;
-    background: rgba(2,18,38,0.9); border: 1px solid var(--border);
-    border-radius: 20px; padding: 6px 14px; font-size: 0.8rem;
-    color: var(--glow); display: none; pointer-events: none;
-  }
-
-  #shop-overlay {
-    position: fixed; inset: 0; z-index: 150;
-    background: rgba(0,5,15,0.85); backdrop-filter: blur(6px);
-    display: none; align-items: center; justify-content: center;
-  }
-  #shop-overlay.open { display: flex; }
-  .shop-panel {
-    background: var(--panel); border: 1px solid var(--border);
-    border-radius: 20px; width: 92%; max-width: 820px;
-    max-height: 88vh; overflow-y: auto;
-    box-shadow: 0 0 100px rgba(0,80,160,0.4);
-    animation: cardIn 0.4s ease both;
-  }
-  .shop-header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 24px 32px; border-bottom: 1px solid var(--border);
-    position: sticky; top: 0; background: var(--panel); z-index: 2;
-  }
-  .shop-header h2 {
-    font-family: 'Cinzel Decorative', serif;
-    font-size: 1.3rem; color: var(--glow);
-  }
-  .shop-header p { font-size: 0.8rem; color: var(--text-dim); margin-top: 2px; }
-  .close-btn {
-    width: 36px; height: 36px; border-radius: 50%;
-    background: rgba(255,80,80,0.1); border: 1px solid rgba(255,80,80,0.2);
-    color: #ff8080; font-size: 1.2rem; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; transition: all 0.2s;
-  }
-  .close-btn:hover { background: rgba(255,80,80,0.25); }
-  .shop-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 20px; padding: 28px 32px;
-  }
-  .fish-card {
-    background: rgba(0,20,50,0.6); border: 1px solid rgba(0,100,200,0.2);
-    border-radius: 14px; padding: 20px; text-align: center;
-    transition: all 0.3s; cursor: pointer; position: relative;
-  }
-  .fish-card:hover {
-    border-color: var(--glow); transform: translateY(-4px);
-    box-shadow: 0 8px 30px rgba(0,212,255,0.2);
-  }
-  .fish-card-preview { height: 80px; display: flex; align-items: center; justify-content: center; }
-  .fish-card h3 { font-size: 1rem; color: var(--text); margin: 10px 0 4px; font-weight: 500; }
-  .fish-card .rarity {
-    font-size: 0.7rem; letter-spacing: 1px; text-transform: uppercase;
-    margin-bottom: 8px; font-weight: 500;
-  }
-  .rarity.common { color: #80b0e0; }
-  .rarity.rare { color: #60ccff; }
-  .rarity.epic { color: #cc80ff; }
-  .rarity.legendary { color: var(--gold); }
-  .fish-card .desc { font-size: 0.78rem; color: var(--text-dim); line-height: 1.4; margin-bottom: 14px; }
-  .fish-card .price {
-    font-size: 1.1rem; color: var(--gold); font-weight: 500;
-    display: flex; align-items: center; justify-content: center; gap: 6px;
-  }
-  .fish-card .price-sub { font-size: 0.7rem; color: var(--text-dim); }
-  .owned-badge {
-    position: absolute; top: 10px; right: 10px;
-    background: rgba(0,200,100,0.2); border: 1px solid rgba(0,200,100,0.4);
-    border-radius: 10px; padding: 2px 8px; font-size: 0.65rem; color: #00cc88;
-  }
-  .btn-buy {
-    width: 100%; margin-top: 12px; padding: 10px;
-    background: linear-gradient(135deg, #004488, #0077cc);
-    color: #fff; border-radius: 8px; font-size: 0.85rem;
-    border: none; cursor: pointer; transition: all 0.3s;
-    font-family: 'Raleway', sans-serif;
-  }
-  .btn-buy:hover { background: linear-gradient(135deg, #005599, #0099ff); transform: translateY(-1px); }
-  .btn-buy:disabled { background: rgba(0,60,120,0.3); color: var(--text-dim); cursor: not-allowed; transform: none; }
-
-  /* ── TOAST ── */
+  /* ── MODAL OVERLAY (shared by all panels) ── */
   #toast {
     position: fixed; bottom: 110px; right: 24px; z-index: 500;
     background: rgba(0,30,60,0.97); border: 1px solid var(--glow);
@@ -623,7 +535,7 @@
   }
   #edit-overlay.open { display: flex; }
   #edit-toolbar {
-    position: absolute; top: 62px; left: 0; right: 0;
+    position: absolute; top: var(--header-h); left: 0; right: 0;
     background: rgba(1,8,16,0.96); border-bottom: 1px solid var(--border);
     padding: 10px 20px; display: flex; align-items: center; gap: 12px;
     z-index: 10; flex-wrap: wrap;
@@ -1201,9 +1113,12 @@ window.addEventListener('load', () => {
   buildAquariumDecor();
   spawnBubbles();
   spawnParticles();
-  buildShopGrid();
   fetchHivePrice();
   setInterval(fetchHivePrice, 60000);
+  // Apply saved settings
+  const s = JSON.parse(localStorage.getItem('hive_aquarium_settings') || '{}');
+  if (s.particles === false) document.querySelectorAll('.bubble,.particle').forEach(el => el.style.display='none');
+  // Restore saved login
   const saved = localStorage.getItem('hive_aquarium_user');
   if (saved) {
     const { username } = JSON.parse(saved);
