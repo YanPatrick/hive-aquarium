@@ -2233,77 +2233,97 @@ function updateHUD() {
 
 // ── BLOCKCHAIN: LOAD MY FISH ──
 async function loadMyFishFromChain(username) {
-  // Build a map of valid fish IDs from the catalog for quick lookup
   const validFishIds = new Set(FISH_CATALOG.map(f => f.id));
+  const owned = {};
 
-  // Fetch up to 1000 ops (two pages of 500)
-  async function fetchHistory(from = -1, limit = 500) {
-    const res = await fetch(HIVE_API, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ jsonrpc:'2.0', method:'condenser_api.get_account_history', params:[username, from, limit], id:1 })
-    });
-    const data = await res.json();
-    return data.result || [];
+  // ── STRATEGY 1: Query the SHOP ACCOUNT history and filter transfers FROM this user ──
+  // This is far more reliable — the shop account only receives "buy:" transfers,
+  // so we don't need thousands of ops. We scan up to 2000 ops from hive-aquarium's history.
+  try {
+    const batchSize = 500;
+    let lastSeq = -1;
+    let pagesScanned = 0;
+    const maxPages = 4; // up to 2000 ops from shop account
+
+    while (pagesScanned < maxPages) {
+      const res = await fetch(HIVE_API, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0', method: 'condenser_api.get_account_history',
+          params: [SHOP_ACCOUNT, lastSeq, batchSize], id: 1
+        })
+      });
+      const data = await res.json();
+      const ops = data.result || [];
+      if (ops.length === 0) break;
+
+      ops.forEach(([seq, op]) => {
+        if (op.op[0] === 'transfer' &&
+            op.op[1].from === username &&
+            op.op[1].to === SHOP_ACCOUNT) {
+          const memo = (op.op[1].memo || '').trim().toLowerCase();
+          if (memo.startsWith('buy:')) {
+            const fishId = memo.slice(4).trim();
+            if (validFishIds.has(fishId) && !owned[fishId]) {
+              owned[fishId] = { id: fishId, ts: op.timestamp, source: 'transfer' };
+            }
+          }
+        }
+      });
+
+      // If we didn't fill the batch, we've hit the beginning — stop
+      if (ops.length < batchSize) break;
+      lastSeq = ops[0][0] - 1; // go further back
+      if (lastSeq <= 0) break;
+      pagesScanned++;
+    }
+  } catch(e) {
+    console.warn('[HiveAquarium] Shop account query failed, falling back to user history:', e);
   }
 
+  // ── STRATEGY 2: Also scan user's own history for custom_json records ──
+  // This catches: new purchases (both transfer + custom_json recorded),
+  // and any manual "add_fish" records.
   try {
-    const owned = {};
-
-    // Page 1: latest 500 ops
-    const page1 = await fetchHistory(-1, 500);
-
-    // If we got a full page, fetch page 2 as well (catches older purchases)
-    let allOps = [...page1];
-    if (page1.length === 500) {
-      const oldestSeq = page1[0][0]; // first item = oldest in this batch
-      if (oldestSeq > 0) {
-        const page2 = await fetchHistory(Math.max(0, oldestSeq - 1), 500);
-        allOps = [...page2, ...allOps];
-      }
-    }
-
-    allOps.forEach(([, op]) => {
-      const opType = op.op[0];
-      const opData = op.op[1];
-
-      // ── SOURCE 1: transfer with memo "buy:fishid" ──
-      // Covers purchases made via Keychain transfer (the original flow)
-      if (opType === 'transfer' &&
-          opData.to === SHOP_ACCOUNT &&
-          opData.from === username &&
-          typeof opData.memo === 'string') {
-        const memo = opData.memo.trim().toLowerCase();
+    const res = await fetch(HIVE_API, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0', method: 'condenser_api.get_account_history',
+        params: [username, -1, 1000], id: 1
+      })
+    });
+    const data = await res.json();
+    (data.result || []).forEach(([, op]) => {
+      // Transfer with buy: memo sent to shop (catches user-side record)
+      if (op.op[0] === 'transfer' &&
+          op.op[1].from === username &&
+          op.op[1].to === SHOP_ACCOUNT) {
+        const memo = (op.op[1].memo || '').trim().toLowerCase();
         if (memo.startsWith('buy:')) {
           const fishId = memo.slice(4).trim();
-          if (validFishIds.has(fishId)) {
-            // Only add if not already present (first occurrence = oldest = original purchase)
-            if (!owned[fishId]) owned[fishId] = { id: fishId, ts: op.timestamp, source: 'transfer' };
+          if (validFishIds.has(fishId) && !owned[fishId]) {
+            owned[fishId] = { id: fishId, ts: op.timestamp, source: 'transfer_userside' };
           }
         }
       }
-
-      // ── SOURCE 2: custom_json with app ID (new purchases + manual registration) ──
-      if (opType === 'custom_json' && opData.id === APP_ID) {
+      // custom_json add_fish / remove_fish
+      if (op.op[0] === 'custom_json' && op.op[1].id === APP_ID) {
         try {
-          const json = JSON.parse(opData.json);
+          const json = JSON.parse(op.op[1].json);
           if (json.action === 'add_fish' && json.fish_id && validFishIds.has(json.fish_id)) {
             if (!owned[json.fish_id]) owned[json.fish_id] = { id: json.fish_id, ts: op.timestamp, source: 'custom_json' };
           }
-          if (json.action === 'remove_fish' && json.fish_id) {
-            delete owned[json.fish_id];
-          }
+          if (json.action === 'remove_fish' && json.fish_id) delete owned[json.fish_id];
         } catch(e) {}
       }
     });
-
-    const result = Object.values(owned);
-    console.log(`[HiveAquarium] Found ${result.length} fish for @${username}:`, result.map(f => f.id));
-    return result;
-
   } catch(e) {
-    console.warn('[HiveAquarium] Could not load fish from chain:', e);
-    return [];
+    console.warn('[HiveAquarium] User history query failed:', e);
   }
+
+  const result = Object.values(owned);
+  console.log(`[HiveAquarium] @${username} owns ${result.length} fish:`, result.map(f => `${f.id}(${f.source})`).join(', '));
+  return result;
 }
 
 // ── LOGIN ──
@@ -2695,7 +2715,6 @@ function buildPickerGrid(slotRarity) {
   const grid = document.getElementById('picker-grid');
   grid.innerHTML = '';
 
-  // Show all owned fish; highlight if already equipped; dim if rarity doesn't match slot
   const ownedIds = myFish.map(f => f.id);
 
   if (ownedIds.length === 0) {
@@ -2708,38 +2727,71 @@ function buildPickerGrid(slotRarity) {
     return;
   }
 
-  FISH_CATALOG.forEach(fish => {
-    const owned = ownedIds.includes(fish.id);
-    if (!owned) return; // only show owned fish
+  // Filter catalog: owned fish of the correct rarity for this slot
+  const matchingFish = FISH_CATALOG.filter(fish =>
+    ownedIds.includes(fish.id) && fish.rarity === slotRarity
+  );
 
-    const isEquipped = equippedFish.includes(fish.id);
-    const card = document.createElement('div');
-    card.className = 'picker-card' + (isEquipped ? ' equipped' : '');
+  // Also show owned fish of OTHER rarities as dimmed (can't equip but shows what you have)
+  const otherOwnedFish = FISH_CATALOG.filter(fish =>
+    ownedIds.includes(fish.id) && fish.rarity !== slotRarity
+  );
 
-    const rl = { common:'Comum', rare:'✦ Raro', epic:'✦✦ Épico', legendary:'★ Lendário' }[fish.rarity];
-    const rc = { common:'#80b0e0', rare:'#60ccff', epic:'#cc80ff', legendary:'#f0c040' }[fish.rarity];
-    card.innerHTML = `
-      <div class="pc-preview">${fish.svg(0.65)}</div>
-      <div class="pc-name">${fish.name}</div>
-      <div class="pc-rarity" style="color:${rc}">${rl}</div>`;
-
-    if (isEquipped) {
-      card.onclick = () => {
-        // Already equipped — show which slot and offer to unequip
-        showToast('ℹ️ Já equipado', `${fish.name} já está em outro slot. Remova-o primeiro.`, false);
-      };
-    } else {
-      card.onclick = () => {
-        equippedFish[pickerSlotIndex] = fish.id;
-        saveEquippedLayout();
-        closePicker();
-        renderEditSlots();
-        applyEquippedToAquarium();
-        showToast('✅ Equipado!', `${fish.name} adicionado ao aquário.`, false);
-      };
+  if (matchingFish.length === 0) {
+    const rarityLabel = { common:'Comuns', rare:'Raros', epic:'Épicos', legendary:'Lendários' }[slotRarity];
+    const rc = { common:'#80b0e0', rare:'#60ccff', epic:'#cc80ff', legendary:'#f0c040' }[slotRarity];
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:30px 20px">
+      <div style="font-size:2rem;margin-bottom:10px">🔍</div>
+      <div style="color:${rc};font-weight:500">Nenhum peixe ${rarityLabel} encontrado</div>
+      <div style="font-size:0.75rem;color:var(--text-dim);margin-top:6px">Este slot aceita apenas peixes ${rarityLabel}.<br>Visite a loja para comprar um!</div>
+      <button class="edit-btn" style="margin-top:14px;pointer-events:all" onclick="closePicker();closeEdit();openShop()">Ir à Loja →</button>
+    </div>`;
+    // Still show other owned fish as dimmed reference
+    if (otherOwnedFish.length > 0) {
+      const divider = document.createElement('div');
+      divider.style.cssText = 'grid-column:1/-1;font-size:0.7rem;color:var(--text-dim);text-align:center;padding-top:8px;opacity:0.5';
+      divider.textContent = 'Seus outros peixes (raridade incompatível com este slot):';
+      grid.appendChild(divider);
+      otherOwnedFish.forEach(fish => appendPickerCard(grid, fish, true, false));
     }
-    grid.appendChild(card);
+    return;
+  }
+
+  // Show matching fish first
+  matchingFish.forEach(fish => {
+    const isEquipped = equippedFish.includes(fish.id);
+    appendPickerCard(grid, fish, false, isEquipped);
   });
+}
+
+function appendPickerCard(grid, fish, dimmed, isEquipped) {
+  const card = document.createElement('div');
+  card.className = 'picker-card' + (isEquipped ? ' equipped' : '');
+  if (dimmed) card.style.opacity = '0.35';
+
+  const rl = { common:'Comum', rare:'✦ Raro', epic:'✦✦ Épico', legendary:'★ Lendário' }[fish.rarity];
+  const rc = { common:'#80b0e0', rare:'#60ccff', epic:'#cc80ff', legendary:'#f0c040' }[fish.rarity];
+  card.innerHTML = `
+    <div class="pc-preview">${fish.svg(0.65)}</div>
+    <div class="pc-name">${fish.name}</div>
+    <div class="pc-rarity" style="color:${rc}">${rl}</div>`;
+
+  if (dimmed) {
+    card.title = 'Raridade incompatível com este slot';
+    card.style.cursor = 'not-allowed';
+  } else if (isEquipped) {
+    card.onclick = () => showToast('ℹ️ Já equipado', `${fish.name} já está em outro slot. Remova-o primeiro.`, false);
+  } else {
+    card.onclick = () => {
+      equippedFish[pickerSlotIndex] = fish.id;
+      saveEquippedLayout();
+      closePicker();
+      renderEditSlots();
+      applyEquippedToAquarium();
+      showToast('✅ Equipado!', `${fish.name} adicionado ao aquário.`, false);
+    };
+  }
+  grid.appendChild(card);
 }
 
 // Apply equipped fish to live aquarium (re-render fish)
