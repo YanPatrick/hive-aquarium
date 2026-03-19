@@ -1107,14 +1107,24 @@ async function buyFish(fishId) {
   showToast('🔑 Keychain', `Confirme o pagamento de ${catalog.price} HIVE${usdStr} para comprar ${catalog.name}`, false);
   btn.textContent = '⏳ Aguardando...';
 
+  // Timeout: se o Keychain não responder em 60s, desbloqueia o botão
+  const transferTimeout = setTimeout(() => {
+    console.warn('[HiveAquarium] requestTransfer timeout — sem resposta do Keychain');
+    showToast('⏱️ Timeout', 'O Keychain não respondeu. Tente novamente.', true);
+    btn.disabled = false;
+    btn.textContent = '🛒 Comprar';
+  }, 60000);
+
+  // IMPORTANT: requestTransfer signature = (username, to, amount, currency, memo, callback)
+  // The 'enforce' boolean parameter causes silent failures in some Keychain versions — removed.
   keychain.requestTransfer(
     currentUser,
     SHOP_ACCOUNT,
     catalog.price.toFixed(3),
     'HIVE',
     catalog.memo,
-    false,
     async (txResponse) => {
+      clearTimeout(transferTimeout);
       console.log('[Hive Aquarium] Transfer response:', txResponse);
       if (!txResponse.success) {
         showToast('❌ Cancelado', txResponse.message || 'Transação cancelada.', true);
