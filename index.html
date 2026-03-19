@@ -1299,9 +1299,10 @@ function updateFish(dt) {
 
     // Translate to position, flip horizontally
     f.el.style.transform = `translate(${f.x}px, ${f.y + bobY}px) scaleX(${scaleXVal})`;
-    f.el.querySelector('svg').style.transform = `rotate(${finalTilt}deg)`;
-    // Tooltip: always centered horizontally, always unflipped regardless of fish direction
-    // scaleXVal is -1 or 1; multiplying by scaleXVal cancels the parent flip
+    // Only apply tilt rotation when no special animation is running (special anims control svg.style.transform themselves)
+    if (!f.specialActive) {
+      f.el.querySelector('svg').style.transform = `rotate(${finalTilt}deg)`;
+    }
     f.tooltip.style.transform = `translateX(-50%) scaleX(${scaleXVal})`;
   });
 }
@@ -1359,24 +1360,23 @@ function triggerSpecial(f, aq) {
       const svg = f.el.querySelector('svg');
       const INFLATE_TICKS = 90, HOLD_TICKS = 120, DEFLATE_TICKS = 90;
       let tick = 0;
-      f.vx *= 0.3; // slow down while inflating
+      const origVx = f.vx;
+      f.vx *= 0.3;
 
       const inflate = setInterval(() => {
         tick++;
-        let scale;
+        let scaleRatio;
         if (tick <= INFLATE_TICKS) {
           const t = tick / INFLATE_TICKS;
-          scale = f.baseScale * (1 + t * 0.7); // up to 1.7x size
-          // Spines extend — handled by CSS scale
+          scaleRatio = 1 + t * 0.75;
           svg.style.filter = `drop-shadow(0 0 ${t*18}px rgba(255,220,0,0.8)) drop-shadow(0 0 ${t*35}px rgba(255,180,0,0.4))`;
         } else if (tick <= INFLATE_TICKS + HOLD_TICKS) {
-          scale = f.baseScale * 1.7;
-          // Emit spiky warning particles at peak
+          scaleRatio = 1.75;
           if (tick === INFLATE_TICKS + 10) {
             for (let i = 0; i < 8; i++) {
               const angle = (i / 8) * Math.PI * 2;
               spawnParticleAt(f, aq, {
-                vx: Math.cos(angle) * 1.2, vy: Math.sin(angle) * 1.2,
+                vx: Math.cos(angle) * 1.5, vy: Math.sin(angle) * 1.5,
                 color: 'rgba(255,220,50,0.9)', size: 5, life: 40, grow: 0.5,
                 buoyancy: 0, baseOpacity: 0.85
               });
@@ -1384,15 +1384,18 @@ function triggerSpecial(f, aq) {
           }
         } else {
           const t = (tick - INFLATE_TICKS - HOLD_TICKS) / DEFLATE_TICKS;
-          scale = f.baseScale * (1.7 - t * 0.7);
+          scaleRatio = 1.75 - t * 0.75;
           svg.style.filter = `drop-shadow(0 0 ${(1-t)*18}px rgba(255,220,0,0.8))`;
           if (t >= 1) {
             svg.style.filter = '';
+            svg.style.transform = '';
+            f.vx = origVx; // restore speed
             f.specialActive = false;
             clearInterval(inflate);
+            return;
           }
         }
-        svg.style.transform = `scale(${scale / f.baseScale})`;
+        svg.style.transform = `scale(${scaleRatio})`;
         svg.style.transformOrigin = 'center center';
       }, 16);
       break;
@@ -1405,27 +1408,19 @@ function triggerSpecial(f, aq) {
       const origVx = f.vx, origVy = f.vy;
       f.vx *= 0.1; f.vy *= 0.1;
 
-      // Dragon SVG: viewBox 0 0 90 55, mouth tip at SVG x≈7, y≈27 (left side of head)
-      // Rendered at baseScale (~1.8x): SVG width=90*1.8=162px, height=55*1.8=99px
-      // SVG center: (81, 49.5). Mouth offset from center: x = (7-45)*scale, y = (27-27.5)*scale ≈ (–68.4, –0.9)
-      // When facing=1 (moving right): scaleX=-1, so mouth is on the RIGHT visually: offsetX = +68.4
-      // When facing=-1 (moving left): scaleX=1,  mouth is on the LEFT visually:  offsetX = -68.4
-      function getMouthOffset() {
+      // Dragon SVG: viewBox 0 0 90 55. Mouth at left edge of head: SVG x≈7, y≈27.
+      // f.x/f.y = top-left corner of the element in world space.
+      // When facing=1 (right): element has scaleX(-1), so SVG x=7 maps to world x = f.x + (90-7)*sc
+      // When facing=-1 (left): no flip, SVG x=7 maps to world x = f.x + 7*sc
+      // y is the same either way: f.y + 27*sc
+      function getMouthWorld() {
         const sc = f.baseScale;
-        const svgW = 90 * sc, svgH = 55 * sc;
-        const mouthSvgX = 7 * sc;  // mouth x in rendered px
-        const mouthSvgY = 27 * sc; // mouth y in rendered px
-        const centerX = svgW / 2;
-        const centerY = svgH / 2;
-        // Raw offset from element origin (top-left)
-        const rawOffX = mouthSvgX - centerX; // negative = left of center
-        const rawOffY = mouthSvgY - centerY;
-        // scaleX applied to element: facing=1 → scaleX=-1 (mirrors x)
-        const scaleXVal = f.facing === 1 ? -1 : 1;
-        return {
-          x: rawOffX * scaleXVal, // flip x offset with scaleX
-          y: rawOffY
-        };
+        const worldX = f.facing === 1
+          ? f.x + (90 - 7) * sc   // flipped: mouth ends up on right side
+          : f.x + 7 * sc;          // not flipped: mouth on left
+        const worldY = f.y + 27 * sc;
+        // Convert to offset from f.x/f.y for spawnParticleAtOffset
+        return { x: worldX - f.x, y: worldY - f.y };
       }
 
       const fire = setInterval(() => {
@@ -1438,13 +1433,15 @@ function triggerSpecial(f, aq) {
         } else if (tick <= 160) {
           const t2 = tick - 60;
           if (t2 % 8 === 0) {
-            const mo = getMouthOffset();
-            // Direction: mouth points in the direction the fish faces
-            const fireDir = f.facing === 1 ? 1 : -1; // facing=1→right, scaleX=-1→mouth on right→fire goes right
+            const mo = getMouthWorld();
+            // Fire direction = direction fish is facing visually
+            // facing=1 → scaleX=-1 → mouth on RIGHT → fire goes RIGHT (+x)
+            // facing=-1 → scaleX=1  → mouth on LEFT  → fire goes LEFT  (-x)
+            const fireDir = f.facing === 1 ? 1 : -1;
             for (let i = 0; i < 3; i++) {
-              const spread = (Math.random() - 0.5) * 1.0;
+              const spread = (Math.random() - 0.5) * 0.8;
               spawnParticleAtOffset(f, aq, mo.x, mo.y, {
-                vx: fireDir * (1.8 + Math.random() * 2.2) + spread * 0.3,
+                vx: fireDir * (2.0 + Math.random() * 2.5),
                 vy: spread,
                 color: i === 0 ? 'rgba(255,60,0,0.95)' : i === 1 ? 'rgba(255,160,0,0.9)' : 'rgba(255,230,60,0.85)',
                 size: 7 + Math.random() * 11,
@@ -1473,10 +1470,10 @@ function triggerSpecial(f, aq) {
       // Get tentacle paths (indices 3–7 in the SVG children after defs, dome, highlight)
       // We'll animate via SVG transform on a group — rebuild SVG with animated group
       let tick = 0;
-      const RETRACT = 40;  // frames to retract
-      const HOLD    = 15;  // frames held small
-      const EXPAND  = 30;  // frames to expand
-      const GLOW    = 35;  // frames of afterglow
+      const RETRACT = 80;   // ~1.3s to retract
+      const HOLD    = 40;   // ~0.7s held compressed
+      const EXPAND  = 60;   // ~1s to snap back
+      const GLOW    = 70;   // ~1.2s afterglow
 
       // We'll animate by scaling the whole SVG and modifying tentacle opacity
       const tentacles = Array.from(svg.querySelectorAll('path')).filter(
@@ -1559,32 +1556,40 @@ function triggerSpecial(f, aq) {
       break;
     }
 
-    // ── SEAHORSE: spin in a full circle, release sparkles ──
+    // ── SEAHORSE: spin 2 full circles, release sparkles in orbit ──
     case 'seahorse': {
       const svg = f.el.querySelector('svg');
       let tick = 0;
-      const origVx = f.vx;
-      f.vx *= 0.15; f.vy = 0;
+      const origVx = f.vx, origVy = f.vy;
+      f.vx = 0; f.vy = 0; // full stop for spin
+      const SPIN_TICKS = 180; // ~3s for 2 full rotations
       const spin = setInterval(() => {
         tick++;
-        if (tick <= 120) {
-          const angle = (tick / 120) * 360;
+        if (tick <= SPIN_TICKS) {
+          const angle = (tick / SPIN_TICKS) * 720; // 2 full rotations
           svg.style.transform = `rotate(${angle}deg)`;
           svg.style.transformOrigin = 'center center';
-          if (tick % 10 === 0) {
-            for (let i = 0; i < 2; i++) {
+          // Sparkles orbit outward
+          if (tick % 8 === 0) {
+            const orbitAngle = (angle * Math.PI / 180);
+            for (let i = 0; i < 3; i++) {
+              const a = orbitAngle + (i / 3) * Math.PI * 2;
               spawnParticleAt(f, aq, {
-                vx: (Math.random() - 0.5) * 1.5,
-                vy: -0.4 - Math.random() * 0.6,
-                color: `rgba(255,${180+Math.floor(Math.random()*75)},${50+Math.floor(Math.random()*100)},0.9)`,
-                size: 3 + Math.random() * 5, life: 50, grow: 0.2,
-                buoyancy: 0.05, baseOpacity: 0.9,
+                vx: Math.cos(a) * (1.0 + Math.random() * 0.8),
+                vy: Math.sin(a) * (0.5 + Math.random() * 0.4),
+                color: `rgba(255,${160+Math.floor(Math.random()*95)},${30+Math.floor(Math.random()*80)},0.92)`,
+                size: 4 + Math.random() * 5, life: 55, grow: 0.15,
+                buoyancy: 0.03, baseOpacity: 0.92,
               });
             }
           }
+          // Add glow that intensifies mid-spin
+          const glowT = Math.sin((tick / SPIN_TICKS) * Math.PI);
+          svg.style.filter = `drop-shadow(0 0 ${4+glowT*20}px rgba(255,180,50,0.8)) brightness(${1+glowT*0.3})`;
         } else {
           svg.style.transform = '';
-          f.vx = origVx;
+          svg.style.filter = '';
+          f.vx = origVx; f.vy = origVy;
           f.specialActive = false;
           clearInterval(spin);
         }
@@ -1652,27 +1657,42 @@ function triggerSpecial(f, aq) {
       break;
     }
 
-    // ── TANG: speed burst with blue streak trail ──
+    // ── TANG: flash white, then sonic speed burst with blue/yellow streak trail ──
     case 'tang': {
-      const origSpd = Math.sqrt(f.vx*f.vx + f.vy*f.vy);
-      f.vx *= 4; f.vy *= 0.5;
+      const svg = f.el.querySelector('svg');
       let tick = 0;
-      const streak = setInterval(() => {
-        tick++;
-        // Emit streak particles
-        if (tick <= 60) {
-          spawnParticleAt(f, aq, {
-            vx: -f.vx * 0.1 + (Math.random()-0.5)*0.3,
-            vy: (Math.random()-0.5)*0.5,
-            color: 'rgba(80,180,255,0.7)', size: 6+Math.random()*8,
-            life: 25, grow: 0.1, buoyancy: 0, baseOpacity: 0.7,
-          });
-          f.vx *= 0.97; // decelerate
-        } else {
-          f.specialActive = false;
-          clearInterval(streak);
-        }
-      }, 16);
+      const origSpd = Math.sqrt(f.vx*f.vx + f.vy*f.vy) || 0.5;
+      // Charge flash for 20 ticks, then burst
+      const burstDir = f.facing === 1 ? 1 : -1;
+      svg.style.filter = `brightness(2.5) drop-shadow(0 0 20px rgba(100,200,255,1))`;
+
+      setTimeout(() => {
+        f.vx = burstDir * 5.5;
+        f.vy *= 0.2;
+        const streak = setInterval(() => {
+          tick++;
+          if (tick <= 80) {
+            // Emit streak trail behind fish
+            const trailDir = -burstDir;
+            spawnParticleAtOffset(f, aq, trailDir * 15, (Math.random()-0.5)*8, {
+              vx: trailDir * (0.5 + Math.random()*0.5),
+              vy: (Math.random()-0.5)*0.4,
+              color: tick % 3 === 0 ? 'rgba(255,220,0,0.8)' : 'rgba(60,180,255,0.75)',
+              size: 8 + Math.random() * 12,
+              life: 20 + Math.random() * 15,
+              grow: 0.0, buoyancy: 0, baseOpacity: 0.75,
+            });
+            f.vx *= 0.96; // decelerate
+            const glowT = 1 - (tick / 80);
+            svg.style.filter = `drop-shadow(0 0 ${glowT*18}px rgba(80,200,255,0.8)) brightness(${1+glowT*0.5})`;
+          } else {
+            svg.style.filter = '';
+            svg.style.transform = '';
+            f.specialActive = false;
+            clearInterval(streak);
+          }
+        }, 16);
+      }, 320); // 20 frames delay for the flash
       break;
     }
 
