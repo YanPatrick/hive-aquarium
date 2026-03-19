@@ -327,6 +327,32 @@
     margin-top: 20px; font-size: 0.75rem; color: var(--text-dim); line-height: 1.5;
   }
   .login-note a { color: var(--glow); text-decoration: none; }
+  .login-note a:hover { color: #fff; }
+
+  /* ── DEV CREDIT ── */
+  #dev-credit {
+    position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%);
+    z-index: 88; pointer-events: none;
+    text-align: center; white-space: nowrap;
+  }
+  #dev-credit a {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 0.62rem; letter-spacing: 1.5px;
+    color: rgba(0, 180, 220, 0.35);
+    text-decoration: none;
+    pointer-events: all;
+    transition: color 0.3s, text-shadow 0.3s;
+  }
+  #dev-credit a:hover {
+    color: rgba(0, 212, 255, 0.75);
+    text-shadow: 0 0 12px rgba(0, 212, 255, 0.4);
+  }
+  #dev-credit span {
+    font-family: 'Raleway', sans-serif;
+    font-size: 0.58rem; letter-spacing: 1px;
+    color: rgba(100, 160, 200, 0.25);
+    margin-right: 4px;
+  }
   #login-error {
     color: #ff6b6b; font-size: 0.82rem; margin-top: 10px;
     background: rgba(255,80,80,0.08); border: 1px solid rgba(255,80,80,0.2);
@@ -485,7 +511,7 @@
     <div id="login-error"></div>
     <p class="login-note">
       Não tem a extensão? <a href="https://hive-keychain.com" target="_blank">Baixar Hive Keychain →</a><br>
-      Sem conta Hive? <a href="https://signup.hive.io" target="_blank">Criar conta grátis →</a>
+      Sem conta Hive? <a href="https://peakd.com/register?ref=shiftrox" target="_blank">Criar conta grátis →</a>
     </p>
   </div>
 </div>
@@ -501,6 +527,11 @@
     <h2>Aquário Vazio</h2>
     <p>Visite a loja e compre seu primeiro peixe 🐟</p>
   </div>
+</div>
+
+<!-- DEV CREDIT -->
+<div id="dev-credit">
+  <span>desenvolvido por</span><a href="https://peakd.com/@shiftrox/posts" target="_blank">Shiftrox</a>
 </div>
 
 <!-- FISH HUD -->
