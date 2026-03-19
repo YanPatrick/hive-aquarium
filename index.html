@@ -206,9 +206,15 @@
   /* Rarity glow effects — color matches fish */
   .fish.common svg { filter: none; }
   .fish.rare svg {
-    filter: drop-shadow(0 0 5px var(--rare-glow, rgba(160,100,255,0.6)))
-            drop-shadow(0 0 12px var(--rare-glow, rgba(160,100,255,0.3)));
-    animation: rarePulse 2.5s ease-in-out infinite;
+    filter: drop-shadow(0 0 4px var(--rare-glow, rgba(100,180,255,0.5)))
+            drop-shadow(0 0 10px var(--rare-glow, rgba(100,180,255,0.25)));
+    animation: rarePulse 3s ease-in-out infinite;
+  }
+  .fish.epic svg {
+    filter: drop-shadow(0 0 7px var(--epic-glow, rgba(180,80,255,0.7)))
+            drop-shadow(0 0 18px var(--epic-glow, rgba(180,80,255,0.35)))
+            drop-shadow(0 0 35px var(--epic-glow, rgba(140,40,220,0.2)));
+    animation: epicPulse 2.2s ease-in-out infinite;
   }
   .fish.legendary svg {
     filter: drop-shadow(0 0 10px var(--leg-glow, rgba(255,180,0,0.8)))
@@ -217,8 +223,12 @@
     animation: legendPulse 1.8s ease-in-out infinite;
   }
   @keyframes rarePulse {
-    0%,100% { filter: drop-shadow(0 0 4px var(--rare-glow)) drop-shadow(0 0 10px var(--rare-glow)); }
-    50%     { filter: drop-shadow(0 0 8px var(--rare-glow)) drop-shadow(0 0 20px var(--rare-glow)); }
+    0%,100% { filter: drop-shadow(0 0 3px var(--rare-glow)) drop-shadow(0 0 8px var(--rare-glow)); }
+    50%     { filter: drop-shadow(0 0 6px var(--rare-glow)) drop-shadow(0 0 16px var(--rare-glow)); }
+  }
+  @keyframes epicPulse {
+    0%,100% { filter: drop-shadow(0 0 5px var(--epic-glow)) drop-shadow(0 0 14px var(--epic-glow)); }
+    50%     { filter: drop-shadow(0 0 10px var(--epic-glow)) drop-shadow(0 0 28px var(--epic-glow)) brightness(1.05); }
   }
   @keyframes legendPulse {
     0%,100% { filter: drop-shadow(0 0 8px var(--leg-glow)) drop-shadow(0 0 20px var(--leg-glow)); }
@@ -390,7 +400,8 @@
     margin-bottom: 8px; font-weight: 500;
   }
   .rarity.common { color: #80b0e0; }
-  .rarity.rare { color: #a070ff; }
+  .rarity.rare { color: #60ccff; }
+  .rarity.epic { color: #cc80ff; }
   .rarity.legendary { color: var(--gold); }
   .fish-card .desc { font-size: 0.78rem; color: var(--text-dim); line-height: 1.4; margin-bottom: 14px; }
   .fish-card .price {
@@ -616,16 +627,12 @@ const FISH_CATALOG = [
       <ellipse cx="32" cy="22" rx="20" ry="13" fill="#ff6a00"/>
       <ellipse cx="32" cy="22" rx="20" ry="13" fill="none" stroke="#e05000" stroke-width="1.5"/>
       <ellipse cx="14" cy="22" rx="6" ry="9" fill="#ff6a00" stroke="#e05000" stroke-width="1"/>
-      <!-- white bars -->
       <ellipse cx="22" cy="22" rx="3" ry="10" fill="white" opacity="0.85"/>
       <ellipse cx="36" cy="22" rx="3" ry="10" fill="white" opacity="0.85"/>
-      <!-- tail -->
       <path d="M52 22 L65 10 L65 34 Z" fill="#ff6a00" stroke="#e05000" stroke-width="1"/>
-      <!-- eye -->
       <circle cx="14" cy="18" r="3" fill="white"/>
       <circle cx="14" cy="18" r="1.5" fill="#111"/>
       <circle cx="13.3" cy="17.3" r="0.5" fill="white"/>
-      <!-- fins -->
       <path d="M25 12 Q30 5 38 10" stroke="#e05000" stroke-width="2" fill="none"/>
       <path d="M25 32 Q30 40 38 35" stroke="#e05000" stroke-width="2" fill="none"/>
     </svg>`
@@ -639,11 +646,8 @@ const FISH_CATALOG = [
       <ellipse cx="14" cy="25" rx="7" ry="11" fill="#1a6ee0"/>
       <path d="M52 25 L66 12 L66 38 Z" fill="#ffcc00"/>
       <path d="M10 20 Q5 12 2 25 Q5 38 10 30 Z" fill="#1a6ee0"/>
-      <!-- stripe -->
       <path d="M20 11 Q32 25 20 39" stroke="#0040a0" stroke-width="2.5" fill="none"/>
-      <!-- yellow accent -->
       <path d="M46 15 Q55 25 46 35" stroke="#ffcc00" stroke-width="3" fill="none"/>
-      <!-- eye -->
       <circle cx="14" cy="21" r="3" fill="white"/>
       <circle cx="14" cy="21" r="1.5" fill="#111"/>
       <circle cx="13.3" cy="20.3" r="0.5" fill="white"/>
@@ -655,71 +659,108 @@ const FISH_CATALOG = [
     memo: 'buy:angelfish',
     svg: (s=1) => `<svg width="${55*s}" height="${70*s}" viewBox="0 0 55 70">
       <ellipse cx="27" cy="35" rx="14" ry="20" fill="#c8a0f0"/>
-      <!-- top fin -->
       <path d="M20 15 Q27 0 34 15" fill="#a070e0" stroke="#8050c0" stroke-width="1"/>
-      <!-- bottom fin -->
       <path d="M20 55 Q27 70 34 55" fill="#a070e0" stroke="#8050c0" stroke-width="1"/>
-      <!-- stripes -->
       <path d="M22 16 Q20 35 22 54" stroke="#8050c0" stroke-width="2" fill="none" opacity="0.7"/>
       <path d="M32 16 Q34 35 32 54" stroke="#8050c0" stroke-width="2" fill="none" opacity="0.7"/>
-      <!-- tail -->
       <path d="M41 35 L55 22 L55 48 Z" fill="#a070e0"/>
-      <!-- eye -->
       <circle cx="18" cy="28" r="3.5" fill="white"/>
       <circle cx="18" cy="28" r="2" fill="#220044"/>
       <circle cx="17" cy="27" r="0.7" fill="white"/>
     </svg>`
   },
   {
-    id: 'jellyfish', name: 'Água-Viva', price: 4, rarity: 'rare',
+    id: 'pufferfish', name: 'Baiacu', price: 4, rarity: 'rare',
+    desc: 'Barrigudo e espinhoso. Infla quando se sente ameaçado!',
+    memo: 'buy:pufferfish',
+    svg: (s=1) => `<svg width="${65*s}" height="${60*s}" viewBox="0 0 65 60">
+      <defs>
+        <radialGradient id="pg" cx="45%" cy="40%" r="60%">
+          <stop offset="0%" stop-color="#ffe066"/>
+          <stop offset="60%" stop-color="#f0b800"/>
+          <stop offset="100%" stop-color="#c08000"/>
+        </radialGradient>
+      </defs>
+      <!-- body — chubby round -->
+      <ellipse cx="30" cy="30" rx="24" ry="22" fill="url(#pg)"/>
+      <!-- belly lighter -->
+      <ellipse cx="30" cy="36" rx="16" ry="12" fill="#fffbe0" opacity="0.5"/>
+      <!-- spots -->
+      <circle cx="20" cy="22" r="3"   fill="#8a6000" opacity="0.45"/>
+      <circle cx="34" cy="18" r="2.5" fill="#8a6000" opacity="0.4"/>
+      <circle cx="44" cy="26" r="2"   fill="#8a6000" opacity="0.4"/>
+      <circle cx="22" cy="36" r="2.5" fill="#8a6000" opacity="0.35"/>
+      <circle cx="38" cy="38" r="2"   fill="#8a6000" opacity="0.35"/>
+      <circle cx="28" cy="28" r="1.5" fill="#8a6000" opacity="0.3"/>
+      <!-- spines -->
+      <line x1="12" y1="22" x2="6"  y2="16" stroke="#c09000" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="14" y1="16" x2="10" y2="9"  stroke="#c09000" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="22" y1="10" x2="20" y2="3"  stroke="#c09000" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="32" y1="8"  x2="32" y2="1"  stroke="#c09000" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="42" y1="10" x2="44" y2="3"  stroke="#c09000" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="50" y1="16" x2="55" y2="10" stroke="#c09000" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="14" y1="40" x2="9"  y2="46" stroke="#c09000" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="24" y1="50" x2="22" y2="57" stroke="#c09000" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="36" y1="51" x2="36" y2="58" stroke="#c09000" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="46" y1="46" x2="50" y2="52" stroke="#c09000" stroke-width="1.5" stroke-linecap="round"/>
+      <!-- tail fin -->
+      <path d="M54 30 Q64 22 62 30 Q64 38 54 30 Z" fill="#f0b800" stroke="#c08000" stroke-width="1"/>
+      <!-- mouth — tiny round pucker -->
+      <ellipse cx="8" cy="32" rx="3" ry="2.5" fill="#d09000"/>
+      <ellipse cx="8" cy="32" rx="1.5" ry="1.2" fill="#804000"/>
+      <!-- eye — big cute -->
+      <circle cx="12" cy="24" r="5"   fill="white"/>
+      <circle cx="12" cy="24" r="3"   fill="#1a1a00"/>
+      <circle cx="11" cy="23" r="1.2" fill="white"/>
+      <!-- pectoral fin -->
+      <path d="M28 20 Q20 14 18 20 Q20 26 28 24 Z" fill="#f0c020" opacity="0.8"/>
+    </svg>`
+  },
+  {
+    id: 'jellyfish', name: 'Água-Viva', price: 5, rarity: 'epic',
     desc: 'Flutuante e hipnótica. Brilha com luz própria nas profundezas.',
     memo: 'buy:jellyfish',
     svg: (s=1) => `<svg width="${55*s}" height="${70*s}" viewBox="0 0 55 70">
       <defs>
         <radialGradient id="jg" cx="50%" cy="40%" r="60%">
-          <stop offset="0%" stop-color="#d090ff" stop-opacity="0.9"/>
-          <stop offset="100%" stop-color="#6020a0" stop-opacity="0.7"/>
+          <stop offset="0%" stop-color="#e0a0ff" stop-opacity="0.95"/>
+          <stop offset="70%" stop-color="#8020c0" stop-opacity="0.8"/>
+          <stop offset="100%" stop-color="#4a00a0" stop-opacity="0.7"/>
         </radialGradient>
       </defs>
-      <!-- dome -->
       <path d="M5 30 Q5 5 27 5 Q49 5 49 30 Z" fill="url(#jg)"/>
-      <path d="M5 30 Q5 5 27 5 Q49 5 49 30" stroke="rgba(200,140,255,0.5)" stroke-width="1.5" fill="none"/>
-      <!-- inner dome highlight -->
-      <path d="M15 28 Q15 12 27 10 Q36 12 38 28" fill="rgba(255,255,255,0.12)"/>
-      <!-- tentacles -->
-      <line x1="14" y1="30" x2="10" y2="65" stroke="#c080ff" stroke-width="1.5" opacity="0.7"/>
-      <line x1="20" y1="30" x2="16" y2="68" stroke="#c080ff" stroke-width="1.5" opacity="0.7"/>
-      <line x1="27" y1="31" x2="27" y2="70" stroke="#c080ff" stroke-width="2" opacity="0.7"/>
-      <line x1="34" y1="30" x2="38" y2="68" stroke="#c080ff" stroke-width="1.5" opacity="0.7"/>
-      <line x1="40" y1="30" x2="44" y2="65" stroke="#c080ff" stroke-width="1.5" opacity="0.7"/>
-      <!-- glow dots -->
-      <circle cx="20" cy="18" r="2" fill="rgba(255,200,255,0.6)"/>
-      <circle cx="34" cy="15" r="1.5" fill="rgba(255,200,255,0.5)"/>
+      <path d="M5 30 Q5 5 27 5 Q49 5 49 30" stroke="rgba(220,160,255,0.6)" stroke-width="1.5" fill="none"/>
+      <path d="M13 28 Q13 10 27 8 Q38 10 41 28" fill="rgba(255,255,255,0.14)"/>
+      <!-- tentacles with wave -->
+      <path d="M12 30 Q9 42 12 52 Q9 60 10 65" stroke="#d080ff" stroke-width="1.5" fill="none" opacity="0.75"/>
+      <path d="M18 30 Q15 43 18 54 Q15 62 16 68" stroke="#d080ff" stroke-width="1.5" fill="none" opacity="0.75"/>
+      <path d="M27 31 Q25 44 27 56 Q25 64 27 70" stroke="#cc70ff" stroke-width="2"   fill="none" opacity="0.8"/>
+      <path d="M36 30 Q39 43 36 54 Q39 62 38 68" stroke="#d080ff" stroke-width="1.5" fill="none" opacity="0.75"/>
+      <path d="M42 30 Q45 42 42 52 Q45 60 44 65" stroke="#d080ff" stroke-width="1.5" fill="none" opacity="0.75"/>
+      <!-- bioluminescent dots -->
+      <circle cx="18" cy="16" r="2.5" fill="rgba(255,220,255,0.8)"/>
+      <circle cx="27" cy="12" r="2"   fill="rgba(255,220,255,0.7)"/>
+      <circle cx="36" cy="16" r="2"   fill="rgba(255,220,255,0.7)"/>
+      <circle cx="22" cy="22" r="1.5" fill="rgba(255,200,255,0.6)"/>
+      <circle cx="32" cy="20" r="1.5" fill="rgba(255,200,255,0.6)"/>
     </svg>`
   },
   {
-    id: 'seahorse', name: 'Cavalo-Marinho', price: 5, rarity: 'rare',
+    id: 'seahorse', name: 'Cavalo-Marinho', price: 6, rarity: 'epic',
     desc: 'Misterioso e delicado. Flutua verticalmente com graça.',
     memo: 'buy:seahorse',
     svg: (s=1) => `<svg width="${40*s}" height="${75*s}" viewBox="0 0 40 75">
-      <!-- body -->
       <path d="M20 12 Q30 12 30 22 Q30 32 22 35 Q28 40 28 50 Q28 62 20 65 Q12 62 12 50 Q12 40 18 35 Q10 32 10 22 Q10 12 20 12 Z" fill="#f0a030"/>
-      <!-- head -->
       <circle cx="20" cy="10" r="8" fill="#f0a030"/>
-      <!-- snout -->
       <path d="M20 8 Q35 10 36 14" stroke="#d08020" stroke-width="3" fill="none" stroke-linecap="round"/>
-      <!-- fin -->
       <path d="M30 28 Q40 25 38 32 Q36 38 28 33" fill="#e09025" opacity="0.7"/>
-      <!-- stripes -->
       <path d="M12 22 Q20 22 28 22" stroke="#d08020" stroke-width="1" opacity="0.5"/>
       <path d="M12 28 Q20 28 28 28" stroke="#d08020" stroke-width="1" opacity="0.5"/>
       <path d="M14 42 Q20 42 26 42" stroke="#d08020" stroke-width="1" opacity="0.5"/>
       <path d="M14 50 Q20 50 26 50" stroke="#d08020" stroke-width="1" opacity="0.5"/>
-      <!-- eye -->
       <circle cx="24" cy="9" r="2.5" fill="white"/>
       <circle cx="24" cy="9" r="1.3" fill="#111"/>
       <circle cx="23.4" cy="8.4" r="0.4" fill="white"/>
-      <!-- crown spikes -->
       <path d="M15 4 L16 0 M20 3 L20 0 M24 4 L25 0" stroke="#d08020" stroke-width="1.5" stroke-linecap="round"/>
     </svg>`
   },
@@ -735,28 +776,20 @@ const FISH_CATALOG = [
           <stop offset="100%" stop-color="#ffcc00"/>
         </linearGradient>
       </defs>
-      <!-- body -->
       <ellipse cx="40" cy="27" rx="28" ry="16" fill="url(#dg)"/>
       <ellipse cx="16" cy="27" rx="9" ry="13" fill="#ff5500"/>
-      <!-- scales pattern -->
       <path d="M20 15 Q28 18 20 22" fill="rgba(255,100,0,0.3)" stroke="rgba(200,60,0,0.5)" stroke-width="0.5"/>
       <path d="M30 13 Q38 16 30 20" fill="rgba(255,100,0,0.3)" stroke="rgba(200,60,0,0.5)" stroke-width="0.5"/>
       <path d="M40 12 Q48 15 40 19" fill="rgba(255,100,0,0.3)" stroke="rgba(200,60,0,0.5)" stroke-width="0.5"/>
       <path d="M50 14 Q58 17 50 21" fill="rgba(255,100,0,0.3)" stroke="rgba(200,60,0,0.5)" stroke-width="0.5"/>
-      <!-- top fin (spiky) -->
       <path d="M20 11 L23 3 L27 11 L31 2 L35 11 L39 4 L43 11 L47 3 L51 11 L55 6 L59 14" fill="#cc3300" stroke="#aa2200" stroke-width="1"/>
-      <!-- bottom fin -->
       <path d="M20 43 Q35 52 55 43" fill="#cc3300" opacity="0.7"/>
-      <!-- tail (forked) -->
       <path d="M68 27 L85 12 L80 27 L85 42 Z" fill="#ff6600"/>
       <path d="M68 27 L82 15 M68 27 L82 39" stroke="#cc4400" stroke-width="2"/>
-      <!-- horns -->
       <path d="M12 14 L9 6 M14 12 L14 5" stroke="#ffaa00" stroke-width="2" stroke-linecap="round"/>
-      <!-- eye -->
       <circle cx="12" cy="22" r="4" fill="#ffee00"/>
       <circle cx="12" cy="22" r="2" fill="#660000"/>
       <circle cx="11" cy="21" r="0.7" fill="white"/>
-      <!-- glow aura -->
       <ellipse cx="40" cy="27" rx="30" ry="18" fill="none" stroke="rgba(255,180,0,0.2)" stroke-width="4"/>
     </svg>`
   }
@@ -1014,25 +1047,10 @@ const AQ_BOUNDS = () => {
 
 // Behavior definitions per rarity
 const BEHAVIORS = {
-  common: [
-    { name: 'cruise',    desc: 'Nada em linha reta suavemente' },
-    { name: 'wander',    desc: 'Deriva devagar em curvas' },
-    { name: 'zigzag',    desc: 'Ziguezague leve' },
-  ],
-  rare: [
-    { name: 'cruise',    desc: 'Nada em linha reta' },
-    { name: 'wander',    desc: 'Deriva em curvas amplas' },
-    { name: 'zigzag',    desc: 'Ziguezague rápido' },
-    { name: 'patrol',    desc: 'Patrulha horizontal' },
-  ],
-  legendary: [
-    { name: 'cruise'   },
-    { name: 'wander'   },
-    { name: 'zigzag'   },
-    { name: 'patrol'   },
-    { name: 'spiral'   },
-    { name: 'dash'     },
-  ],
+  common: ['cruise','wander','zigzag'],
+  rare:   ['cruise','wander','zigzag','patrol'],
+  epic:   ['cruise','wander','zigzag','patrol','spiral'],
+  legendary: ['cruise','wander','zigzag','patrol','spiral','dash'],
 };
 
 function pickBehavior(rarity) {
@@ -1050,10 +1068,10 @@ function spawnFish(fishId, opts = {}) {
   fishEl.className = 'fish ' + catalog.rarity;
   fishEl.dataset.id = fishId;
 
-  // Legendary dragon gets a much bigger scale to feel majestic
-  const baseScale = catalog.id === 'dragon' ? 1.6 + Math.random() * 0.4
+  const baseScale = catalog.id === 'dragon'        ? 1.6 + Math.random() * 0.4
                   : catalog.rarity === 'legendary' ? 1.1 + Math.random() * 0.3
-                  : 0.7 + Math.random() * 0.45;
+                  : catalog.rarity === 'epic'      ? 0.9 + Math.random() * 0.3
+                  : 0.7 + Math.random() * 0.4;
 
   // Tooltip must NOT be inside the flipped container — put it as sibling with counter-flip
   const svgHtml = catalog.svg(baseScale);
@@ -1072,8 +1090,7 @@ function spawnFish(fishId, opts = {}) {
   const startX = 0.05 * w + Math.random() * 0.85 * w;
   const startY = 0.08 * h + Math.random() * 0.62 * h;
 
-  // Speed by rarity — dragon is slower but powerful
-  const speeds = { common: 0.5, rare: 0.75, legendary: 0.9 };
+  const speeds = { common: 0.5, rare: 0.65, epic: 0.8, legendary: 0.9 };
   const spd = (speeds[catalog.rarity] || 0.5) * (0.8 + Math.random() * 0.5);
 
   // Start moving RIGHT (positive vx) so fish faces correct direction immediately
@@ -1105,14 +1122,17 @@ function spawnFish(fishId, opts = {}) {
   const glowColors = {
     clownfish:  'rgba(255,120,0,0.7)',
     tang:       'rgba(30,140,255,0.7)',
-    angelfish:  'rgba(180,100,255,0.7)',
-    jellyfish:  'rgba(200,80,255,0.75)',
-    seahorse:   'rgba(240,160,40,0.7)',
-    dragon:     'rgba(255,160,0,0.85)',
+    angelfish:  'rgba(180,100,255,0.65)',
+    pufferfish: 'rgba(255,210,0,0.7)',
+    jellyfish:  'rgba(200,60,255,0.8)',
+    seahorse:   'rgba(240,160,40,0.75)',
+    dragon:     'rgba(255,160,0,0.9)',
   };
   const glowColor = glowColors[fishId] || 'rgba(0,212,255,0.6)';
   if (catalog.rarity === 'rare') {
     fishEl.style.setProperty('--rare-glow', glowColor);
+  } else if (catalog.rarity === 'epic') {
+    fishEl.style.setProperty('--epic-glow', glowColor);
   } else if (catalog.rarity === 'legendary') {
     fishEl.style.setProperty('--leg-glow', glowColor);
   }
@@ -1220,14 +1240,14 @@ function updateFish(dt) {
     }
 
     // Auto-change behavior
-    const changeEvery = { common: 400, rare: 300, legendary: 200 };
+    const changeEvery = { common: 400, rare: 320, epic: 260, legendary: 200 };
     if (f.behaviorTick > (changeEvery[f.rarity] || 350) + Math.random() * 150) {
       f.behavior = pickBehavior(f.rarity);
       f.behaviorTick = 0;
     }
 
     // Speed cap
-    const maxSpeeds = { common: 1.4, rare: 2.0, legendary: 4.5 };
+    const maxSpeeds = { common: 1.4, rare: 1.8, epic: 2.4, legendary: 4.5 };
     const maxSpd = maxSpeeds[f.rarity] || 1.5;
     const curSpd = Math.sqrt(f.vx*f.vx + f.vy*f.vy);
     if (curSpd > maxSpd) { f.vx = (f.vx/curSpd)*maxSpd; f.vy = (f.vy/curSpd)*maxSpd; }
@@ -1459,7 +1479,12 @@ function buildShopGrid() {
       ${alreadyOwned ? '<div class="owned-badge">✓ Seu</div>' : ''}
       <div class="fish-card-preview">${fish.svg(0.9)}</div>
       <h3>${fish.name}</h3>
-      <div class="rarity ${fish.rarity}">${fish.rarity === 'common' ? 'Comum' : fish.rarity === 'rare' ? 'Raro' : '★ Lendário'}</div>
+      <div class="rarity ${fish.rarity}">${
+        fish.rarity === 'common'    ? 'Comum' :
+        fish.rarity === 'rare'      ? '✦ Raro' :
+        fish.rarity === 'epic'      ? '✦✦ Épico' :
+                                      '★ Lendário'
+      }</div>
       <p class="desc">${fish.desc}</p>
       <div class="price">🐝 ${fish.price} HIVE <span class="price-sub" data-hive="${fish.price}">${hiveUsdPrice ? '≈ $' + (fish.price * hiveUsdPrice).toFixed(2) + ' USD' : '...'}</span></div>
       <button class="btn-buy" id="btn-${fish.id}" onclick="buyFish('${fish.id}')" ${alreadyOwned ? 'disabled' : ''}>
