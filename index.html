@@ -532,36 +532,123 @@
   #edit-overlay {
     position: fixed; inset: 0; z-index: 140;
     display: none; flex-direction: column;
+    pointer-events: none;
   }
   #edit-overlay.open { display: flex; }
+  /* dim aquarium slightly in edit mode */
+  #edit-overlay.open::before {
+    content: ''; position: absolute; inset: 0;
+    background: rgba(0,5,20,0.35);
+    pointer-events: none; z-index: 0;
+  }
+
   #edit-toolbar {
     position: absolute; top: var(--header-h); left: 0; right: 0;
-    background: rgba(1,8,16,0.96); border-bottom: 1px solid var(--border);
-    padding: 10px 20px; display: flex; align-items: center; gap: 12px;
-    z-index: 10; flex-wrap: wrap;
+    background: rgba(1,8,16,0.97); border-bottom: 1px solid var(--border);
+    padding: 10px 20px; display: flex; align-items: center; gap: 10px;
+    z-index: 10; flex-wrap: wrap; pointer-events: all;
   }
-  .edit-toolbar-label { font-size: 0.75rem; color: var(--text-dim); letter-spacing: 0.5px; }
+  .edit-toolbar-label { font-size: 0.72rem; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; }
   .slot-info { font-size: 0.78rem; color: var(--glow); background: rgba(0,212,255,0.08); border: 1px solid var(--border); border-radius: 8px; padding: 5px 12px; }
   .slot-info strong { color: var(--gold); }
-  .edit-btn { padding: 7px 16px; border-radius: 8px; border: 1px solid var(--border); background: rgba(0,212,255,0.06); color: var(--glow); font-size: 0.8rem; cursor: pointer; font-family: 'Raleway', sans-serif; transition: all 0.2s; }
+  .edit-btn { padding: 7px 14px; border-radius: 8px; border: 1px solid var(--border); background: rgba(0,212,255,0.06); color: var(--glow); font-size: 0.78rem; cursor: pointer; font-family: 'Raleway', sans-serif; transition: all 0.2s; pointer-events: all; }
   .edit-btn:hover { background: rgba(0,212,255,0.14); }
   .edit-btn.save { background: linear-gradient(135deg,#004488,#0077cc); border-color: transparent; color:#fff; }
   .edit-btn.save:hover { background: linear-gradient(135deg,#005599,#0099ff); }
-  .edit-slots-area { position: absolute; bottom: 90px; left: 0; right: 0; display: flex; align-items: flex-end; justify-content: center; gap: 10px; padding: 0 20px; flex-wrap: wrap; z-index: 5; pointer-events: none; }
-  .decor-slot {
-    width: 60px; height: 60px; border-radius: 12px;
-    border: 2px dashed rgba(0,212,255,0.3); background: rgba(0,20,50,0.5);
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; pointer-events: all; transition: all 0.2s; position: relative;
-    backdrop-filter: blur(2px);
+
+  /* ── FISH SLOTS — float in the middle of the aquarium ── */
+  #fish-slots-area {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex; flex-wrap: wrap; gap: 12px;
+    justify-content: center; align-items: center;
+    z-index: 5; pointer-events: all;
+    max-width: 90%;
+    padding: 16px 20px;
+    background: rgba(0,10,30,0.65);
+    border: 1px solid rgba(0,212,255,0.15);
+    border-radius: 18px;
+    backdrop-filter: blur(4px);
   }
-  .decor-slot:hover { border-color: var(--glow); background: rgba(0,212,255,0.1); }
-  .decor-slot .slot-label { font-size: 0.5rem; color: var(--text-dim); text-align: center; }
-  .decor-slot .slot-item { font-size: 1.4rem; }
-  .decor-slot .slot-rarity-dot { width: 8px; height: 8px; border-radius: 50%; position: absolute; top: 4px; right: 4px; }
-  .hp-progress { background: rgba(0,20,50,0.7); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; }
-  .hp-bar-track { background: rgba(0,212,255,0.08); border-radius: 4px; height: 8px; margin-top: 6px; }
-  .hp-bar-fill { background: linear-gradient(90deg, #0055aa, #00aaff); border-radius: 4px; height: 8px; transition: width 0.5s ease; }
+  .fish-slots-label {
+    width: 100%; text-align: center;
+    font-size: 0.68rem; color: var(--text-dim);
+    letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px;
+  }
+
+  /* ── DECOR SLOTS — sit near the bottom ── */
+  .edit-slots-area {
+    position: absolute; bottom: 110px; left: 0; right: 0;
+    display: flex; align-items: flex-end; justify-content: center;
+    gap: 8px; padding: 0 20px; flex-wrap: wrap;
+    z-index: 5; pointer-events: all;
+  }
+
+  /* Generic slot card (fish or decor) */
+  .eq-slot {
+    width: 72px; min-height: 88px;
+    border-radius: 12px;
+    border: 2px dashed rgba(0,212,255,0.25);
+    background: rgba(0,20,50,0.55);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    cursor: pointer; pointer-events: all; transition: all 0.2s; position: relative;
+    backdrop-filter: blur(2px); padding: 6px 4px;
+  }
+  .eq-slot:hover { border-color: var(--glow); background: rgba(0,212,255,0.1); transform: translateY(-3px); }
+  .eq-slot.occupied { border-style: solid; background: rgba(0,30,60,0.7); }
+  .eq-slot.occupied:hover { box-shadow: 0 0 18px rgba(0,212,255,0.35); }
+  .eq-slot .slot-rarity-dot { width: 7px; height: 7px; border-radius: 50%; position: absolute; top: 5px; right: 5px; }
+  .eq-slot .slot-fish-preview { height: 48px; display: flex; align-items: center; justify-content: center; }
+  .eq-slot .slot-name { font-size: 0.58rem; color: var(--text-dim); text-align: center; line-height: 1.2; margin-top: 3px; }
+  .eq-slot .slot-empty-label { font-size: 0.6rem; color: rgba(100,160,200,0.45); text-align: center; }
+  .eq-slot .slot-remove-btn {
+    position: absolute; top: -6px; left: -6px;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: rgba(255,60,60,0.85); color: #fff;
+    font-size: 0.7rem; border: none; cursor: pointer;
+    display: none; align-items: center; justify-content: center;
+    line-height: 1; z-index: 2;
+  }
+  .eq-slot.occupied:hover .slot-remove-btn { display: flex; }
+
+  /* ── ITEM PICKER PANEL ── */
+  #item-picker {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,5,15,0.88); backdrop-filter: blur(8px);
+    display: none; align-items: center; justify-content: center;
+    animation: fadeIn 0.2s ease;
+  }
+  #item-picker.open { display: flex; }
+  .picker-panel {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 18px; width: 92%; max-width: 700px; max-height: 80vh;
+    overflow: hidden; display: flex; flex-direction: column;
+    box-shadow: 0 0 80px rgba(0,80,160,0.4);
+    animation: cardIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+  .picker-top {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 24px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+  }
+  .picker-title { font-family: 'Cinzel Decorative', serif; font-size: 1.1rem; color: var(--glow); }
+  .picker-subtitle { font-size: 0.75rem; color: var(--text-dim); margin-top: 2px; }
+  .picker-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 12px; padding: 18px 24px; overflow-y: auto;
+  }
+  .picker-card {
+    background: rgba(0,20,50,0.7); border: 1px solid rgba(0,100,200,0.2);
+    border-radius: 12px; padding: 14px 10px; text-align: center;
+    cursor: pointer; transition: all 0.2s; position: relative;
+  }
+  .picker-card:hover { border-color: var(--glow); transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,212,255,0.2); }
+  .picker-card.equipped { border-color: rgba(0,200,100,0.5); background: rgba(0,40,20,0.5); }
+  .picker-card.equipped::after { content:'✓ Equipado'; position:absolute; bottom:6px; left:0; right:0; font-size:0.6rem; color:#00cc88; }
+  .picker-card .pc-preview { height: 55px; display: flex; align-items: center; justify-content: center; margin-bottom: 6px; }
+  .picker-card .pc-name { font-size: 0.78rem; color: var(--text); font-weight: 500; }
+  .picker-card .pc-rarity { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+  .picker-card .pc-not-owned { font-size: 0.62rem; color: var(--text-dim); margin-top: 4px; opacity: 0.6; }
 
   /* ── SETTINGS PANEL ── */
   .settings-body { padding: 28px; display: flex; flex-direction: column; gap: 20px; }
@@ -740,15 +827,37 @@
 <!-- ── EDIT MODE OVERLAY ── -->
 <div id="edit-overlay">
   <div id="edit-toolbar">
-    <span class="edit-toolbar-label">MODO EDIÇÃO</span>
+    <span class="edit-toolbar-label">✏️ MODO EDIÇÃO</span>
     <div class="slot-info" id="edit-slot-summary">Carregando slots...</div>
     <div class="slot-info" id="edit-hp-info">HP: —</div>
-    <button class="edit-btn" onclick="openShopFromEdit()">+ Adicionar item</button>
     <button class="edit-btn save" onclick="saveEdit()">💾 Salvar</button>
     <button class="edit-btn" onclick="closeEdit()" style="color:#ff8080;border-color:rgba(255,80,80,0.3)">✕ Fechar</button>
   </div>
-  <!-- Decoration slots will be injected here -->
-  <div class="edit-slots-area" id="edit-slots-area"></div>
+
+  <!-- FISH SLOTS: floating center of aquarium -->
+  <div id="fish-slots-area">
+    <div class="fish-slots-label">🐠 Slots de Peixes — clique para equipar / remover</div>
+    <!-- Injected by JS -->
+  </div>
+
+  <!-- DECOR SLOTS: near the bottom -->
+  <div class="edit-slots-area" id="edit-slots-area">
+    <!-- Injected by JS -->
+  </div>
+</div>
+
+<!-- ── ITEM PICKER (shown when clicking a slot) ── -->
+<div id="item-picker">
+  <div class="picker-panel">
+    <div class="picker-top">
+      <div>
+        <div class="picker-title" id="picker-title">Escolher Peixe</div>
+        <div class="picker-subtitle" id="picker-subtitle">Selecione um dos seus peixes para este slot</div>
+      </div>
+      <button class="close-btn" onclick="closePicker()">✕</button>
+    </div>
+    <div class="picker-grid" id="picker-grid"></div>
+  </div>
 </div>
 
 <!-- ── SETTINGS MODAL ── -->
@@ -2095,8 +2204,24 @@ function spawnParticleAtOffset(f, aq, offX, offY, opts) {
 function renderMyFish() {
   clearFish();
   const empty = document.getElementById('empty-state');
-  if (myFish.length === 0) { empty.style.display = 'block'; }
-  else { empty.style.display = 'none'; myFish.forEach(f => spawnFish(f.id)); }
+
+  // If there's a saved layout, use it; otherwise show all owned fish freely
+  const savedLayout = localStorage.getItem(`layout_${currentUser}`);
+  let toSpawn = [];
+  if (savedLayout) {
+    try {
+      const layout = JSON.parse(savedLayout);
+      equippedFish = layout.fish || [];
+      toSpawn = equippedFish.filter(id => id !== null);
+    } catch(e) { toSpawn = myFish.map(f => f.id); }
+  } else {
+    // No layout saved yet — auto-fill slots with owned fish
+    toSpawn = myFish.map(f => f.id);
+    equippedFish = [...toSpawn]; // pre-fill equippedFish for edit mode
+  }
+
+  if (toSpawn.length === 0) { empty.style.display = 'block'; }
+  else { empty.style.display = 'none'; toSpawn.forEach(id => spawnFish(id)); }
   updateHUD();
   updateShopOwned();
 }
@@ -2291,7 +2416,11 @@ function renderShopGrid() {
     grid.innerHTML = `<div class="shop-coming-soon"><div class="cs-icon">🌿</div><h3>Em Breve</h3><p>Plantas, rochas, troncos e ornamentos em breve!</p></div>`;
     return;
   }
-  const subMap = { classics:['clownfish','tang'], exotic:['angelfish','pufferfish'], special:['jellyfish','seahorse','dragon'] };
+  const subMap = {
+    classics: ['clownfish','tang','angelfish','pufferfish','jellyfish','seahorse','dragon'],
+    exotic:   [], // future fish
+    special:  [], // future fish
+  };
   let items = FISH_CATALOG.filter(f => (subMap[shopSubTab] || FISH_CATALOG.map(x=>x.id)).includes(f.id));
   if (shopRarityFilter !== 'all') items = items.filter(f => f.rarity === shopRarityFilter);
   const ro = { common:0, rare:1, epic:2, legendary:3 };
@@ -2388,38 +2517,196 @@ function openWallet() {
 function closeWallet() { document.getElementById('wallet-overlay').classList.remove('open'); setActiveTab(null); }
 
 // ── EDIT MODE ──
+
+// ── EDIT MODE STATE ──
+let equippedFish = []; // array of fishId strings, length = total fish slots, null = empty
+let pickerSlotIndex = null; // which slot index is being edited
+let pickerSlotType = 'fish'; // 'fish' or 'decor'
+
 function openEdit() {
   setActiveTab('tab-edit');
+  // Load equipped state from localStorage
+  const saved = localStorage.getItem(`layout_${currentUser}`);
+  if (saved) {
+    try { equippedFish = JSON.parse(saved).fish || []; } catch(e) { equippedFish = []; }
+  }
   document.getElementById('edit-overlay').classList.add('open');
   renderEditSlots();
 }
-function closeEdit() { document.getElementById('edit-overlay').classList.remove('open'); setActiveTab(null); }
+function closeEdit() {
+  document.getElementById('edit-overlay').classList.remove('open');
+  closePicker();
+  setActiveTab(null);
+}
 function openShopFromEdit() { closeEdit(); openShop(); }
 
 function renderEditSlots() {
   const hp = getHPFromAccount();
   const { slots } = getSlotsForHP(hp);
+  const totalFishSlots = slots.common + slots.rare + slots.epic + slots.legendary;
+
   document.getElementById('edit-hp-info').textContent = `HP: ${hp.toLocaleString()}`;
   document.getElementById('edit-slot-summary').innerHTML =
     `Slots: <strong>${slots.common}</strong>C · <strong>${slots.rare}</strong>R · <strong>${slots.epic}</strong>E · <strong>${slots.legendary}</strong>L`;
-  const area = document.getElementById('edit-slots-area');
-  area.innerHTML = '';
-  const defs = [
-    ...Array(slots.legendary).fill({ rarity:'legendary', color:'#f0c040', label:'Lendário' }),
-    ...Array(slots.epic).fill({     rarity:'epic',       color:'#cc80ff', label:'Épico'    }),
-    ...Array(slots.rare).fill({     rarity:'rare',       color:'#60ccff', label:'Raro'     }),
-    ...Array(slots.common).fill({   rarity:'common',     color:'#80b0e0', label:'Comum'    }),
+
+  // Ensure equippedFish array matches total slots
+  while (equippedFish.length < totalFishSlots) equippedFish.push(null);
+  equippedFish = equippedFish.slice(0, totalFishSlots);
+
+  // ── FISH SLOTS (center of aquarium) ──
+  const fishArea = document.getElementById('fish-slots-area');
+  // Keep label, rebuild slots after it
+  const label = fishArea.querySelector('.fish-slots-label');
+  fishArea.innerHTML = '';
+  fishArea.appendChild(label);
+
+  // Build slot defs in same order as progression: legendary → epic → rare → common
+  const slotDefs = [
+    ...Array(slots.legendary).fill({ rarity:'legendary', color:'#f0c040' }),
+    ...Array(slots.epic).fill({     rarity:'epic',       color:'#cc80ff' }),
+    ...Array(slots.rare).fill({     rarity:'rare',       color:'#60ccff' }),
+    ...Array(slots.common).fill({   rarity:'common',     color:'#80b0e0' }),
   ];
-  defs.forEach(s => {
-    const slot = document.createElement('div');
-    slot.className = 'decor-slot';
-    slot.style.borderColor = s.color + '55';
-    slot.innerHTML = `<div class="slot-rarity-dot" style="background:${s.color}"></div><div class="slot-label">${s.label}</div>`;
-    slot.onclick = () => showToast('✏️ Em breve','Equipar itens nos slots estará disponível em breve!',false);
-    area.appendChild(slot);
+
+  slotDefs.forEach((def, i) => {
+    const equippedId = equippedFish[i] || null;
+    const catalog = equippedId ? FISH_CATALOG.find(f => f.id === equippedId) : null;
+    const el = document.createElement('div');
+    el.className = 'eq-slot' + (catalog ? ' occupied' : '');
+    el.dataset.slotIndex = i;
+    el.style.borderColor = def.color + (catalog ? 'cc' : '44');
+
+    if (catalog) {
+      el.innerHTML = `
+        <button class="slot-remove-btn" onclick="unequipFish(${i}, event)">✕</button>
+        <div class="slot-rarity-dot" style="background:${def.color}"></div>
+        <div class="slot-fish-preview">${catalog.svg(0.55)}</div>
+        <div class="slot-name">${catalog.name}</div>`;
+    } else {
+      el.innerHTML = `
+        <div class="slot-rarity-dot" style="background:${def.color}"></div>
+        <div class="slot-empty-label">+ Equipar<br><span style="color:${def.color};font-size:0.56rem">${def.rarity === 'legendary' ? '★ Lend.' : def.rarity === 'epic' ? '✦✦ Épico' : def.rarity === 'rare' ? '✦ Raro' : 'Comum'}</span></div>`;
+    }
+    el.onclick = (e) => {
+      if (e.target.classList.contains('slot-remove-btn')) return;
+      openPicker(i, 'fish', def.rarity);
+    };
+    fishArea.appendChild(el);
+  });
+
+  // ── DECOR SLOTS (near the bottom — future use) ──
+  const decorArea = document.getElementById('edit-slots-area');
+  decorArea.innerHTML = '';
+  // For now show a small "coming soon" row of locked decor slots
+  const decorCount = Math.min(4, slots.common); // placeholder
+  for (let i = 0; i < decorCount; i++) {
+    const el = document.createElement('div');
+    el.className = 'eq-slot';
+    el.style.cssText = 'width:56px;min-height:56px;opacity:0.45;cursor:not-allowed;';
+    el.innerHTML = `<div class="slot-empty-label" style="font-size:0.55rem">🌿<br>Decor<br>Em breve</div>`;
+    decorArea.appendChild(el);
+  }
+}
+
+function unequipFish(slotIndex, event) {
+  event.stopPropagation();
+  equippedFish[slotIndex] = null;
+  saveEquippedLayout();
+  renderEditSlots();
+  applyEquippedToAquarium();
+}
+
+// ── ITEM PICKER ──
+function openPicker(slotIndex, type, slotRarity) {
+  pickerSlotIndex = slotIndex;
+  pickerSlotType = type;
+  document.getElementById('picker-title').textContent = 'Escolher Peixe';
+  document.getElementById('picker-subtitle').textContent =
+    `Slot ${slotRarity === 'legendary' ? '★ Lendário' : slotRarity === 'epic' ? '✦✦ Épico' : slotRarity === 'rare' ? '✦ Raro' : 'Comum'} — apenas seus peixes comprados`;
+  buildPickerGrid(slotRarity);
+  document.getElementById('item-picker').classList.add('open');
+}
+function closePicker() {
+  document.getElementById('item-picker').classList.remove('open');
+  pickerSlotIndex = null;
+}
+
+function buildPickerGrid(slotRarity) {
+  const grid = document.getElementById('picker-grid');
+  grid.innerHTML = '';
+
+  // Show all owned fish; highlight if already equipped; dim if rarity doesn't match slot
+  const ownedIds = myFish.map(f => f.id);
+
+  if (ownedIds.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px 20px;color:var(--text-dim)">
+      <div style="font-size:2rem;margin-bottom:10px">🐠</div>
+      <div>Você ainda não tem peixes!</div>
+      <div style="font-size:0.75rem;margin-top:6px">Visite a Loja para comprar seus primeiros peixes.</div>
+      <button class="edit-btn" style="margin-top:14px;pointer-events:all" onclick="closePicker();closeEdit();openShop()">Ir à Loja →</button>
+    </div>`;
+    return;
+  }
+
+  FISH_CATALOG.forEach(fish => {
+    const owned = ownedIds.includes(fish.id);
+    if (!owned) return; // only show owned fish
+
+    const isEquipped = equippedFish.includes(fish.id);
+    const card = document.createElement('div');
+    card.className = 'picker-card' + (isEquipped ? ' equipped' : '');
+
+    const rl = { common:'Comum', rare:'✦ Raro', epic:'✦✦ Épico', legendary:'★ Lendário' }[fish.rarity];
+    const rc = { common:'#80b0e0', rare:'#60ccff', epic:'#cc80ff', legendary:'#f0c040' }[fish.rarity];
+    card.innerHTML = `
+      <div class="pc-preview">${fish.svg(0.65)}</div>
+      <div class="pc-name">${fish.name}</div>
+      <div class="pc-rarity" style="color:${rc}">${rl}</div>`;
+
+    if (isEquipped) {
+      card.onclick = () => {
+        // Already equipped — show which slot and offer to unequip
+        showToast('ℹ️ Já equipado', `${fish.name} já está em outro slot. Remova-o primeiro.`, false);
+      };
+    } else {
+      card.onclick = () => {
+        equippedFish[pickerSlotIndex] = fish.id;
+        saveEquippedLayout();
+        closePicker();
+        renderEditSlots();
+        applyEquippedToAquarium();
+        showToast('✅ Equipado!', `${fish.name} adicionado ao aquário.`, false);
+      };
+    }
+    grid.appendChild(card);
   });
 }
-function saveEdit() { showToast('💾 Salvo!','Configuração salva. Persistência on-chain em breve!',false); closeEdit(); }
+
+// Apply equipped fish to live aquarium (re-render fish)
+function applyEquippedToAquarium() {
+  clearFish();
+  const toSpawn = equippedFish.filter(id => id !== null);
+  if (toSpawn.length === 0) {
+    document.getElementById('empty-state').style.display = 'block';
+  } else {
+    document.getElementById('empty-state').style.display = 'none';
+    toSpawn.forEach(id => spawnFish(id));
+  }
+  updateHUD();
+}
+
+function saveEquippedLayout() {
+  if (!currentUser) return;
+  const layout = { fish: equippedFish };
+  localStorage.setItem(`layout_${currentUser}`, JSON.stringify(layout));
+}
+
+function saveEdit() {
+  saveEquippedLayout();
+  applyEquippedToAquarium();
+  showToast('💾 Aquário salvo!', 'Seus peixes foram equipados no aquário.', false);
+  closeEdit();
+}
 
 // ── SETTINGS ──
 let appSettings = JSON.parse(localStorage.getItem('hive_aquarium_settings')||'{"lang":"pt","anim":true,"special":true,"particles":true,"quality":"auto"}');
@@ -2483,9 +2770,9 @@ function showToast(title, body, isError) {
 }
 
 // Close modals on backdrop click
-['shop-overlay','wallet-overlay','settings-overlay'].forEach(id => {
+['shop-overlay','wallet-overlay','settings-overlay','item-picker'].forEach(id => {
   document.getElementById(id)?.addEventListener('click', e => {
-    if (e.target.id === id) { closeShop(); closeWallet(); closeSettings(); }
+    if (e.target.id === id) { closeShop(); closeWallet(); closeSettings(); closePicker(); }
   });
 });
 
