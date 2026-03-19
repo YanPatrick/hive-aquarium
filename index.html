@@ -1282,11 +1282,14 @@ function updateFish(dt) {
     const bobY = Math.sin(f.bobPhase) * bobAmt;
 
     // Facing — SVGs are drawn facing LEFT (eye on left, tail on right)
-    // So to make fish swim RIGHT (positive vx): scaleX(-1) flips to face right
-    // facing= 1 → vx>0 → moving right → scaleX(-1) → looks right ✓
-    // facing=-1 → vx<0 → moving left → scaleX(1)  → looks left  ✓
-    if (f.vx > 0.08)  f.facing =  1;
-    if (f.vx < -0.08) f.facing = -1;
+    // EXCEPTION: seahorse snout points RIGHT in SVG, so its logic is reversed
+    if (f.fishId === 'seahorse') {
+      if (f.vx > 0.08)  f.facing = -1; // moving right → no flip → snout faces right ✓
+      if (f.vx < -0.08) f.facing =  1; // moving left  → flip  → snout faces left  ✓
+    } else {
+      if (f.vx > 0.08)  f.facing =  1;
+      if (f.vx < -0.08) f.facing = -1;
+    }
 
     const scaleXVal = f.facing === 1 ? -1 : 1;
 
@@ -1395,43 +1398,63 @@ function triggerSpecial(f, aq) {
       break;
     }
 
-    // ── DRAGON: stop, charge glow, then blow fire bubbles ──
+    // ── DRAGON: stop, charge glow, then blow fire bubbles from exact mouth position ──
     case 'dragon': {
       const svg = f.el.querySelector('svg');
       let tick = 0;
       const origVx = f.vx, origVy = f.vy;
-      f.vx *= 0.1; f.vy *= 0.1; // nearly stop
+      f.vx *= 0.1; f.vy *= 0.1;
 
-      // Phase 1: charge (60 ticks) → Phase 2: fire burst (emit 12 fire orbs over 80 ticks) → Phase 3: resume
+      // Dragon SVG: viewBox 0 0 90 55, mouth tip at SVG x≈7, y≈27 (left side of head)
+      // Rendered at baseScale (~1.8x): SVG width=90*1.8=162px, height=55*1.8=99px
+      // SVG center: (81, 49.5). Mouth offset from center: x = (7-45)*scale, y = (27-27.5)*scale ≈ (–68.4, –0.9)
+      // When facing=1 (moving right): scaleX=-1, so mouth is on the RIGHT visually: offsetX = +68.4
+      // When facing=-1 (moving left): scaleX=1,  mouth is on the LEFT visually:  offsetX = -68.4
+      function getMouthOffset() {
+        const sc = f.baseScale;
+        const svgW = 90 * sc, svgH = 55 * sc;
+        const mouthSvgX = 7 * sc;  // mouth x in rendered px
+        const mouthSvgY = 27 * sc; // mouth y in rendered px
+        const centerX = svgW / 2;
+        const centerY = svgH / 2;
+        // Raw offset from element origin (top-left)
+        const rawOffX = mouthSvgX - centerX; // negative = left of center
+        const rawOffY = mouthSvgY - centerY;
+        // scaleX applied to element: facing=1 → scaleX=-1 (mirrors x)
+        const scaleXVal = f.facing === 1 ? -1 : 1;
+        return {
+          x: rawOffX * scaleXVal, // flip x offset with scaleX
+          y: rawOffY
+        };
+      }
+
       const fire = setInterval(() => {
         tick++;
-
         if (tick <= 60) {
-          // Charge glow intensifies
           const t = tick / 60;
           svg.style.filter = `drop-shadow(0 0 ${8+t*30}px rgba(255,${Math.floor(100+t*155)},0,0.9)) brightness(${1+t*0.4})`;
-          // Slight vibration
           const shake = Math.sin(tick * 0.8) * t * 3;
           svg.style.transform = `translateX(${shake}px)`;
-        } else if (tick <= 60 + 100) {
-          // Fire burst — emit fire bubbles from mouth (left side of fish = mouth direction)
+        } else if (tick <= 160) {
           const t2 = tick - 60;
-          if (t2 % 8 === 0) { // every 8 ticks = ~8 bubbles total
-            const mouthDir = f.facing === 1 ? -1 : 1; // mouth is on left SVG side
+          if (t2 % 8 === 0) {
+            const mo = getMouthOffset();
+            // Direction: mouth points in the direction the fish faces
+            const fireDir = f.facing === 1 ? 1 : -1; // facing=1→right, scaleX=-1→mouth on right→fire goes right
             for (let i = 0; i < 3; i++) {
-              spawnParticleAt(f, aq, {
-                vx: mouthDir * (1.5 + Math.random() * 2),
-                vy: (Math.random() - 0.5) * 1.2,
-                color: i === 0 ? 'rgba(255,80,0,0.9)' : i === 1 ? 'rgba(255,180,0,0.85)' : 'rgba(255,220,80,0.8)',
-                size: 8 + Math.random() * 10,
-                life: 60 + Math.random() * 40,
-                grow: 1.2, buoyancy: 0.04 + Math.random() * 0.04,
-                baseOpacity: 0.9,
-                isFireBubble: true,
+              const spread = (Math.random() - 0.5) * 1.0;
+              spawnParticleAtOffset(f, aq, mo.x, mo.y, {
+                vx: fireDir * (1.8 + Math.random() * 2.2) + spread * 0.3,
+                vy: spread,
+                color: i === 0 ? 'rgba(255,60,0,0.95)' : i === 1 ? 'rgba(255,160,0,0.9)' : 'rgba(255,230,60,0.85)',
+                size: 7 + Math.random() * 11,
+                life: 55 + Math.random() * 35,
+                grow: 1.3, buoyancy: 0.03 + Math.random() * 0.035,
+                baseOpacity: 0.92, isFireBubble: true,
               });
             }
           }
-          svg.style.filter = `drop-shadow(0 0 ${38 - (t2/100)*30}px rgba(255,150,0,0.8)) brightness(${1.4 - (t2/100)*0.4})`;
+          svg.style.filter = `drop-shadow(0 0 ${38-(t2/100)*30}px rgba(255,150,0,0.8)) brightness(${1.4-(t2/100)*0.4})`;
           svg.style.transform = '';
         } else {
           svg.style.filter = '';
@@ -1444,32 +1467,91 @@ function triggerSpecial(f, aq) {
       break;
     }
 
-    // ── JELLYFISH: pulse bioluminescence, release glow orbs upward ──
+    // ── JELLYFISH: retract dome+tentacles, then pulse-expand releasing orbs ──
     case 'jellyfish': {
       const svg = f.el.querySelector('svg');
+      // Get tentacle paths (indices 3–7 in the SVG children after defs, dome, highlight)
+      // We'll animate via SVG transform on a group — rebuild SVG with animated group
       let tick = 0;
+      const RETRACT = 40;  // frames to retract
+      const HOLD    = 15;  // frames held small
+      const EXPAND  = 30;  // frames to expand
+      const GLOW    = 35;  // frames of afterglow
+
+      // We'll animate by scaling the whole SVG and modifying tentacle opacity
+      const tentacles = Array.from(svg.querySelectorAll('path')).filter(
+        el => el.getAttribute('stroke') === '#d080ff' || el.getAttribute('stroke') === '#cc70ff'
+      );
+
       const pulse = setInterval(() => {
         tick++;
-        const t = tick / 120;
-        if (tick <= 120) {
-          const glow = Math.sin(t * Math.PI);
-          svg.style.filter = `drop-shadow(0 0 ${8+glow*40}px rgba(200,80,255,0.9)) drop-shadow(0 0 ${20+glow*60}px rgba(180,40,255,0.5)) brightness(${1+glow*0.5})`;
-          // Emit floating orbs from tentacles
-          if (tick % 15 === 0) {
-            for (let i = 0; i < 3; i++) {
-              spawnParticleAt(f, aq, {
-                vx: (Math.random() - 0.5) * 0.8,
-                vy: -0.3 - Math.random() * 0.5,
-                color: `rgba(${200+Math.floor(Math.random()*55)},${100+Math.floor(Math.random()*80)},255,0.85)`,
-                size: 4 + Math.random() * 6,
-                life: 80 + Math.random() * 50,
-                grow: 0.3, buoyancy: 0.06,
-                baseOpacity: 0.85,
-              });
-            }
+        const total = RETRACT + HOLD + EXPAND + GLOW;
+
+        if (tick <= RETRACT) {
+          // Retract: dome squishes up, tentacles pull in
+          const t = tick / RETRACT;
+          const domeScale = 1 - t * 0.35;
+          const tentScale = 1 - t * 0.7; // tentacles retract more
+          svg.style.transform = `scaleY(${domeScale}) scaleX(${1 + t * 0.15})`; // squish vertically, widen
+          svg.style.transformOrigin = 'center 40%';
+          tentacles.forEach(el => {
+            el.style.opacity = (0.75 * (1 - t)).toString();
+            el.style.transform = `scaleY(${tentScale})`;
+            el.style.transformOrigin = '50% 0%';
+          });
+          svg.style.filter = `drop-shadow(0 0 ${4+t*20}px rgba(200,80,255,0.7)) brightness(${1+t*0.3})`;
+
+        } else if (tick <= RETRACT + HOLD) {
+          // Hold compressed — max charge
+          svg.style.filter = `drop-shadow(0 0 24px rgba(220,80,255,0.95)) drop-shadow(0 0 50px rgba(180,40,255,0.5)) brightness(1.35)`;
+
+        } else if (tick <= RETRACT + HOLD + EXPAND) {
+          // EXPAND — snap back out, release orbs on first frame
+          const t = (tick - RETRACT - HOLD) / EXPAND;
+          const bounce = 1 + Math.sin(t * Math.PI) * 0.25; // overshoot bounce
+          svg.style.transform = `scaleY(${bounce}) scaleX(${1 - (bounce-1)*0.5})`;
+          svg.style.transformOrigin = 'center 40%';
+          tentacles.forEach(el => {
+            el.style.opacity = t.toString();
+            el.style.transform = `scaleY(${t * 1.1})`; // snap back with slight overshoot
+            el.style.transformOrigin = '50% 0%';
+          });
+          svg.style.filter = `drop-shadow(0 0 ${24*(1-t)+8}px rgba(200,80,255,0.9)) brightness(${1.35-t*0.35})`;
+
+          // Release orbs from each tentacle tip on expansion burst
+          if (tick === RETRACT + HOLD + 2) {
+            const tentacleBaseXs = [12, 18, 27, 36, 42]; // SVG x positions of tentacle tops
+            const sc = f.baseScale;
+            const svgW = 55 * sc, svgH = 70 * sc;
+            tentacleBaseXs.forEach(tx => {
+              // offset from element center, tentacle tip at y≈65 in SVG
+              const offX = (tx * sc) - svgW / 2;
+              const offY = (65 * sc) - svgH / 2;
+              for (let i = 0; i < 2; i++) {
+                spawnParticleAtOffset(f, aq, offX, offY, {
+                  vx: (Math.random() - 0.5) * 1.2,
+                  vy: -0.5 - Math.random() * 0.8,
+                  color: `rgba(${210+Math.floor(Math.random()*45)},${80+Math.floor(Math.random()*80)},255,0.88)`,
+                  size: 5 + Math.random() * 7,
+                  life: 90 + Math.random() * 60,
+                  grow: 0.25, buoyancy: 0.07,
+                  baseOpacity: 0.88,
+                });
+              }
+            });
           }
+
+        } else if (tick <= total) {
+          // Afterglow fades
+          const t = (tick - RETRACT - HOLD - EXPAND) / GLOW;
+          svg.style.transform = '';
+          tentacles.forEach(el => { el.style.opacity = '0.75'; el.style.transform = ''; });
+          svg.style.filter = `drop-shadow(0 0 ${8*(1-t)}px rgba(200,80,255,0.7))`;
+
         } else {
+          svg.style.transform = '';
           svg.style.filter = '';
+          tentacles.forEach(el => { el.style.opacity = ''; el.style.transform = ''; });
           f.specialActive = false;
           clearInterval(pulse);
         }
@@ -1600,6 +1682,10 @@ function triggerSpecial(f, aq) {
 }
 
 function spawnParticleAt(f, aq, opts) {
+  spawnParticleAtOffset(f, aq, (Math.random()-0.5)*20, (Math.random()-0.5)*20, opts);
+}
+
+function spawnParticleAtOffset(f, aq, offX, offY, opts) {
   const el = document.createElement('div');
   const isFireBubble = opts.isFireBubble;
   el.style.cssText = `
@@ -1613,18 +1699,17 @@ function spawnParticleAt(f, aq, opts) {
   `;
   aq.appendChild(el);
 
-  // Offset from fish center
-  const offX = f.x + (Math.random()-0.5) * 20;
-  const offY = f.y + (Math.random()-0.5) * 20;
+  const px = f.x + offX;
+  const py = f.y + offY;
 
   const particle = {
-    el, x: offX, y: offY,
+    el, x: px, y: py,
     vx: opts.vx, vy: opts.vy,
     size: opts.size, life: opts.life, maxLife: opts.life,
     grow: opts.grow || 0, buoyancy: opts.buoyancy || 0,
     baseOpacity: opts.baseOpacity || 0.8,
   };
-  el.style.transform = `translate(${offX}px, ${offY}px)`;
+  el.style.transform = `translate(${px}px, ${py}px)`;
   f.specialParticles.push(particle);
 }
 
