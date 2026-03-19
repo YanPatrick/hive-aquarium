@@ -491,33 +491,59 @@ const APP_ID = 'hive-aquarium/1.0';
 let hiveUsdPrice = null;
 
 async function fetchHivePrice() {
+  // Strategy 1: CoinGecko via public CORS proxy
+  const COINGECKO_PROXIES = [
+    'https://api.coingecko.com/api/v3/simple/price?ids=hive&vs_currencies=usd',
+    'https://corsproxy.io/?https://api.coingecko.com/api/v3/simple/price?ids=hive&vs_currencies=usd',
+  ];
+  for (const url of COINGECKO_PROXIES) {
+    try {
+      const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+      const data = await res.json();
+      const price = data?.hive?.usd || data?.hive?.usd;
+      if (price && price > 0) {
+        hiveUsdPrice = price;
+        console.log('[HiveAquarium] HIVE price from CoinGecko:', price);
+        updateAllPrices();
+        return;
+      }
+    } catch(e) { console.warn('[HiveAquarium] CoinGecko fetch failed:', url, e.message); }
+  }
+
+  // Strategy 2: Hive internal price feed (witnesses median — most reliable for Hive apps)
   try {
-    // Try CoinGecko first
-    const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=hive&vs_currencies=usd', {
-      headers: { 'Accept': 'application/json' }
-    });
-    const data = await res.json();
-    if (data.hive && data.hive.usd) {
-      hiveUsdPrice = data.hive.usd;
-      updateAllPrices();
-      return;
-    }
-  } catch(e) {}
-  try {
-    // Fallback: Hive internal price feed
-    const res2 = await fetch(HIVE_API, {
+    const res = await fetch(HIVE_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ jsonrpc:'2.0', method:'condenser_api.get_current_median_history_price', params:[], id:1 })
     });
-    const data2 = await res2.json();
-    if (data2.result) {
-      const base = parseFloat(data2.result.base);
-      const quote = parseFloat(data2.result.quote);
-      hiveUsdPrice = base / quote;
-      updateAllPrices();
+    const data = await res.json();
+    if (data.result) {
+      // base = HBD amount, quote = HIVE amount  → price = base/quote USD per HIVE
+      const base  = parseFloat(data.result.base.replace(' HBD',''));
+      const quote = parseFloat(data.result.quote.replace(' HIVE',''));
+      if (quote > 0) {
+        hiveUsdPrice = base / quote;
+        console.log('[HiveAquarium] HIVE price from Hive feed:', hiveUsdPrice);
+        updateAllPrices();
+        return;
+      }
     }
-  } catch(e) { console.warn('Could not fetch HIVE price'); }
+  } catch(e) { console.warn('[HiveAquarium] Hive price feed failed:', e.message); }
+
+  // Strategy 3: CoinCap (no CORS restriction)
+  try {
+    const res = await fetch('https://api.coincap.io/v2/assets/hive');
+    const data = await res.json();
+    if (data?.data?.priceUsd) {
+      hiveUsdPrice = parseFloat(data.data.priceUsd);
+      console.log('[HiveAquarium] HIVE price from CoinCap:', hiveUsdPrice);
+      updateAllPrices();
+      return;
+    }
+  } catch(e) { console.warn('[HiveAquarium] CoinCap failed:', e.message); }
+
+  console.error('[HiveAquarium] All price sources failed.');
 }
 
 function updateAllPrices() {
