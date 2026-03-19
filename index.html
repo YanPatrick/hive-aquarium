@@ -490,9 +490,12 @@
   .rarity-filter.legendary { color: var(--gold); border-color: rgba(240,192,64,0.2); }
   .rarity-filter.active, .rarity-filter:hover { background: rgba(255,255,255,0.06); }
   .shop-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
-    gap: 16px; padding: 20px 28px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px; padding: 16px 20px;
   }
+  @media(max-width:900px){ .shop-grid { grid-template-columns: repeat(3, 1fr); } }
+  @media(max-width:600px){ .shop-grid { grid-template-columns: repeat(2, 1fr); } }
   .shop-coming-soon {
     grid-column: 1/-1; text-align: center; padding: 60px 20px; color: var(--text-dim);
   }
@@ -893,16 +896,6 @@
         <div class="settings-group-title">Performance</div>
         <div class="settings-row">
           <div>
-            <div class="settings-label">Animações dos peixes</div>
-            <div class="settings-desc">Desativar pode melhorar performance em celulares</div>
-          </div>
-          <label class="toggle">
-            <input type="checkbox" id="toggle-anim" checked onchange="toggleAnimations(this.checked)">
-            <div class="toggle-track"></div>
-          </label>
-        </div>
-        <div class="settings-row">
-          <div>
             <div class="settings-label">Animações especiais</div>
             <div class="settings-desc">Efeitos únicos de cada peixe (inflate, fogo, etc)</div>
           </div>
@@ -923,12 +916,21 @@
         </div>
         <div class="settings-row">
           <div>
+            <div class="settings-label">Raios de luz</div>
+            <div class="settings-desc">Faixas brancas e azuis que passam pelo aquário</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="toggle-rays" checked onchange="toggleRays(this.checked)">
+            <div class="toggle-track"></div>
+          </label>
+        </div>
+        <div class="settings-row">
+          <div>
             <div class="settings-label">Qualidade</div>
             <div class="settings-desc">Reduz decorações para telas menores</div>
           </div>
           <div class="lang-btns">
-            <button class="lang-btn active" id="q-auto" onclick="setQuality('auto',this)">Auto</button>
-            <button class="lang-btn" id="q-low" onclick="setQuality('low',this)">Baixa</button>
+            <button class="lang-btn active" id="q-low" onclick="setQuality('low',this)">Baixa</button>
             <button class="lang-btn" id="q-high" onclick="setQuality('high',this)">Alta</button>
           </div>
         </div>
@@ -1486,7 +1488,7 @@ function spawnFish(fishId, opts = {}) {
   fishEl.appendChild(tooltip);
 
   fishEl.style.cssText = `left:0;top:0;z-index:10;position:absolute;`;
-  fishEl.addEventListener('click', () => showToast('🐠 ' + catalog.name, catalog.desc, false));
+ fishEl.addEventListener('click', () => showToast(catalog.name, catalog.desc, false));
   aq.appendChild(fishEl);
 
   const startX = 0.05 * w + Math.random() * 0.85 * w;
@@ -2030,7 +2032,7 @@ async function loginWithKeychain() {
   const errEl = document.getElementById('login-error');
   errEl.style.display = 'none';
   if (!username) { showLoginError('Digite seu usuário Hive.'); return; }
-  showToast('🔑 Keychain','Conectando com a extensão...',false);
+ showToast('Keychain','Conectando com a extensão...',false);
   let keychain;
   try { keychain = await waitForKeychain(5000); }
   catch(e) { showLoginError('Hive Keychain não encontrado. Verifique se a extensão está instalada.'); return; }
@@ -2054,17 +2056,17 @@ async function afterLogin(username) {
   document.getElementById('nav-tabs').style.display = 'flex';
   document.getElementById('user-avatar').src = `https://images.hive.blog/u/${username}/avatar`;
   loadBalance(username);
-  showToast('🔍 Buscando peixes...', `Verificando blockchain de @${username}...`, false);
+ showToast('Buscando...', `Verificando blockchain de @${username}...`, false);
   const fishFromChain = await loadMyFishFromChain(username);
   if (fishFromChain.length > 0) {
     myFish = fishFromChain;
     localStorage.setItem(`fish_${username}`, JSON.stringify(myFish));
-    showToast('🐠 Aquário carregado!', `${myFish.length} peixe(s) encontrado(s) na blockchain.`, false);
+ showToast('Aquário carregado!', `${myFish.length} peixe(s) encontrado(s) na blockchain.`, false);
   } else {
     const cached = localStorage.getItem(`fish_${username}`);
     myFish = cached ? JSON.parse(cached) : [];
-    if (myFish.length > 0) showToast('📦 Cache local', `${myFish.length} peixe(s) carregados do cache.`, false);
-    else showToast('🐠 Aquário vazio', 'Visite a Loja para comprar seus primeiros peixes!', false);
+ if (myFish.length > 0) showToast('Cache local', `${myFish.length} peixe(s) carregados do cache.`, false);
+ else showToast('Aquário vazio', 'Visite a Loja para comprar seus primeiros peixes!', false);
   }
   renderMyFish();
 }
@@ -2255,21 +2257,21 @@ async function buyFish(fishId) {
   btn.disabled=true; btn.textContent='⏳ Conectando...';
   let keychain;
   try { keychain = await waitForKeychain(5000); }
-  catch(e) { showToast('❌ Keychain não encontrado','Verifique se a extensão está ativa.',true); btn.disabled=false; btn.textContent='🛒 Comprar'; return; }
+ catch(e) { showToast('Keychain não encontrado','Verifique se a extensão está ativa.',true); btn.disabled=false; btn.textContent='Comprar'; return; }
   const usdStr = hiveUsdPrice ? ` (≈ $${(catalog.price*hiveUsdPrice).toFixed(2)})` : '';
-  showToast('🔑 Keychain',`Confirme o pagamento de ${catalog.price} HIVE${usdStr} para comprar ${catalog.name}`,false);
+ showToast('Keychain',`Confirme o pagamento de ${catalog.price} HIVE${usdStr} para comprar ${catalog.name}`,false);
   btn.textContent='⏳ Aguardando...';
-  const tt = setTimeout(()=>{ showToast('⏱️ Timeout','Keychain não respondeu. Tente novamente.',true); btn.disabled=false; btn.textContent='🛒 Comprar'; },60000);
+ const tt = setTimeout(()=>{ showToast('Timeout','Keychain não respondeu. Tente novamente.',true); btn.disabled=false; btn.textContent='Comprar'; },60000);
   keychain.requestTransfer(currentUser, SHOP_ACCOUNT, catalog.price.toFixed(3), catalog.memo, 'HIVE', async (tx) => {
     clearTimeout(tt);
-    if (!tx.success) { showToast('❌ Cancelado',tx.message||'Transação cancelada.',true); btn.disabled=false; btn.textContent='🛒 Comprar'; return; }
-    showToast('✅ Pagamento enviado!',`Registrando ${catalog.name} na blockchain...`,false);
+ if (!tx.success) { showToast('Cancelado',tx.message||'Transação cancelada.',true); btn.disabled=false; btn.textContent='Comprar'; return; }
+ showToast('Pagamento enviado!',`Registrando ${catalog.name} na blockchain...`,false);
     const j = JSON.stringify({ action:'add_fish', fish_id:fishId, fish_name:catalog.name, tx:tx.result?.id||'unknown', app:APP_ID });
     keychain.requestCustomJson(currentUser, APP_ID, 'Posting', j, `Hive Aquarium: Adicionar ${catalog.name}`, (jr) => {
       myFish.push({ id:fishId, name:catalog.name, boughtAt:new Date().toISOString() });
       localStorage.setItem(`fish_${currentUser}`, JSON.stringify(myFish));
       renderMyFish(); closeShop();
-      showToast(jr.success?`🎉 ${catalog.name} adquirido!`:`⚠️ ${catalog.name} adquirido!`, jr.success?'Seu novo peixe já está nadando!':'Peixe no aquário! (on-chain com aviso)',false);
+ showToast(jr.success?`${catalog.name} adquirido!`:`${catalog.name} adquirido!`, jr.success?'Seu novo peixe já está nadando!':'Peixe no aquário! (on-chain com aviso)',false);
       loadBalance(currentUser);
     });
   });
@@ -2290,21 +2292,21 @@ async function buyDecor(decorId) {
   btn.disabled = true; btn.textContent = '⏳ Conectando...';
   let keychain;
   try { keychain = await waitForKeychain(5000); }
-  catch(e) { showToast('❌ Keychain não encontrado','Verifique se a extensão está ativa.',true); btn.disabled=false; btn.textContent='🛒 Comprar'; return; }
+ catch(e) { showToast('Keychain não encontrado','Verifique se a extensão está ativa.',true); btn.disabled=false; btn.textContent='Comprar'; return; }
   const usdStr = hiveUsdPrice ? ` (≈ $${(catalog.price*hiveUsdPrice).toFixed(2)})` : '';
-  showToast('🔑 Keychain',`Confirme ${catalog.price} HIVE${usdStr} para ${catalog.name}`,false);
+ showToast('Keychain',`Confirme ${catalog.price} HIVE${usdStr} para ${catalog.name}`,false);
   btn.textContent = '⏳ Aguardando...';
-  const tt = setTimeout(()=>{ showToast('⏱️ Timeout','Keychain não respondeu.',true); btn.disabled=false; btn.textContent='🛒 Comprar'; },60000);
+ const tt = setTimeout(()=>{ showToast('Timeout','Keychain não respondeu.',true); btn.disabled=false; btn.textContent='Comprar'; },60000);
   keychain.requestTransfer(currentUser, SHOP_ACCOUNT, catalog.price.toFixed(3), catalog.memo, 'HIVE', async (tx) => {
     clearTimeout(tt);
-    if (!tx.success) { showToast('❌ Cancelado',tx.message||'Cancelado.',true); btn.disabled=false; btn.textContent='🛒 Comprar'; return; }
-    showToast('✅ Pago!',`Registrando ${catalog.name}...`,false);
+ if (!tx.success) { showToast('Cancelado',tx.message||'Cancelado.',true); btn.disabled=false; btn.textContent='Comprar'; return; }
+ showToast('Pago!',`Registrando ${catalog.name}...`,false);
     const j = JSON.stringify({ action:'add_decor', decor_id:decorId, decor_name:catalog.name, tx:tx.result?.id||'unknown', app:APP_ID });
     keychain.requestCustomJson(currentUser, APP_ID, 'Posting', j, `Hive Aquarium: ${catalog.name}`, (jr) => {
       myDecor.push({ id:decorId, name:catalog.name, boughtAt:new Date().toISOString() });
       localStorage.setItem(`decor_${currentUser}`, JSON.stringify(myDecor));
       closeShop();
-      showToast(jr.success?`🎉 ${catalog.name} adquirida!`:`⚠️ ${catalog.name} adquirida!`, jr.success?'Vá ao Modo Edição para equipar!':'Item seu! (on-chain com aviso)',false);
+ showToast(jr.success?`${catalog.name} adquirida!`:`${catalog.name} adquirida!`, jr.success?'Vá ao Modo Edição para equipar!':'Item seu! (on-chain com aviso)',false);
       loadBalance(currentUser);
     });
   });
@@ -2497,11 +2499,11 @@ function appendPickerCard(grid, fish, dimmed, isEquipped) {
   const rc = { common:'#80b0e0', rare:'#60ccff', epic:'#cc80ff', legendary:'#f0c040' }[fish.rarity];
   card.innerHTML = `<div class="pc-preview">${fish.svg(0.65)}</div><div class="pc-name">${fish.name}</div><div class="pc-rarity" style="color:${rc}">${rl}</div>`;
   if (dimmed) { card.title = 'Raridade incompatível'; card.style.cursor = 'not-allowed'; }
-  else if (isEquipped) card.onclick = () => showToast('ℹ️ Já equipado', `${fish.name} já está em outro slot.`, false);
+ else if (isEquipped) card.onclick = () => showToast('Já equipado', `${fish.name} já está em outro slot.`, false);
   else card.onclick = () => {
     equippedFish[pickerSlotIndex] = fish.id;
     saveEquippedLayout(); closePicker(); renderEditSlots(); applyEquippedToAquarium();
-    showToast('✅ Equipado!', `${fish.name} adicionado ao aquário.`, false);
+ showToast('Equipado!', `${fish.name} adicionado ao aquário.`, false);
   };
   grid.appendChild(card);
 }
@@ -2548,11 +2550,11 @@ function buildDecorPickerGrid(slotRarity) {
       const card = document.createElement('div');
       card.className = 'picker-card' + (isEquipped ? ' equipped' : '');
       card.innerHTML = `<div class="pc-preview">${d.svg(0.6)}</div><div class="pc-name">${d.name}</div><div class="pc-rarity" style="color:${rc[d.rarity]}">${{common:'Comum',rare:'✦ Raro',epic:'✦✦ Épico',legendary:'★ Lendário'}[d.rarity]}</div>`;
-      if (isEquipped) card.onclick = () => showToast('ℹ️ Já equipado',`${d.name} já está em uso.`,false);
+ if (isEquipped) card.onclick = () => showToast('Já equipado',`${d.name} já está em uso.`,false);
       else card.onclick = () => {
         equippedDecor[pickerSlotIndex] = d.id;
         saveEquippedLayout(); closePicker(); renderEditSlots(); renderEquippedDecorInAquarium();
-        showToast('✅ Equipado!',`${d.name} adicionada.`,false);
+ showToast('Equipado!',`${d.name} adicionada.`,false);
       };
       grid.appendChild(card);
     });
@@ -2600,20 +2602,20 @@ function saveEquippedLayout() {
 
 function saveEdit() {
   saveEquippedLayout(); applyEquippedToAquarium(); renderEquippedDecorInAquarium();
-  showToast('💾 Aquário salvo!', 'Peixes e decorações equipados com sucesso!', false);
+ showToast('Aquário salvo!', 'Peixes e decorações equipados com sucesso!', false);
   closeEdit();
 }
 
 // ── SETTINGS ──
-let appSettings = JSON.parse(localStorage.getItem('hive_aquarium_settings')||'{"lang":"pt","anim":true,"special":true,"particles":true,"quality":"auto"}');
+let appSettings = JSON.parse(localStorage.getItem('hive_aquarium_settings')||'{"lang":"pt","special":true,"particles":true,"rays":true,"quality":"low"}');
 
 function openSettings() {
   setActiveTab('tab-settings');
-  document.getElementById('toggle-anim').checked     = appSettings.anim;
-  document.getElementById('toggle-special').checked  = appSettings.special;
-  document.getElementById('toggle-particles').checked= appSettings.particles;
+  document.getElementById('toggle-special').checked   = appSettings.special !== false;
+  document.getElementById('toggle-particles').checked = appSettings.particles !== false;
+  document.getElementById('toggle-rays').checked      = appSettings.rays !== false;
   document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent.trim().includes(appSettings.lang==='pt'?'PT':'EN')));
-  ['auto','low','high'].forEach(q => document.getElementById('q-'+q)?.classList.toggle('active', appSettings.quality===q));
+  ['low','high'].forEach(q => document.getElementById('q-'+q)?.classList.toggle('active', appSettings.quality===q));
   document.getElementById('settings-overlay').classList.add('open');
 }
 function closeSettings() { document.getElementById('settings-overlay').classList.remove('open'); setActiveTab(null); }
@@ -2623,29 +2625,29 @@ function setLang(lang, btn) {
   appSettings.lang = lang; saveSettings();
   document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  showToast('🌐 Idioma', lang==='pt'?'Português selecionado':'English selected', false);
-}
-function toggleAnimations(on) {
-  appSettings.anim = on; saveSettings();
-  if (!on && animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
-  else if (on && !animFrameId && fishInstances.length > 0) startFishLoop();
-  showToast(on?'✅ Animações ativadas':'⏸️ Animações pausadas','',false);
+ showToast('Idioma', lang==='pt'?'Português selecionado':'English selected', false);
 }
 function toggleSpecialAnims(on) {
   appSettings.special = on; saveSettings();
   if (!on) fishInstances.forEach(f => { f.specialActive=false; f.specialTimer=0; });
-  showToast(on?'✨ Efeitos especiais ON':'✨ Efeitos especiais OFF','',false);
+ showToast(on?'Efeitos especiais ON':'Efeitos especiais OFF','',false);
 }
 function toggleParticles(on) {
   appSettings.particles = on; saveSettings();
   document.querySelectorAll('.bubble, .particle').forEach(el => { el.style.display = on?'':'none'; });
-  showToast(on?'🫧 Partículas ON':'🫧 Partículas OFF','',false);
+ showToast(on?'Particulas ON':'Particulas OFF','',false);
+}
+function toggleRays(on) {
+  appSettings.rays = on; saveSettings();
+  const raysEl = document.querySelector('.rays');
+  if (raysEl) raysEl.style.display = on ? '' : 'none';
+ showToast(on?'Raios de luz ON':'Raios de luz OFF','',false);
 }
 function setQuality(q, btn) {
   appSettings.quality = q; saveSettings();
-  ['auto','low','high'].forEach(id => document.getElementById('q-'+id)?.classList.remove('active'));
+  ['low','high'].forEach(id => document.getElementById('q-'+id)?.classList.remove('active'));
   btn.classList.add('active');
-  showToast('🎨 Qualidade', {auto:'Automática',low:'Baixa',high:'Alta'}[q], false);
+ showToast('Qualidade', {low:'Baixa',high:'Alta'}[q], false);
 }
 
 function setActiveTab(id) {
