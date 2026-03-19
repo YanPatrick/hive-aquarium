@@ -500,22 +500,22 @@
   .shop-coming-soon h3 { font-family: 'Cinzel Decorative', serif; font-size: 1rem; color: rgba(0,212,255,0.4); margin-bottom: 8px; }
   .fish-card {
     background: rgba(0,20,50,0.6); border: 1px solid rgba(0,100,200,0.2);
-    border-radius: 14px; padding: 16px 12px; text-align: center;
+    border-radius: 14px; padding: 14px 12px 12px; text-align: center;
     transition: all 0.3s; cursor: pointer; position: relative;
     display: flex; flex-direction: column; align-items: center;
-    height: 280px; /* fixed height — all cards equal */
+    height: 240px; /* fixed height — all cards equal */
   }
   .fish-card:hover { border-color: var(--glow); transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,212,255,0.2); }
-  .fish-card-preview { height: 75px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .fish-card h3 { font-size: 0.88rem; color: var(--text); margin: 6px 0 2px; font-weight: 500; line-height: 1.2;
-    max-height: 2.4em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; flex-shrink: 0; }
-  .fish-card .rarity { font-size: 0.62rem; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; font-weight: 600; flex-shrink: 0; }
-  .fish-card .desc { font-size: 0.72rem; color: var(--text-dim); line-height: 1.3; margin-bottom: 8px;
-    flex: 1; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-  .fish-card .price { font-size: 0.95rem; color: var(--gold); font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 4px; flex-shrink: 0; }
-  .fish-card .price-sub { font-size: 0.65rem; color: var(--text-dim); }
+  .fish-card-preview { height: 68px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .fish-card h3 { font-size: 0.85rem; color: var(--text); margin: 5px 0 2px; font-weight: 500; line-height: 1.2;
+    max-height: 2.4em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; flex-shrink: 0; width: 100%; }
+  .fish-card .rarity { font-size: 0.6rem; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 3px; font-weight: 600; flex-shrink: 0; }
+  .fish-card .desc { font-size: 0.7rem; color: var(--text-dim); line-height: 1.3; margin-bottom: 6px;
+    flex: 1; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; width: 100%; }
+  .fish-card .price { font-size: 0.9rem; color: var(--gold); font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 4px; flex-shrink: 0; }
+  .fish-card .price-sub { font-size: 0.62rem; color: var(--text-dim); }
   .owned-badge { position: absolute; top: 8px; right: 8px; background: rgba(0,200,100,0.2); border: 1px solid rgba(0,200,100,0.4); border-radius: 10px; padding: 2px 7px; font-size: 0.6rem; color: #00cc88; }
-  .btn-buy { width: 100%; margin-top: 8px; padding: 8px; background: linear-gradient(135deg, #004488, #0077cc); color: #fff; border-radius: 8px; font-size: 0.8rem; border: none; cursor: pointer; transition: all 0.3s; font-family: 'Raleway', sans-serif; flex-shrink: 0; }
+  .btn-buy { width: 100%; margin-top: 6px; padding: 7px; background: linear-gradient(135deg, #004488, #0077cc); color: #fff; border-radius: 8px; font-size: 0.78rem; border: none; cursor: pointer; transition: all 0.3s; font-family: 'Raleway', sans-serif; flex-shrink: 0; }
   .btn-buy:hover { background: linear-gradient(135deg, #005599, #0099ff); transform: translateY(-1px); }
   .btn-buy:disabled { background: rgba(0,60,120,0.3); color: var(--text-dim); cursor: not-allowed; transform: none; }
 
@@ -692,7 +692,7 @@
 
 <!-- HEADER -->
 <header>
-  <div class="logo"><svg width="22" height="22" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle;margin-right:6px"><polygon fill="#e31337" points="155,60 60,250 155,440 210,440 115,250 210,60"/><polygon fill="#e31337" points="220,60 125,250 220,440 270,440 175,250 270,60"/><polygon fill="#e31337" points="285,60 190,250 285,440 440,440 345,250 440,60"/></svg>Hive <span>Aquarium</span></div>
+  <div class="logo"><img id="hive-header-logo" src="" width="22" height="19" style="display:inline-block;vertical-align:middle;margin-right:6px;image-rendering:crisp-edges;" alt="HIVE"/>Hive <span>Aquarium</span></div>
   <nav class="nav-tabs" id="nav-tabs" style="display:none">
     <button class="nav-tab" onclick="openShop()" id="tab-shop">
       <span class="tab-icon">🛒</span><span class="tab-label">Loja</span>
@@ -771,9 +771,9 @@
     </div>
     <!-- Main tabs: Peixes | Decoração | Aquários -->
     <div class="shop-tabs-row" id="shop-main-tabs">
-      <button class="shop-tab active" onclick="setShopMain('fish',this)">🐠 Peixes</button>
-      <button class="shop-tab" onclick="setShopMain('decor',this)">🌱 Decoração</button>
-      <button class="shop-tab" onclick="setShopMain('aquarium',this)">🔷 Aquários</button>
+      <button class="shop-tab active" onclick="setShopMain('fish',this)">Peixes</button>
+      <button class="shop-tab" onclick="setShopMain('decor',this)">Decoração</button>
+      <button class="shop-tab" onclick="setShopMain('aquarium',this)">Aquários</button>
     </div>
     <!-- Sub-tabs row (changes per main tab) -->
     <div class="shop-subtabs-row" id="shop-subtabs"></div>
@@ -804,7 +804,7 @@
     <div class="modal-body wallet-body">
       <div class="wallet-cards">
         <div class="wallet-card">
-          <div class="wc-icon"><svg width="36" height="36" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg"><polygon fill="#e31337" points="155,60 60,250 155,440 210,440 115,250 210,60"/><polygon fill="#e31337" points="220,60 125,250 220,440 270,440 175,250 270,60"/><polygon fill="#e31337" points="285,60 190,250 285,440 440,440 345,250 440,60"/></svg></div>
+          <div class="wc-icon"><img id="wallet-hive-logo" src="" width="36" height="31" style="image-rendering:crisp-edges;" alt="HIVE"/></div>
           <div class="wc-label">HIVE</div>
           <div class="wc-amount" id="wc-hive">—</div>
           <div class="wc-usd" id="wc-hive-usd">— USD</div>
@@ -817,7 +817,7 @@
         </div>
       </div>
       <div class="wallet-card" style="margin-bottom:16px">
-        <div class="wc-icon"><svg width="36" height="36" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg"><polygon fill="#00aaff" points="155,60 60,250 155,440 210,440 115,250 210,60"/><polygon fill="#00aaff" points="220,60 125,250 220,440 270,440 175,250 270,60"/><polygon fill="#00aaff" points="285,60 190,250 285,440 440,440 345,250 440,60"/></svg></div>
+        <div class="wc-icon"><img id="wallet-hp-logo" src="" width="36" height="31" style="image-rendering:crisp-edges;filter:hue-rotate(200deg) saturate(1.5);" alt="HP"/></div>
         <div class="wc-label">Hive Power</div>
         <div class="wc-amount" id="wc-hp">—</div>
         <div class="wc-hp" id="wc-hp-level">Nível de slots —</div>
@@ -966,17 +966,12 @@ const HIVE_API = 'https://api.hive.blog';
 const SHOP_ACCOUNT = 'hive-aquarium';
 const APP_ID = 'hive-aquarium/1.0';
 
-// ── HIVE OFFICIAL LOGO SVG ──
-// Paths traced from the official Hive logo: hexagonal shape with diamond + two chevrons
-function hiveLogo(size = 16, color = '#e31337') {
-  return `<span class="hive-logo"><svg width="${size}" height="${size}" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
-    <!-- Diamond (left shape) -->
-    <polygon fill="${color}" points="155,60 60,250 155,440 210,440 115,250 210,60"/>
-    <!-- Middle chevron -->
-    <polygon fill="${color}" points="220,60 125,250 220,440 270,440 175,250 270,60"/>
-    <!-- Outer chevron (right) -->
-    <polygon fill="${color}" points="285,60 190,250 285,440 440,440 345,250 440,60"/>
-  </svg></span>`;
+// ── HIVE OFFICIAL LOGO (exact image provided by project owner) ──
+const HIVE_LOGO_B64 = '/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAC+ANsDASIAAhEBAxEB/8QAHAABAAIDAQEBAAAAAAAAAAAAAAYHAgQFCAMB/8QAOhAAAQMDAAYIBQIGAwEBAAAAAQACAwQFEQYHITFBgRIiQlFhcZHBExQVMqEWI1Vik7HR8FJUlOHx/8QAHAEBAAIDAQEBAAAAAAAAAAAAAAUHAwQGCAIB/8QANxEAAQMCAgcGBQQBBQAAAAAAAQACAwQFETEGEiFBUWGBExQicZHBFSOx0eEyQqHwF1JTktLx/9oADAMBAAIRAxEAPwDxkiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIu7oRZDe73HDI0/KxfuTn+X/AI+ZOzyz3LhtBcQ0AknYAFdWg9kFkskcUjQKqb9yc9zj2eQ2eqwTyajdma6jROy/FK4a4+Wza7nwHX6YqJa1bCIZWXqljAjfiOdrRsadzXc93Id6gK9A3CkgrqKajqWdOKZhY4eB91Rl8ts9pus9BOOtE7Y7H3N4OHmF8Usus3VO5SunVk7pUisiHgkz5O/OfnisbLXy2u6U9fBgvhfnB7Q3EcwSFelvqaevoYaymIdFMwOacd/DzXn9T7VRfPhTvslQ/qSkvpyeDuLee/ke9KqPWbrDcvzQW9Ckqu5ynwSZcnbvXLzwVk9FvcPRYyxRSxPikja9j2lrmkZBB3hZoo5XIWgjAhUdpbZ32S9zUZyYj14XHiw7vTaOS5CuPWHY/rFkMkLOlV0uZIsb3DtN5geoCpxSsEnaN5qg9KbKbVXFrR4HbW+XDp9MFOtVN6bT1j7NUEfDqD04SeD8bRzA/HirN6Le4ei89wySQzMmieWSMcHNcN4I2gq79E7wy92WGsGBKOpM0dl438uPNa1VHgdYLuNAr0JoTQSnxM2t5jeOh/g8l1ei3uHoo7p/YxeLG4wsBq6bMkOBtd3t5j8gKRotVri04hd3XUUVbTvp5R4XDD++Wa87opZrLsf0y8fOQMxS1ZLhjc1/aHPf69yial2OD24hedbjQS2+pfTS5tPrwPUbUREX0tJERERERERERERERERERfegpZq2shpKdnTlleGNHifZMl9MY57g1oxJUr1X2P5+6G5zszT0hBZnc6TePTf6K1lo2G2w2i0wUEG1sTes7H3OO88yt5RM0naOxXoLRyzttNC2E/rO13mftl/KKG60bH8/axc6dmaikaS/Haj4+m/1UyQgEEEZB2EL4Y8scCFv3O3xXGlfTS5OHodx6Reed1nTyyQTxzwvLJI3BzHDeCDkFdvTmyGyXt8cbSKWbMkBxsA4t5H8Y71wVLtcHDELztV00tFUOhk2OacPyPqFeui93jvdmhrmYDyOjKwdl43j3HgQumqg1b3z6VeRTTvxSVZDHZOxjuy72Pn4K31Fzx9m7Dcr20YvIutC17j427HefHrn6jciqHWRY/pV5NVAzFLVkvbgbGv7TfcefgreXM0otEV7s01C/AeR0onnsvG4+x8CUgk7N2O5NJ7MLrQujaPG3a3z4dcvQ7lRSk2ru+Cz3oRzv6NJVYjkydjT2XcuPgT3KOVEUkE8kEzCySNxa9p3gg4IWClHND24FUXRVk1vqWzx7HNP/AKD55FeiEUX1cXz6tZRTzvzV0gDH5O1zey72PiPFShRD2lhwK9FW+uir6ZlREdjhj9x0Oxc3SW1RXqzz0MmA5wzE8j7Hjcf94EqjamGWnqJKeZhZLG4se08CDghehFXGtix9CVl8p2dV+I6nHA7mu9vTvWzSyYHVO9cTp5ZO8QCuiHiZ+rm3j0+hPBV8iIpBU+iIiIiIiIiIiIiIiIisfVPY+jG++VDBl2Y6bPAbnO9vXvUK0atUt5vEFDHkNccyuHYYN5/3iQrypoIqanjp4GBkUTQxjRwAGAFqVUmA1RvVhaB2TvFQa6UeFmXN3Hp9SOC+iIij1cCIiIi4emtkbfLLJAxo+Zi68Dv5u7yO70PBUo5rmuLXAtcDggjaCvQ6qzWlY/kriLrTsxBVO/cA3Nk/+7/PK3KWXA6hVa6fWTtIxcIhtbsd5bj0yPLyUKVx6vL59Ysgjmf0qulxHLne4dl3P+4KpxdbRK8Psl7hrBkxHqTNHaYd/Mb+S2Z4+0bzXF6LXo2quD3HwO2O8uPT6Yq8kWMUjJYmSxPD2PaHNcDkEHcQslFK/QQRiFW2tix/CnZe6dnUkwyoAG53B3PdyHeoAvQNwpIK+hmo6lvSimYWuHnx81Rd7t09quk9BUDrxOwDwcOBHmFI0sms3VO5U1p1ZO6VXfIh4JM+Tvzn54rY0Wu8lkvUNa3JjHVmaO0w7x7+YCvCCWOeFk0Tw+ORoc1w3EHcV56Vl6qL58anfZah/XiBfTkne3i3lv8AI+C/KqPEawWxoFe+wnNDKfC/a3k7h1+o5qer4V9LBXUU1JUs6cUzCxw8Cvuij8lbj2Ne0tcMQVQt8ts9puk9BUDrRO6rsbHN4O5haKtXWjY/nrYLpAzNRSN6+BtdHx9N/llVUpaGTtG4rz5pHZ3WmudCP0na08j9skREWVQSIiIiIiIiIier+x/Wb20zMzSU2JJu53/ABbzP4BXy5waMStqho5a2oZTxDxOOH56ZlTrVrY/pdn+cnZiqqwHnI2tZ2R78/BStEUQ9xe4kr0XbqGKgpmU0WTR68T1O1ERF8rdRERERal5t8F0tk9BUDqStxni08CPI4K20QHA4hY5YmSsMbxiCMCORXn+5Uc9vr5qKpb0ZYXlrh7jwO9a6szWtYvjUzb1TM/chAZUADezg7lu8j4Ks1LxSdo3Feer9aX2qtdTnLNp4g5fY8wrO1U3z5ikdZqh+ZYAXQk8WcRyP4Pgp0qAtdbPbbjBXUxxLC8OHce8HwIyOavW0V0FztsFfTnMczOkBxB4g+IORyWlVR6rtYZFWfoNe++UvdJD448ubd3pl6LaUL1p2P522i607Mz0rcSY3uj4+m/yypovxzQ5pa4AtIwQeK12PLHBwXVXS3R3KkfTSZOHodx6FeeFsW2snt9fDW0zujLC8OafY+B3Lp6aWV1kvckDWn5aT9yB38p4eY3eh4riKXBD248V53ngmoKkxv8AC9h/kbx9Qr9s1wgulsgr6c9SZuccWniD5HIW2qt1V3z5O4OtNQ/EFUcxE9mTu5jZ5gd6tJRU0fZuwV+aPXdt2oWz/uGxw5j75hfjgHNLXAEEYIPFUrptZDZL3JCxp+Wl/cgP8p7PmDs9O9XWuBp1ZBe7I9kbQaqDMkB4k8W8x+cdy+6eTUdtyK0dLbL8UoSWD5jNrefEdfqAqWRfpBBwRghfilFQ6IiIiIiIiyjY+SRscbS97yGtaBkkncFd2h9mZZLJFSbDM7rzuHF59hu5KD6qbK2rr33edoMVKejEDxkI38gfUjuVoLQqpMTqBW3oDZeyiNfKNrtjeQ3nqf4HNERFpqx0RERERERERERFhNHHNC+GVgfG9pa5pGQQd4VIaWWd9kvU1GcmL74XHtMO7nw5K8lGdY1lbdbE+dgAqaQGWMk4y3tN9BnzAWxTyajsDkVyGmNl+JURkYPmR7RzG8e45jmqdUx1daTwWd09HcZXMo5OuxwaXdB/HYNuCP7eKhyKRewPGBVN224z22pbUQHxDjkeRVyfrjRn+IO/oP8A8J+uNGf4g7+g/wDwqbRa/dGc11n+Q7n/AKGejv8AsrF06vmjN8sro4a0mrhPTgPwXjJ4tyRuI/OFXSIs8cYjGAXMXe7S3Wft5mtDsMPCCMcOOJO1ZMe6N7XscWuactIOCD3q7dDby292SKpJHx2ftztHB44+R381SCker68vtN/jY7pGnqiIpGjbtJ6ruRPoSsdRHrt5hTGiF6Ntrg15+XJsPI7j0+hKuVERRavZVRrPsf0+6/UoGYpqtxLsbmycfXf6qHK+dILZDd7TPQTYAkb1XY+xw3H1VFVUMlNUy08oAkieWOwcjIOCpKmk124HMKkdNbL3Ct7eMeCTE+R3j3H4XzREWyuLREREUk1fXz6NegyZ+KSpxHLk7Gnsu5Z9CVci87q3dWt9+qWcUc781dIA05O17Oy72Pl4rSq4v3hWfoBe8CbdKebfce46qVoiLRVpoiIiIiIiIiIiIoPrVvnytC2z078TVA6UxB2tj7uZ/APepfda6C226euqXYihYXHvPcB4k7FRV2rp7ncp66oOZJn9IgbgOAHgBgLZpo9Z2scguG04vfcqTusZ8cn8N3+uXqtVEVk6ttGKV9sdcrpSRTmo2QslZ0g1g7WDxJ/A8VvSSCNuJVWWa0TXaqFPDs2YknID+7FWyK9f0/Yv4PQf+dv+E/T9i/g9B/52/wCFr98bwXX/AOOav/eb6FUUisLWd9GttJFbqK20cVXPh7nshaHMYDwI4kj0BVerZjfrtxwXG3e2/DKo0xeHEZ4bjwRTjVVY/mq513qGZhpz0YQRsdJ38h+SO5RC10U9xuEFDTN6Usz+i3uHeT4AbeSvW0UEFstsFBTjEcLOiDxJ4k+JOSsFTLqt1RmV0ug9k77V96kHgj/l270z9OK2kRfj3NY0ucQ1oGSSdgCjldOS4Gnl8Flsj3ROxVz5jgHEHi7kPzhUudpyV29NL06+XuSoa4/LR/twNP8AxHHzO/0HBcRSkEeo3bmqF0rvXxWuJYfls2N9z1+mCIiLOuYRERERdLRu6y2W8Q10WS1pxIwdth3j/eIC5qL8IBGBWWCeSnlbLGcHNOIPML0JSzxVNNHUQPD4pWh7HDiDtC+ir3VPfMtfY6h+0Zkpie7e5vv6qwlESMLHYL0RZbpHdKNlSzM5jgRmPtywRERfClURERERFyNLrwyyWSasyDMepA09p53chv5L9aC44BYKmojpoXTSnBrRiVCNat8+YrG2anfmKA9Kcg/c/gOQ/J8FBVlLI+WV8sry973FznE5JJ3krFS8bAxoAXna73KS51b6mTfkOA3BdjRGzPvd6ipMEQt687hwYN/M7uau6KNkUbYo2NYxgDWtaMAAbgo7q+sf0ayNdMzFXU4klzvaOy3kPySpIo6ol13bMgrj0PsnwyiD5B8x+08huHTfzKLXuVZBb6CatqXdGKFhc4+w8TuWwq01r3z41Qyy07+pEQ+oI4u4N5DbzHcviKPtHYKUv12ZaqJ9Qc8mjiTl9zyCh15uE90uc9fUHryuzjg0cAPIYC00XW0Us8l7vUNE3Ii++Zw7LBv58OalSQ0cgqAjZPXVIaPE959SSpvqpsZgpX3qoZiScdCAEbmcXcz+B4qdrCGKOGFkMTAyNjQ1rQMAAbgs1EyPL3FxXoW0WyO2UbKZm7M8TvP93bEUL1p3z5K3C1U78T1TcyEb2x//AHd5AqW3CrgoKGasqXdGKFhc4+XDzVF3u4z3W6T19QevK7IHBo4AeQWamj1nYnILm9N713Gj7tGfHJs8m7z1yHXgtJERSSpRERERERERERERERfaiqZqOriqqd5ZLE8PYe4hXno9dIbxaYK+HA6Yw9ufscN4VDKX6sb59Ou3yE78U1WQBk7GScDz3enctapi124jMLs9C738PrOwkPy5Nnkdx9j+FbKIijVd6IiIiKnNYV8+sXsshf0qSlzHFjc49p3M/gBTnWRfPpVm+VgfirqwWNwdrGdp3sPPwVQrepI/3lVZp/e8SLdEebvYe56IpXq2sf1S8irnZmlpCHuyNj39lvufLxUYpoZaiojp4WF8kjgxjRxJOAFeOjNpistnhoY8FwHSleB97zvPsPABZamTUbgMyoHQyyfEa3tZB8uPaeZ3D3P5XTREUYrxXL0qu8dkss1a7Bkx0YWntPO4e58AVR08sk875pnl8kji57jvJO0lSXWNfPq16MED80lISxmNzndp3sPLxUXUnTx6jcTmVRmmV7+JVvZxn5cewczvPsOQ5Lri1dWP6RZRLOzo1dVh8mRta3st9/MlQXVzY/q16E87M0lIQ9+dzndlvufAeKuBYauT9gXRaAWXO4yjk33PsOqIi5mlF2jstmmrn4LwOjEw9p53D3PgCtMAk4BWXUTx08TpZDg1oxPRQnWxfPiTsslO/qR4fUEcXdlvLfzHcoAvpUTSVE8k8zy+SRxe9x4knJK+al42BjcAvO95ucl0rH1L9+Q4DcP7vRERfai0RERERERERERERERFc+gV8+tWRpldmrp8Rzd57ncx+QVIVSGh16fY73FUkn5d/UnaOLDx8xv/8A1XdG9kjGyMcHMcAWuByCO9RdRHqO2ZFXtohe/idEGyH5jNh58D138wV+rComjp4JJ5nhkUbS97juAAySs1ANa98+HCyyU7+u/D6gg7m8G89/p3rHGwvdgFMXm6R2ujfUv3ZDidw/u5QnSe7S3q8zV0mQwnoxMPYYNw9z4krmIt2x26e7XWCgg+6V2C7g1vE8gpbY0cgvPTnT11RifE959SSpnqnsfTlffKhnVZmOnyN57TuW7me5WQvhQUkFDRQ0dMzoRQsDGjwHuvuoqWQyOxXoGxWplqomU7c8yeJOf2HIIozrEvn0iymKB/Rq6rLI8Ha0dp3t5kKRzSRwwvmleGRsaXOcTgADeVSGld4kvd6mrTkRfZC09lg3c+PNZKePXdicgojTG9/DaIxxn5kmwchvPsOZ5LkrOGKSaZkMTC+SRwaxo3knYAsFPdVFj+NUuvVQzqQkspweLuLuQ2eZ8FISPDG6xVP2e2SXOsZTM35ngN5/u9TbRW0R2Syw0TcGT75nDtPO8+w8AF1URRBJJxK9EU9PHTRNhjGDWjAdEVQ6yb59UvJpYH5paQljcHY9/ad7Dy8VOtYV8+j2RzIX9GrqcxxY3tHadyH5IVNrcpI/3lVtp/esALdEebvYe56IiIt5VaiIiIiIiIiIiIiIiIiIiIitDVXfPmqF1nqH5mpx0oSTtdH3cv7Edyq9bVprp7ZcoK6nOJIX9IdxHEHwIyFilj7RuCm9H7u601rZx+nJw4g5+mY8leN8uUFptc9fUfbE3Ibna53Bo8yqLuFXPXVs1ZUv6cszy5x/3gpLrA0njvj6anoi8UkbQ9wcMEyEcfLd6+Ciax00Wo3E5lTOmd+bcqoQwuxjZlwJ3n2HXiitXVdY/kbYbpOzFRVt6md7Y+Hrv9FW1mFCbpT/AFJ7mUgfmUtaSSBtxs793NWm3TvRtrQ1s8wAGABCdi/KkuI1WhZdCY6GGd1ZVytaW7GgkDbvPQbB14KUoov+vdHP+xN/RcsZdPtHmxOcyWd7gCWt+ERk9y0uxfwVoHSG1AY94Z/yC5ute+fApWWWnf8AuTAPnIO5nBvM/geKrNbNzrZ7jcJ66pd0pZnlzu4dwHgBsWspOKPs24Kj7/dn3WtdOf05NHADL7nmVt2egnulzgoKcfuTO6OeDRxJ8hkq9bZRQW+ghoqZvRihaGt8fE+J3qsNXl2sVlbUVdwlkFXIegwCMuDWbDvHef7BS/8AXujn/Ym/ouWrUh73YAbAu70LfbbdTGeeZokfuJGIAyHXM9OClCxleyKN0kjgxjAXOcTgADeSoz+vdHP+xN/Rco/p1plR3C0fIWmSQ/GP7zy0tw0cB5/2HisDYHk4YLq63Si201O+VkzXEDYAQSTuCi2l14fe73NWbRCOpC08GDdzO/muQiKUaA0YBUPU1ElTM6aU4uccSiIi/VgREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREX/9k=';
+
+function hiveLogo(size = 16) {
+  const h = Math.round(size * (190/219)); // maintain 219:190 aspect ratio
+  return `<span class="hive-logo"><img src="data:image/jpeg;base64,${HIVE_LOGO_B64}" width="${size}" height="${h}" style="display:inline-block;vertical-align:middle;image-rendering:crisp-edges;" alt="HIVE"/></span>`;
 }
 
 // ── HIVE PRICE ──
@@ -1372,6 +1367,12 @@ let fishElements = [];
 
 // ── INIT ──
 window.addEventListener('load', () => {
+  // Set Hive logo on all static img elements
+  const logoSrc = 'data:image/jpeg;base64,' + HIVE_LOGO_B64;
+  ['hive-header-logo','wallet-hive-logo','wallet-hp-logo'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.src = logoSrc;
+  });
   buildAquariumDecor();
   spawnBubbles();
   spawnParticles();
@@ -2450,7 +2451,7 @@ async function loadBalance(username) {
     const data = await res.json();
     if (data.result && data.result[0]) {
       const acc = data.result[0];
-      document.getElementById('hive-balance').innerHTML = hiveLogo(14, '#e31337') + ' ' + acc.balance;
+      document.getElementById('hive-balance').innerHTML = hiveLogo(14) + ' ' + acc.balance;
       document.getElementById('hive-balance').style.display = 'block';
       window._accountData = {
         hiveAmt: parseFloat(acc.balance),
@@ -2523,13 +2524,13 @@ function getHPFromAccount() {
 let shopMainTab = 'fish', shopSubTab = 'classics', shopRarityFilter = 'all';
 
 const SHOP_SUBTABS = {
-  fish:    [{ id:'classics',label:'🐠 Clássicos'},{ id:'exotic',label:'🦈 Exóticos'},{ id:'special',label:'✨ Especiais'}],
-  decor:   [{ id:'plants_art',label:'🌱 Plantas'},
-            { id:'rocks',     label:'&#x1F48E; Rochas'},
-            { id:'logs',      label:'🟫 Troncos'},
-            { id:'ornaments', label:'🏺 Ornamentos'},
-            { id:'substrate', label:'◉ Substrato'},
-            { id:'lighting',  label:'💡 Iluminação'}],
+  fish:    [{ id:'classics',label:'Clássicos'},{ id:'exotic',label:'Exóticos'},{ id:'special',label:'Especiais'}],
+  decor:   [{ id:'plants_art',label:'Plantas'},
+            { id:'rocks',     label:'Rochas'},
+            { id:'logs',      label:'Troncos'},
+            { id:'ornaments', label:'Ornamentos'},
+            { id:'substrate', label:'Substrato'},
+            { id:'lighting',  label:'Iluminação'}],
   aquarium: [],
 };
 
@@ -2591,7 +2592,7 @@ function renderShopGrid() {
         <h3>${decor.name}</h3>
         <div class="rarity ${decor.rarity}">${rl}</div>
         <p class="desc">${decor.desc}</p>
-        <div class="price">${hiveLogo(14,'#e31337')} ${decor.price} HIVE <span class="price-sub" data-hive="${decor.price}">${hiveUsdPrice?'≈ $'+(decor.price*hiveUsdPrice).toFixed(2)+' USD':'...'}</span></div>
+        <div class="price">${hiveLogo(14)} ${decor.price} HIVE <span class="price-sub" data-hive="${decor.price}">${hiveUsdPrice?'≈ $'+(decor.price*hiveUsdPrice).toFixed(2)+' USD':'...'}</span></div>
         <button class="btn-buy" id="btn-${decor.id}" onclick="buyDecor('${decor.id}')" ${owned?'disabled':''}>
           ${owned?'✓ Já seu':'🛒 Comprar'}</button>`;
       grid.appendChild(card);
@@ -2619,7 +2620,7 @@ function renderShopGrid() {
       <h3>${fish.name}</h3>
       <div class="rarity ${fish.rarity}">${rl}</div>
       <p class="desc">${fish.desc}</p>
-      <div class="price">${hiveLogo(14,'#e31337')} ${fish.price} HIVE <span class="price-sub" data-hive="${fish.price}">${hiveUsdPrice?'≈ $'+(fish.price*hiveUsdPrice).toFixed(2)+' USD':'...'}</span></div>
+      <div class="price">${hiveLogo(14)} ${fish.price} HIVE <span class="price-sub" data-hive="${fish.price}">${hiveUsdPrice?'≈ $'+(fish.price*hiveUsdPrice).toFixed(2)+' USD':'...'}</span></div>
       <button class="btn-buy" id="btn-${fish.id}" onclick="buyFish('${fish.id}')" ${owned?'disabled':''}>
         ${owned?'✓ Já no aquário':'🛒 Comprar'}</button>`;
     grid.appendChild(card);
