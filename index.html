@@ -187,18 +187,25 @@
   .fish {
     position: absolute;
     cursor: pointer;
-    transition: filter 0.3s;
-    animation: fishSwim linear infinite;
     will-change: transform;
+    transition: filter 0.3s;
   }
   .fish:hover { filter: brightness(1.4) drop-shadow(0 0 12px rgba(0,212,255,0.8)); }
-  .fish svg { display: block; }
-  @keyframes fishSwim {
-    0%   { transform: translateX(0) translateY(0); }
-    25%  { transform: translateX(var(--tx1)) translateY(var(--ty1)); }
-    50%  { transform: translateX(var(--tx2)) translateY(var(--ty2)); }
-    75%  { transform: translateX(var(--tx3)) translateY(var(--ty3)); }
-    100% { transform: translateX(0) translateY(0); }
+  .fish svg { display: block; transition: transform 0.4s ease; }
+
+  /* Rarity glow effects */
+  .fish.rare svg    { filter: drop-shadow(0 0 6px rgba(160,100,255,0.5)); }
+  .fish.legendary svg { filter: drop-shadow(0 0 12px rgba(255,180,0,0.7)); }
+
+  /* Jellyfish specific bob */
+  @keyframes jellybob {
+    0%,100% { transform: translateY(0) scaleY(1); }
+    50%     { transform: translateY(-8px) scaleY(0.95); }
+  }
+  /* Seahorse hover */
+  @keyframes seabob {
+    0%,100% { transform: rotate(-5deg); }
+    50%     { transform: rotate(5deg); }
   }
 
   /* Fish tooltip */
@@ -821,57 +828,230 @@ function spawnParticles() {
   }
 }
 
-// ── FISH IN AQUARIUM ──
+// ── FISH MOVEMENT ENGINE ──
+let fishInstances = []; // { el, fishId, rarity, x, y, vx, vy, facing, behavior, timer, scale, bobPhase, wobble }
+let animFrameId = null;
+
+const AQ_BOUNDS = () => {
+  const aq = document.getElementById('aquarium');
+  return { w: aq.clientWidth, h: aq.clientHeight };
+};
+
+// Behavior definitions per rarity
+const BEHAVIORS = {
+  common: [
+    { name: 'cruise',    desc: 'Nada em linha reta suavemente' },
+    { name: 'wander',    desc: 'Deriva devagar em curvas' },
+    { name: 'zigzag',    desc: 'Ziguezague leve' },
+  ],
+  rare: [
+    { name: 'cruise',    desc: 'Nada em linha reta' },
+    { name: 'wander',    desc: 'Deriva em curvas amplas' },
+    { name: 'zigzag',    desc: 'Ziguezague rápido' },
+    { name: 'patrol',    desc: 'Patrulha horizontal' },
+  ],
+  legendary: [
+    { name: 'cruise'   },
+    { name: 'wander'   },
+    { name: 'zigzag'   },
+    { name: 'patrol'   },
+    { name: 'spiral'   },
+    { name: 'dash'     },
+  ],
+};
+
+function pickBehavior(rarity) {
+  const list = BEHAVIORS[rarity] || BEHAVIORS.common;
+  return list[Math.floor(Math.random() * list.length)].name;
+}
+
 function spawnFish(fishId, opts = {}) {
   const catalog = FISH_CATALOG.find(f => f.id === fishId);
   if (!catalog) return;
   const aq = document.getElementById('aquarium');
+  const { w, h } = AQ_BOUNDS();
 
   const fishEl = document.createElement('div');
-  fishEl.className = 'fish';
+  fishEl.className = 'fish ' + catalog.rarity;
   fishEl.dataset.id = fishId;
 
-  // Random position (avoid bottom 15% for sand)
-  const startX = 5 + Math.random() * 80;
-  const startY = 10 + Math.random() * 60;
-  const dur = 18 + Math.random() * 20;
-
-  // Random swim path offsets
-  const tx1 = (Math.random() - 0.5) * 200;
-  const ty1 = (Math.random() - 0.5) * 80;
-  const tx2 = (Math.random() - 0.5) * 300;
-  const ty2 = (Math.random() - 0.5) * 120;
-  const tx3 = (Math.random() - 0.5) * 150;
-  const ty3 = (Math.random() - 0.5) * 80;
-
-  const scale = 0.7 + Math.random() * 0.5;
-  const isLeft = Math.random() > 0.5;
-
-  fishEl.style.cssText = `
-    left:${startX}%;top:${startY}%;
-    --tx1:${tx1}px;--ty1:${ty1}px;
-    --tx2:${tx2}px;--ty2:${ty2}px;
-    --tx3:${tx3}px;--ty3:${ty3}px;
-    animation-duration:${dur}s;
-    animation-delay:-${Math.random() * dur}s;
-    transform:${isLeft ? 'scaleX(-1)' : ''};
-    z-index:10;
-  `;
-
+  const scale = 0.7 + Math.random() * 0.45;
   fishEl.innerHTML = catalog.svg(scale) +
     `<div class="fish-tooltip">${catalog.name} · ${opts.owner || currentUser}</div>`;
 
-  fishEl.addEventListener('click', () => {
-    showToast('🐠 ' + catalog.name, catalog.desc, false);
-  });
-
+  fishEl.style.cssText = `left:0;top:0;z-index:10;position:absolute;`;
+  fishEl.addEventListener('click', () => showToast('🐠 ' + catalog.name, catalog.desc, false));
   aq.appendChild(fishEl);
+
+  const startX = 0.05 * w + Math.random() * 0.85 * w;
+  const startY = 0.08 * h + Math.random() * 0.62 * h;
+
+  // Speed by rarity
+  const speeds = { common: 0.4, rare: 0.65, legendary: 1.1 };
+  const spd = (speeds[catalog.rarity] || 0.5) * (0.8 + Math.random() * 0.5);
+  const angle = Math.random() * Math.PI * 2;
+
+  const instance = {
+    el: fishEl,
+    fishId,
+    rarity: catalog.rarity,
+    x: startX, y: startY,
+    vx: Math.cos(angle) * spd,
+    vy: Math.sin(angle) * spd * 0.4,
+    facing: 1, // 1 = right, -1 = left
+    behavior: pickBehavior(catalog.rarity),
+    behaviorTimer: Math.random() * 300,
+    behaviorTick: 0,
+    scale,
+    bobPhase: Math.random() * Math.PI * 2,
+    wobble: 0,
+    wobbleDir: 1,
+    dashCooldown: 0,
+    spiralAngle: Math.random() * Math.PI * 2,
+    patrolDir: Math.random() > 0.5 ? 1 : -1,
+    idleTimer: 0,
+  };
+
+  fishInstances.push(instance);
   fishElements.push(fishEl);
   updateHUD();
+
+  if (!animFrameId) startFishLoop();
+}
+
+function startFishLoop() {
+  let last = performance.now();
+  function loop(now) {
+    const dt = Math.min((now - last) / 16.67, 3); // normalize to ~60fps, cap at 3x
+    last = now;
+    updateFish(dt);
+    animFrameId = requestAnimationFrame(loop);
+  }
+  animFrameId = requestAnimationFrame(loop);
+}
+
+function updateFish(dt) {
+  const { w, h } = AQ_BOUNDS();
+  const FLOOR = h * 0.85; // sand level
+  const CEIL  = h * 0.07;
+  const LEFT  = w * 0.01;
+  const RIGHT = w * 0.97;
+
+  fishInstances.forEach(f => {
+    f.behaviorTick += dt;
+    f.bobPhase += 0.025 * dt;
+    f.dashCooldown = Math.max(0, f.dashCooldown - dt);
+
+    // ── Behavior logic ──
+    switch (f.behavior) {
+
+      case 'cruise':
+        // Smooth straight swim, occasional gentle vertical drift
+        f.vy += (Math.sin(f.bobPhase * 0.3) * 0.008) * dt;
+        f.vy *= 0.97;
+        break;
+
+      case 'wander': {
+        // Slow random steering
+        const turn = (Math.random() - 0.5) * 0.04 * dt;
+        const spd = Math.sqrt(f.vx*f.vx + f.vy*f.vy);
+        const ang = Math.atan2(f.vy, f.vx) + turn;
+        f.vx = Math.cos(ang) * spd;
+        f.vy = Math.sin(ang) * spd * 0.5;
+        break;
+      }
+
+      case 'zigzag':
+        // Sharp direction changes on a timer
+        if (f.behaviorTick > 60 + Math.random() * 80) {
+          f.vy = (Math.random() - 0.5) * 1.2;
+          f.behaviorTick = 0;
+        }
+        break;
+
+      case 'patrol':
+        // Horizontal patrol, turns around at edges automatically
+        f.vy *= 0.92;
+        if (f.x > RIGHT - 60) { f.vx = -Math.abs(f.vx); }
+        if (f.x < LEFT  + 60) { f.vx =  Math.abs(f.vx); }
+        break;
+
+      case 'spiral': {
+        // Circular motion
+        f.spiralAngle += 0.012 * dt;
+        const r = 80;
+        const spd2 = Math.sqrt(f.vx*f.vx + f.vy*f.vy) || 0.8;
+        f.vx = Math.cos(f.spiralAngle) * spd2;
+        f.vy = Math.sin(f.spiralAngle) * spd2 * 0.45;
+        break;
+      }
+
+      case 'dash':
+        // Bursts of speed then glides
+        if (f.dashCooldown === 0 && f.behaviorTick > 120) {
+          const boost = 4 + Math.random() * 3;
+          f.vx *= boost;
+          f.vy *= 0.5;
+          f.dashCooldown = 80 + Math.random() * 60;
+          f.behaviorTick = 0;
+        }
+        // Slow down after dash
+        if (f.dashCooldown > 0) {
+          f.vx *= 0.975;
+        }
+        break;
+    }
+
+    // Behavior change on timer (random interval per rarity)
+    const changeEvery = { common: 500, rare: 380, legendary: 250 };
+    if (f.behaviorTick > (changeEvery[f.rarity] || 400) + Math.random() * 200) {
+      f.behavior = pickBehavior(f.rarity);
+      f.behaviorTick = 0;
+    }
+
+    // Speed cap by rarity
+    const maxSpeeds = { common: 1.2, rare: 1.8, legendary: 3.5 };
+    const maxSpd = maxSpeeds[f.rarity] || 1.5;
+    const curSpd = Math.sqrt(f.vx*f.vx + f.vy*f.vy);
+    if (curSpd > maxSpd) { f.vx = (f.vx/curSpd)*maxSpd; f.vy = (f.vy/curSpd)*maxSpd; }
+
+    // Min speed (don't let fish completely stop)
+    const minSpd = 0.15;
+    if (curSpd < minSpd && curSpd > 0) { f.vx = (f.vx/curSpd)*minSpd; f.vy = (f.vy/curSpd)*minSpd; }
+    if (curSpd === 0) { f.vx = minSpd; }
+
+    // Move
+    f.x += f.vx * dt;
+    f.y += f.vy * dt;
+
+    // Bounce off walls smoothly
+    if (f.x < LEFT)  { f.x = LEFT;  f.vx =  Math.abs(f.vx) * 0.8; }
+    if (f.x > RIGHT) { f.x = RIGHT; f.vx = -Math.abs(f.vx) * 0.8; }
+    if (f.y < CEIL)  { f.y = CEIL;  f.vy =  Math.abs(f.vy) * 0.7; }
+    if (f.y > FLOOR) { f.y = FLOOR; f.vy = -Math.abs(f.vy) * 0.7; }
+
+    // Bob (vertical sine wave on top of position)
+    const bobAmt = { common: 1.5, rare: 2.5, legendary: 4 }[f.rarity] || 2;
+    const bobY = Math.sin(f.bobPhase) * bobAmt;
+
+    // Facing: flip when changing horizontal direction
+    if (f.vx > 0.05)  f.facing =  1;
+    if (f.vx < -0.05) f.facing = -1;
+
+    // Tilt: lean slightly in direction of vertical movement
+    const tilt = Math.atan2(f.vy, Math.abs(f.vx)) * (180/Math.PI) * 0.35;
+    const flipTilt = f.facing === -1 ? -tilt : tilt;
+
+    // Apply transform
+    f.el.style.transform = `translate(${f.x}px, ${f.y + bobY}px) scaleX(${f.facing})`;
+    f.el.querySelector('svg').style.transform = `rotate(${flipTilt}deg)`;
+  });
 }
 
 function clearFish() {
-  fishElements.forEach(el => el.remove());
+  if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
+  fishInstances.forEach(f => f.el.remove());
+  fishInstances = [];
   fishElements = [];
 }
 
@@ -930,7 +1110,7 @@ async function loadMyFishFromChain(username) {
 
 // ── LOGIN ──
 async function loginWithKeychain() {
-  const username = document.getElementById('username-input').value.trim().replace('@','');
+  const username = document.getElementById('username-input').value.trim().replace('@','').toLowerCase();
   const errEl = document.getElementById('login-error');
   errEl.style.display = 'none';
 
