@@ -426,7 +426,10 @@
     box-shadow: 0 0 100px rgba(0,80,160,0.4);
     animation: cardIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both;
   }
-  .modal-panel.wide { max-width: 1100px; }
+  .modal-panel.wide {
+    max-width: 1100px;
+    height: 82vh; /* fixed height — same for all shop tabs */
+  }
   .modal-panel.narrow { max-width: 480px; }
   .modal-top {
     display: flex; align-items: center; justify-content: space-between;
@@ -437,7 +440,7 @@
     font-family: 'Cinzel Decorative', serif; font-size: 1.2rem; color: var(--glow);
   }
   .modal-subtitle { font-size: 0.78rem; color: var(--text-dim); margin-top: 3px; }
-  .modal-body { overflow-y: auto; flex: 1; }
+  .modal-body { overflow-y: auto; flex: 1; min-height: 0; }
   .close-btn {
     width: 34px; height: 34px; border-radius: 50%;
     background: rgba(255,80,80,0.1); border: 1px solid rgba(255,80,80,0.2);
@@ -497,7 +500,10 @@
   @media(max-width:900px){ .shop-grid { grid-template-columns: repeat(3, 1fr); } }
   @media(max-width:600px){ .shop-grid { grid-template-columns: repeat(2, 1fr); } }
   .shop-coming-soon {
-    grid-column: 1/-1; text-align: center; padding: 60px 20px; color: var(--text-dim);
+    grid-column: 1/-1; text-align: center; color: var(--text-dim);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 420px; /* matches approx 2 rows of fish cards so modal stays same size */
+    padding: 20px;
   }
   .shop-coming-soon .cs-icon { font-size: 3rem; margin-bottom: 12px; }
   .shop-coming-soon h3 { font-family: 'Cinzel Decorative', serif; font-size: 1rem; color: rgba(0,212,255,0.4); margin-bottom: 8px; }
@@ -2174,6 +2180,7 @@ function renderShopSubtabs() {
 }
 function renderShopFilterRow() {
   document.getElementById('shop-filter-row').style.display = shopMainTab === 'aquarium' ? 'none' : 'flex';
+  document.getElementById('shop-subtabs').style.display   = shopMainTab === 'aquarium' ? 'none' : 'flex';
 }
 function renderShopGrid() {
   const grid = document.getElementById('shop-grid');
@@ -2181,7 +2188,7 @@ function renderShopGrid() {
   const ro = { common:0, rare:1, epic:2, legendary:3 };
 
   if (shopMainTab === 'aquarium') {
-    grid.innerHTML = `<div class="shop-coming-soon"><div class="cs-icon">🔷</div><h3>Em Breve</h3><p>Novos aquários temáticos chegando em breve!</p></div>`;
+    grid.innerHTML = `<div class="shop-coming-soon"><div class="cs-icon">🌊</div><h3>Em Breve</h3><p>Novos aquários temáticos chegando em breve!</p></div>`;
     return;
   }
 
