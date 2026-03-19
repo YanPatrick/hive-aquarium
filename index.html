@@ -1116,6 +1116,11 @@ function spawnFish(fishId, opts = {}) {
     spiralAngle: Math.random() * Math.PI * 2,
     spiralCenterX: startX,
     spiralCenterY: startY,
+    // Special animation state
+    specialTimer: Math.random() * 1800, // offset so not all fish trigger at once
+    specialActive: false,
+    specialPhase: 0,
+    specialParticles: [],
   };
 
   // Glow colors per fish
@@ -1268,6 +1273,10 @@ function updateFish(dt) {
     if (f.y < CEIL)  { f.y = CEIL;  f.vy =  Math.abs(f.vy) * 0.7; }
     if (f.y > FLOOR) { f.y = FLOOR; f.vy = -Math.abs(f.vy) * 0.7; }
 
+    // ── Special animations ──
+    f.specialTimer += dt;
+    tickSpecialAnimation(f, dt);
+
     // Bob
     const bobAmt = { common: 1.5, rare: 2.5, legendary: 3.5 }[f.rarity] || 2;
     const bobY = Math.sin(f.bobPhase) * bobAmt;
@@ -1296,9 +1305,327 @@ function updateFish(dt) {
 
 function clearFish() {
   if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
-  fishInstances.forEach(f => f.el.remove());
+  fishInstances.forEach(f => {
+    f.specialParticles.forEach(p => p.el && p.el.remove());
+    f.el.remove();
+  });
   fishInstances = [];
   fishElements = [];
+}
+
+// ── SPECIAL ANIMATIONS ──
+// Triggered every ~30s per fish, each with a unique personality
+
+const SPECIAL_INTERVAL = 1800; // ~30s at 60fps
+
+function tickSpecialAnimation(f, dt) {
+  const aq = document.getElementById('aquarium');
+
+  // Tick existing particles
+  f.specialParticles = f.specialParticles.filter(p => {
+    p.life -= dt;
+    if (p.life <= 0) { p.el.remove(); return false; }
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vy -= p.buoyancy * dt; // bubbles rise
+    p.vx *= 0.98;
+    const t = 1 - p.life / p.maxLife;
+    const opacity = t < 0.1 ? t * 10 : t > 0.8 ? (1 - t) * 5 : 1;
+    const sz = p.size * (1 + t * p.grow);
+    p.el.style.transform = `translate(${p.x}px, ${p.y}px)`;
+    p.el.style.opacity = opacity * p.baseOpacity;
+    p.el.style.width  = sz + 'px';
+    p.el.style.height = sz + 'px';
+    return true;
+  });
+
+  // Trigger new special
+  if (!f.specialActive && f.specialTimer > SPECIAL_INTERVAL) {
+    f.specialTimer = 0;
+    f.specialActive = true;
+    f.specialPhase = 0;
+    triggerSpecial(f, aq);
+  }
+}
+
+function triggerSpecial(f, aq) {
+  switch (f.fishId) {
+
+    // ── PUFFERFISH: inflate over 1.5s, hold 2s, deflate 1.5s ──
+    case 'pufferfish': {
+      const svg = f.el.querySelector('svg');
+      const INFLATE_TICKS = 90, HOLD_TICKS = 120, DEFLATE_TICKS = 90;
+      let tick = 0;
+      f.vx *= 0.3; // slow down while inflating
+
+      const inflate = setInterval(() => {
+        tick++;
+        let scale;
+        if (tick <= INFLATE_TICKS) {
+          const t = tick / INFLATE_TICKS;
+          scale = f.baseScale * (1 + t * 0.7); // up to 1.7x size
+          // Spines extend — handled by CSS scale
+          svg.style.filter = `drop-shadow(0 0 ${t*18}px rgba(255,220,0,0.8)) drop-shadow(0 0 ${t*35}px rgba(255,180,0,0.4))`;
+        } else if (tick <= INFLATE_TICKS + HOLD_TICKS) {
+          scale = f.baseScale * 1.7;
+          // Emit spiky warning particles at peak
+          if (tick === INFLATE_TICKS + 10) {
+            for (let i = 0; i < 8; i++) {
+              const angle = (i / 8) * Math.PI * 2;
+              spawnParticleAt(f, aq, {
+                vx: Math.cos(angle) * 1.2, vy: Math.sin(angle) * 1.2,
+                color: 'rgba(255,220,50,0.9)', size: 5, life: 40, grow: 0.5,
+                buoyancy: 0, baseOpacity: 0.85
+              });
+            }
+          }
+        } else {
+          const t = (tick - INFLATE_TICKS - HOLD_TICKS) / DEFLATE_TICKS;
+          scale = f.baseScale * (1.7 - t * 0.7);
+          svg.style.filter = `drop-shadow(0 0 ${(1-t)*18}px rgba(255,220,0,0.8))`;
+          if (t >= 1) {
+            svg.style.filter = '';
+            f.specialActive = false;
+            clearInterval(inflate);
+          }
+        }
+        svg.style.transform = `scale(${scale / f.baseScale})`;
+        svg.style.transformOrigin = 'center center';
+      }, 16);
+      break;
+    }
+
+    // ── DRAGON: stop, charge glow, then blow fire bubbles ──
+    case 'dragon': {
+      const svg = f.el.querySelector('svg');
+      let tick = 0;
+      const origVx = f.vx, origVy = f.vy;
+      f.vx *= 0.1; f.vy *= 0.1; // nearly stop
+
+      // Phase 1: charge (60 ticks) → Phase 2: fire burst (emit 12 fire orbs over 80 ticks) → Phase 3: resume
+      const fire = setInterval(() => {
+        tick++;
+
+        if (tick <= 60) {
+          // Charge glow intensifies
+          const t = tick / 60;
+          svg.style.filter = `drop-shadow(0 0 ${8+t*30}px rgba(255,${Math.floor(100+t*155)},0,0.9)) brightness(${1+t*0.4})`;
+          // Slight vibration
+          const shake = Math.sin(tick * 0.8) * t * 3;
+          svg.style.transform = `translateX(${shake}px)`;
+        } else if (tick <= 60 + 100) {
+          // Fire burst — emit fire bubbles from mouth (left side of fish = mouth direction)
+          const t2 = tick - 60;
+          if (t2 % 8 === 0) { // every 8 ticks = ~8 bubbles total
+            const mouthDir = f.facing === 1 ? -1 : 1; // mouth is on left SVG side
+            for (let i = 0; i < 3; i++) {
+              spawnParticleAt(f, aq, {
+                vx: mouthDir * (1.5 + Math.random() * 2),
+                vy: (Math.random() - 0.5) * 1.2,
+                color: i === 0 ? 'rgba(255,80,0,0.9)' : i === 1 ? 'rgba(255,180,0,0.85)' : 'rgba(255,220,80,0.8)',
+                size: 8 + Math.random() * 10,
+                life: 60 + Math.random() * 40,
+                grow: 1.2, buoyancy: 0.04 + Math.random() * 0.04,
+                baseOpacity: 0.9,
+                isFireBubble: true,
+              });
+            }
+          }
+          svg.style.filter = `drop-shadow(0 0 ${38 - (t2/100)*30}px rgba(255,150,0,0.8)) brightness(${1.4 - (t2/100)*0.4})`;
+          svg.style.transform = '';
+        } else {
+          svg.style.filter = '';
+          svg.style.transform = '';
+          f.vx = origVx; f.vy = origVy;
+          f.specialActive = false;
+          clearInterval(fire);
+        }
+      }, 16);
+      break;
+    }
+
+    // ── JELLYFISH: pulse bioluminescence, release glow orbs upward ──
+    case 'jellyfish': {
+      const svg = f.el.querySelector('svg');
+      let tick = 0;
+      const pulse = setInterval(() => {
+        tick++;
+        const t = tick / 120;
+        if (tick <= 120) {
+          const glow = Math.sin(t * Math.PI);
+          svg.style.filter = `drop-shadow(0 0 ${8+glow*40}px rgba(200,80,255,0.9)) drop-shadow(0 0 ${20+glow*60}px rgba(180,40,255,0.5)) brightness(${1+glow*0.5})`;
+          // Emit floating orbs from tentacles
+          if (tick % 15 === 0) {
+            for (let i = 0; i < 3; i++) {
+              spawnParticleAt(f, aq, {
+                vx: (Math.random() - 0.5) * 0.8,
+                vy: -0.3 - Math.random() * 0.5,
+                color: `rgba(${200+Math.floor(Math.random()*55)},${100+Math.floor(Math.random()*80)},255,0.85)`,
+                size: 4 + Math.random() * 6,
+                life: 80 + Math.random() * 50,
+                grow: 0.3, buoyancy: 0.06,
+                baseOpacity: 0.85,
+              });
+            }
+          }
+        } else {
+          svg.style.filter = '';
+          f.specialActive = false;
+          clearInterval(pulse);
+        }
+      }, 16);
+      break;
+    }
+
+    // ── SEAHORSE: spin in a full circle, release sparkles ──
+    case 'seahorse': {
+      const svg = f.el.querySelector('svg');
+      let tick = 0;
+      const origVx = f.vx;
+      f.vx *= 0.15; f.vy = 0;
+      const spin = setInterval(() => {
+        tick++;
+        if (tick <= 120) {
+          const angle = (tick / 120) * 360;
+          svg.style.transform = `rotate(${angle}deg)`;
+          svg.style.transformOrigin = 'center center';
+          if (tick % 10 === 0) {
+            for (let i = 0; i < 2; i++) {
+              spawnParticleAt(f, aq, {
+                vx: (Math.random() - 0.5) * 1.5,
+                vy: -0.4 - Math.random() * 0.6,
+                color: `rgba(255,${180+Math.floor(Math.random()*75)},${50+Math.floor(Math.random()*100)},0.9)`,
+                size: 3 + Math.random() * 5, life: 50, grow: 0.2,
+                buoyancy: 0.05, baseOpacity: 0.9,
+              });
+            }
+          }
+        } else {
+          svg.style.transform = '';
+          f.vx = origVx;
+          f.specialActive = false;
+          clearInterval(spin);
+        }
+      }, 16);
+      break;
+    }
+
+    // ── ANGELFISH: graceful figure-8 shimmer with silver sparkles ──
+    case 'angelfish': {
+      const svg = f.el.querySelector('svg');
+      let tick = 0;
+      const origVx = f.vx, origVy = f.vy;
+      f.vx *= 0.4; f.vy = 0;
+      const shimmer = setInterval(() => {
+        tick++;
+        if (tick <= 100) {
+          const t = tick / 100;
+          const wave = Math.sin(t * Math.PI * 2) * 12;
+          svg.style.transform = `rotate(${wave}deg)`;
+          svg.style.transformOrigin = 'center center';
+          svg.style.filter = `drop-shadow(0 0 ${6+Math.abs(Math.sin(t*Math.PI*4))*18}px rgba(200,150,255,0.8)) brightness(${1+Math.abs(Math.sin(t*Math.PI*4))*0.4})`;
+          if (tick % 12 === 0) {
+            for (let i = 0; i < 3; i++) {
+              spawnParticleAt(f, aq, {
+                vx: (Math.random()-0.5)*1.2, vy: -0.5-Math.random()*0.5,
+                color: `rgba(230,200,255,0.9)`, size: 3+Math.random()*4,
+                life: 45, grow: 0.1, buoyancy: 0.04, baseOpacity: 0.9,
+              });
+            }
+          }
+        } else {
+          svg.style.transform = '';
+          svg.style.filter = '';
+          f.vx = origVx; f.vy = origVy;
+          f.specialActive = false;
+          clearInterval(shimmer);
+        }
+      }, 16);
+      break;
+    }
+
+    // ── CLOWNFISH: excited wiggle + bubble stream ──
+    case 'clownfish': {
+      const svg = f.el.querySelector('svg');
+      let tick = 0;
+      const wiggle = setInterval(() => {
+        tick++;
+        if (tick <= 80) {
+          const shake = Math.sin(tick * 0.6) * 8;
+          svg.style.transform = `rotate(${shake}deg)`;
+          svg.style.transformOrigin = 'center center';
+          if (tick % 10 === 0) {
+            spawnParticleAt(f, aq, {
+              vx: (Math.random()-0.5)*0.6, vy: -0.6-Math.random()*0.4,
+              color: 'rgba(200,240,255,0.8)', size: 4+Math.random()*4,
+              life: 60, grow: 0.4, buoyancy: 0.08, baseOpacity: 0.75,
+            });
+          }
+        } else {
+          svg.style.transform = '';
+          f.specialActive = false;
+          clearInterval(wiggle);
+        }
+      }, 16);
+      break;
+    }
+
+    // ── TANG: speed burst with blue streak trail ──
+    case 'tang': {
+      const origSpd = Math.sqrt(f.vx*f.vx + f.vy*f.vy);
+      f.vx *= 4; f.vy *= 0.5;
+      let tick = 0;
+      const streak = setInterval(() => {
+        tick++;
+        // Emit streak particles
+        if (tick <= 60) {
+          spawnParticleAt(f, aq, {
+            vx: -f.vx * 0.1 + (Math.random()-0.5)*0.3,
+            vy: (Math.random()-0.5)*0.5,
+            color: 'rgba(80,180,255,0.7)', size: 6+Math.random()*8,
+            life: 25, grow: 0.1, buoyancy: 0, baseOpacity: 0.7,
+          });
+          f.vx *= 0.97; // decelerate
+        } else {
+          f.specialActive = false;
+          clearInterval(streak);
+        }
+      }, 16);
+      break;
+    }
+
+    default:
+      f.specialActive = false;
+  }
+}
+
+function spawnParticleAt(f, aq, opts) {
+  const el = document.createElement('div');
+  const isFireBubble = opts.isFireBubble;
+  el.style.cssText = `
+    position:absolute; left:0; top:0; pointer-events:none; z-index:20;
+    width:${opts.size}px; height:${opts.size}px; border-radius:50%;
+    background:${isFireBubble
+      ? `radial-gradient(circle at 35% 35%, rgba(255,255,150,0.9), ${opts.color})`
+      : opts.color};
+    ${isFireBubble ? `border:1px solid rgba(255,200,0,0.5);` : ''}
+    box-shadow: 0 0 ${opts.size*0.8}px ${opts.color};
+  `;
+  aq.appendChild(el);
+
+  // Offset from fish center
+  const offX = f.x + (Math.random()-0.5) * 20;
+  const offY = f.y + (Math.random()-0.5) * 20;
+
+  const particle = {
+    el, x: offX, y: offY,
+    vx: opts.vx, vy: opts.vy,
+    size: opts.size, life: opts.life, maxLife: opts.life,
+    grow: opts.grow || 0, buoyancy: opts.buoyancy || 0,
+    baseOpacity: opts.baseOpacity || 0.8,
+  };
+  el.style.transform = `translate(${offX}px, ${offY}px)`;
+  f.specialParticles.push(particle);
 }
 
 function renderMyFish() {
