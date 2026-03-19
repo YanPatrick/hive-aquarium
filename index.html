@@ -1115,14 +1115,13 @@ async function buyFish(fishId) {
     btn.textContent = '🛒 Comprar';
   }, 60000);
 
-  // IMPORTANT: requestTransfer signature = (username, to, amount, currency, memo, callback)
-  // The 'enforce' boolean parameter causes silent failures in some Keychain versions — removed.
+  // Correct signature: requestTransfer(username, to, amount, memo, currency, callback)
   keychain.requestTransfer(
     currentUser,
     SHOP_ACCOUNT,
     catalog.price.toFixed(3),
-    'HIVE',
     catalog.memo,
+    'HIVE',
     async (txResponse) => {
       clearTimeout(transferTimeout);
       console.log('[Hive Aquarium] Transfer response:', txResponse);
