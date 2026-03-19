@@ -93,30 +93,57 @@
     overflow: hidden;
   }
 
-  /* Light rays */
+  /* Light rays — seamless loop using oversized element */
   .rays {
-    position: absolute; top: 0; left: 0; right: 0; height: 60%;
+    position: absolute; top: 0; left: -20%; width: 140%; height: 65%;
     background: repeating-linear-gradient(
-      -15deg,
-      transparent 0%, transparent 8%,
-      rgba(0,160,255,0.025) 8%, rgba(0,160,255,0.025) 12%
+      -18deg,
+      transparent 0%, transparent 7%,
+      rgba(0,170,255,0.018) 7%, rgba(0,170,255,0.018) 10%,
+      transparent 10%, transparent 14%,
+      rgba(0,200,255,0.012) 14%, rgba(0,200,255,0.012) 16%
     );
-    animation: rayMove 8s linear infinite;
+    animation: rayMove 18s linear infinite;
     pointer-events: none;
   }
-  @keyframes rayMove { 0%{transform:translateX(-5%)} 100%{transform:translateX(5%)} }
-
-  /* Caustics overlay */
-  .caustics {
-    position: absolute; inset: 0; pointer-events: none; opacity: 0.06;
-    background: radial-gradient(ellipse 200px 80px at 20% 20%, rgba(0,212,255,1) 0%, transparent 70%),
-                radial-gradient(ellipse 150px 60px at 60% 15%, rgba(0,212,255,1) 0%, transparent 70%),
-                radial-gradient(ellipse 180px 70px at 80% 25%, rgba(0,212,255,1) 0%, transparent 70%);
-    animation: causticShift 6s ease-in-out infinite alternate;
+  /* Key: start and end at same visual position so loop is invisible */
+  @keyframes rayMove {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(14.28%); } /* exactly one stripe-repeat width */
   }
-  @keyframes causticShift {
-    0% { transform: scale(1) translateX(0); }
-    100% { transform: scale(1.05) translateX(20px); }
+
+  /* Caustics — multiple independent layers, no hard start/end */
+  .caustics {
+    position: absolute; inset: 0; pointer-events: none;
+  }
+  .caustics::before, .caustics::after {
+    content: ''; position: absolute; inset: 0;
+    border-radius: 50%;
+  }
+  .caustic-layer {
+    position: absolute; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse 180px 60px at 15% 12%, rgba(0,200,255,0.05) 0%, transparent 70%),
+      radial-gradient(ellipse 130px 50px at 45% 8%,  rgba(0,220,255,0.04) 0%, transparent 70%),
+      radial-gradient(ellipse 160px 55px at 75% 18%, rgba(0,200,255,0.045) 0%, transparent 70%),
+      radial-gradient(ellipse 100px 40px at 90% 10%, rgba(0,210,255,0.035) 0%, transparent 70%);
+    animation: caustic1 7s ease-in-out infinite alternate;
+  }
+  .caustic-layer2 {
+    position: absolute; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse 120px 45px at 30% 22%, rgba(0,230,255,0.035) 0%, transparent 70%),
+      radial-gradient(ellipse 150px 50px at 60% 14%, rgba(0,200,255,0.04) 0%, transparent 70%),
+      radial-gradient(ellipse 90px 35px at 85% 25%,  rgba(0,215,255,0.03) 0%, transparent 70%);
+    animation: caustic2 9s ease-in-out infinite alternate;
+  }
+  @keyframes caustic1 {
+    0%   { transform: translateX(0) translateY(0) scale(1); }
+    100% { transform: translateX(25px) translateY(8px) scale(1.04); }
+  }
+  @keyframes caustic2 {
+    0%   { transform: translateX(0) translateY(0) scale(1.02); }
+    100% { transform: translateX(-20px) translateY(12px) scale(0.98); }
   }
 
   /* Sand bottom */
@@ -209,13 +236,17 @@
     50%     { transform: rotate(5deg); }
   }
 
-  /* Fish tooltip */
+  /* Fish tooltip — sits above fish, never flips */
   .fish-tooltip {
-    position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    /* DO NOT use translateX here — counter-flip is applied via JS */
     background: rgba(2,18,38,0.95); border: 1px solid var(--border);
     border-radius: 8px; padding: 6px 12px; white-space: nowrap;
     font-size: 0.75rem; color: var(--glow); pointer-events: none;
     opacity: 0; transition: opacity 0.2s;
+    transform-origin: center bottom;
   }
   .fish:hover .fish-tooltip { opacity: 1; }
 
@@ -451,15 +482,14 @@
 <!-- AQUARIUM -->
 <div id="aquarium">
   <div class="rays"></div>
-  <div class="caustics"></div>
+  <div class="caustic-layer"></div>
+  <div class="caustic-layer2"></div>
   <div class="sand-bottom"></div>
   <div class="sand-top"></div>
   <div id="empty-state">
     <h2>Aquário Vazio</h2>
     <p>Visite a loja e compre seu primeiro peixe 🐟</p>
   </div>
-  <!-- Corals & decorations injected by JS -->
-  <!-- Fish injected by JS -->
 </div>
 
 <!-- FISH HUD -->
@@ -756,73 +786,134 @@ window.addEventListener('load', () => {
 function buildAquariumDecor() {
   const aq = document.getElementById('aquarium');
 
-  // ── PEBBLES / GRAVEL ──
-  const pebbleColors = ['#4a7a9b','#5b8fa8','#3d6b82','#6a9db5','#2d5a70','#4e8ca0','#7aafcb','#c8a96e','#b09060','#8a7050'];
-  for (let i = 0; i < 120; i++) {
+  // ── PEBBLES / GRAVEL — lots of them ──
+  const pebbleColors = [
+    '#4a7a9b','#5b8fa8','#3d6b82','#6a9db5','#2d5a70',
+    '#4e8ca0','#7aafcb','#c8a96e','#b09060','#8a7050',
+    '#5d9eb8','#3a7a95','#92c4d8','#d4b878','#a08048',
+    '#2e6680','#7bbdd4','#c0a060','#e8cc88','#6090a8'
+  ];
+  // Dense layer — tiny pebbles everywhere
+  for (let i = 0; i < 250; i++) {
     const p = document.createElement('div');
-    const sz = 4 + Math.random() * 10;
+    const sz = 3 + Math.random() * 9;
     const left = Math.random() * 100;
-    const bottom = 2 + Math.random() * 20;
+    const bottom = 1 + Math.random() * 30;
     const col = pebbleColors[Math.floor(Math.random() * pebbleColors.length)];
-    p.style.cssText = `position:absolute;bottom:${bottom}px;left:${left}%;width:${sz}px;height:${sz*0.65}px;background:${col};border-radius:50%;opacity:${0.6+Math.random()*0.4};`;
+    const bright = 0.5 + Math.random() * 0.6;
+    p.style.cssText = `position:absolute;bottom:${bottom}px;left:${left}%;width:${sz}px;height:${sz*0.62}px;background:${col};border-radius:50%;opacity:${bright};box-shadow:inset -1px -1px 2px rgba(0,0,0,0.3),inset 1px 1px 2px rgba(255,255,255,0.1);`;
+    aq.appendChild(p);
+  }
+  // Larger accent pebbles on top
+  for (let i = 0; i < 60; i++) {
+    const p = document.createElement('div');
+    const sz = 8 + Math.random() * 16;
+    const left = Math.random() * 100;
+    const bottom = 18 + Math.random() * 18;
+    const col = pebbleColors[Math.floor(Math.random() * pebbleColors.length)];
+    p.style.cssText = `position:absolute;bottom:${bottom}px;left:${left}%;width:${sz}px;height:${sz*0.6}px;background:radial-gradient(ellipse at 35% 30%,${col},${shadeColor(col,-30)});border-radius:50%;opacity:${0.7+Math.random()*0.3};`;
     aq.appendChild(p);
   }
 
+  // ── SUNKEN BOAT (right side) ──
+  const boat = document.createElement('div');
+  boat.style.cssText = `position:absolute;bottom:78px;right:3%;z-index:5;`;
+  boat.innerHTML = buildBoatSVG();
+  aq.appendChild(boat);
+
   // ── LOGS / DRIFTWOOD ──
   const logs = [
-    { x: 18, w: 120, h: 18, rot: -8,  col: '#3d2810' },
-    { x: 55, w: 90,  h: 14, rot:  5,  col: '#4a3218' },
-    { x: 73, w: 70,  h: 12, rot: -4,  col: '#382508' },
+    { x: 18, w: 130, h: 17, rot: -7,  col: '#3d2810' },
+    { x: 52, w: 100, h: 13, rot:  4,  col: '#4a3218' },
   ];
   logs.forEach(l => {
     const div = document.createElement('div');
-    div.style.cssText = `position:absolute;bottom:${88 + Math.random()*10}px;left:${l.x}%;width:${l.w}px;height:${l.h}px;background:linear-gradient(180deg,${l.col} 0%,#1a1008 100%);border-radius:${l.h/2}px;transform:rotate(${l.rot}deg);opacity:0.85;`;
-    // Log rings
-    div.innerHTML = `<div style="position:absolute;top:3px;left:${l.w*0.3}px;width:${l.h-6}px;height:${l.h-6}px;border-radius:50%;border:1.5px solid rgba(255,200,100,0.15);"></div>
-    <div style="position:absolute;top:5px;left:${l.w*0.3+2}px;width:${l.h-10}px;height:${l.h-10}px;border-radius:50%;border:1px solid rgba(255,200,100,0.1);"></div>`;
+    div.style.cssText = `position:absolute;bottom:${90+Math.random()*8}px;left:${l.x}%;width:${l.w}px;height:${l.h}px;background:linear-gradient(180deg,${shadeColor(l.col,20)} 0%,${l.col} 40%,#1a1008 100%);border-radius:${l.h/2}px;transform:rotate(${l.rot}deg);opacity:0.88;z-index:3;`;
+    div.innerHTML = `<div style="position:absolute;top:3px;left:${l.w*0.28}px;width:${l.h-5}px;height:${l.h-5}px;border-radius:50%;border:1.5px solid rgba(255,200,100,0.12);"></div>`;
     aq.appendChild(div);
   });
 
-  // ── AQUATIC PLANTS (varied colors like the photo) ──
+  // ── AQUATIC PLANTS ──
   const plants = [
-    { x: 3,  color: '#cc2222', h: 130, name: 'red' },
-    { x: 8,  color: '#cc2222', h: 100, name: 'red2' },
-    { x: 18, color: '#1a88ee', h: 140, name: 'blue' },
-    { x: 24, color: '#22aa44', h: 120, name: 'green' },
-    { x: 32, color: '#2244ee', h: 150, name: 'indigo' },
-    { x: 40, color: '#22cc44', h: 110, name: 'green2' },
-    { x: 52, color: '#aa22dd', h: 130, name: 'purple' },
-    { x: 60, color: '#22cc88', h: 100, name: 'teal' },
-    { x: 70, color: '#ee44aa', h: 140, name: 'pink' },
-    { x: 78, color: '#22aa44', h: 125, name: 'green3' },
-    { x: 86, color: '#ee44aa', h: 115, name: 'pink2' },
-    { x: 93, color: '#1a88ee', h: 135, name: 'blue2' },
+    { x: 2,  color: '#cc2222', h: 140 },
+    { x: 7,  color: '#dd3322', h: 105 },
+    { x: 13, color: '#1a88ee', h: 150 },
+    { x: 19, color: '#22aa44', h: 125 },
+    { x: 26, color: '#2244ee', h: 155 },
+    { x: 33, color: '#22cc44', h: 115 },
+    { x: 39, color: '#aa22dd', h: 140 },
+    { x: 45, color: '#22cc88', h: 105 },
+    { x: 51, color: '#ee44aa', h: 145 },
+    { x: 57, color: '#22aa44', h: 120 },
+    { x: 63, color: '#ee44aa', h: 118 },
+    { x: 69, color: '#1a88ee', h: 138 },
+    { x: 75, color: '#aa22dd', h: 108 },
+    { x: 80, color: '#cc2222', h: 130 },
   ];
-
-  plants.forEach((pl, i) => {
+  plants.forEach((pl) => {
     const div = document.createElement('div');
-    div.style.cssText = `position:absolute;bottom:88px;left:${pl.x}%;transform-origin:bottom center;animation:plantSway ${2.5+Math.random()*2}s ease-in-out infinite;animation-delay:${Math.random()*3}s;`;
+    div.style.cssText = `position:absolute;bottom:88px;left:${pl.x}%;transform-origin:bottom center;animation:plantSway ${2.5+Math.random()*2}s ease-in-out infinite;animation-delay:${Math.random()*3}s;z-index:4;`;
     div.innerHTML = buildPlantSVG(pl.color, pl.h);
     aq.appendChild(div);
   });
 
   // ── CORALS ──
   const corals = [
-    { x: 44, color: '#ff5566', h: 70 },
-    { x: 63, color: '#ff3344', h: 55 },
-    { x: 48, color: '#ff7744', h: 50 },
+    { x: 44, color: '#ff5566', h: 72 },
+    { x: 62, color: '#ff3344', h: 58 },
+    { x: 48, color: '#ff7744', h: 52 },
   ];
   corals.forEach(c => {
     const div = document.createElement('div');
-    div.style.cssText = `position:absolute;bottom:90px;left:${c.x}%;filter:drop-shadow(0 0 6px ${c.color}88);animation:plantSway ${3+Math.random()*2}s ease-in-out infinite;animation-delay:${Math.random()*2}s;`;
+    div.style.cssText = `position:absolute;bottom:90px;left:${c.x}%;filter:drop-shadow(0 0 6px ${c.color}88);animation:plantSway ${3+Math.random()*2}s ease-in-out infinite;animation-delay:${Math.random()*2}s;z-index:4;`;
     div.innerHTML = buildCoralSVG(c.color, c.h);
     aq.appendChild(div);
   });
 
-  // ── SAND/GRAVEL BASE ──
+  // ── SAND BASE ──
   const sandBase = document.createElement('div');
-  sandBase.style.cssText = `position:absolute;bottom:0;left:0;right:0;height:90px;background:linear-gradient(180deg,transparent 0%,rgba(40,30,15,0.6) 30%,rgba(20,15,8,0.95) 100%);pointer-events:none;`;
+  sandBase.style.cssText = `position:absolute;bottom:0;left:0;right:0;height:90px;background:linear-gradient(180deg,transparent 0%,rgba(40,30,15,0.5) 25%,rgba(20,15,8,0.95) 100%);pointer-events:none;z-index:2;`;
   aq.appendChild(sandBase);
+}
+
+function buildBoatSVG() {
+  return `<svg width="180" height="130" viewBox="0 0 180 130" style="overflow:visible">
+    <!-- Boat hull (tilted, sunken) -->
+    <g transform="rotate(-18, 90, 90)">
+      <!-- hull -->
+      <path d="M10 70 Q15 90 90 95 Q165 90 170 70 L155 55 Q90 60 25 55 Z"
+        fill="#5a3a1a" stroke="#3a2010" stroke-width="1.5"/>
+      <!-- hull planks -->
+      <path d="M30 58 Q90 63 150 58" stroke="#7a5030" stroke-width="1" fill="none" opacity="0.6"/>
+      <path d="M25 65 Q90 71 155 65" stroke="#7a5030" stroke-width="1" fill="none" opacity="0.6"/>
+      <!-- hull interior -->
+      <path d="M30 56 Q90 60 150 56 L145 50 Q90 54 35 50 Z" fill="#3a2510" opacity="0.8"/>
+      <!-- moss/algae on hull -->
+      <ellipse cx="50"  cy="75" rx="12" ry="5" fill="#1a6030" opacity="0.7"/>
+      <ellipse cx="90"  cy="80" rx="16" ry="5" fill="#226040" opacity="0.6"/>
+      <ellipse cx="130" cy="74" rx="10" ry="4" fill="#1a5028" opacity="0.7"/>
+      <!-- broken mast stump -->
+      <rect x="82" y="30" width="8" height="28" fill="#4a3018" rx="2"/>
+      <rect x="78" y="40" width="16" height="4"  fill="#5a3820" rx="1" transform="rotate(-5,86,42)"/>
+      <!-- barnacles -->
+      <circle cx="45"  cy="72" r="3" fill="#8a8060" opacity="0.8"/>
+      <circle cx="60"  cy="76" r="2" fill="#9a9070" opacity="0.7"/>
+      <circle cx="115" cy="74" r="2.5" fill="#8a8060" opacity="0.8"/>
+      <circle cx="135" cy="70" r="2" fill="#9a9070" opacity="0.7"/>
+      <!-- rope -->
+      <path d="M86 30 Q70 18 55 22 Q45 28 50 35" stroke="#8a6040" stroke-width="2" fill="none" stroke-dasharray="3,2" opacity="0.7"/>
+    </g>
+    <!-- Seaweed growing from boat -->
+    <g style="transform-origin:bottom center;animation:plantSway 2.8s ease-in-out infinite">
+      ${buildPlantSVG('#22aa55', 90)}
+    </g>
+    <g style="transform:translateX(35px);transform-origin:bottom center;animation:plantSway 3.2s ease-in-out infinite;animation-delay:0.5s">
+      ${buildPlantSVG('#1a8844', 70)}
+    </g>
+    <g style="transform:translateX(70px);transform-origin:bottom center;animation:plantSway 2.5s ease-in-out infinite;animation-delay:1s">
+      ${buildPlantSVG('#2acc66', 80)}
+    </g>
+  </svg>`;
 }
 
 function buildPlantSVG(color, h) {
@@ -1177,8 +1268,9 @@ function updateFish(dt) {
     // Translate to position, flip horizontally
     f.el.style.transform = `translate(${f.x}px, ${f.y + bobY}px) scaleX(${scaleXVal})`;
     f.el.querySelector('svg').style.transform = `rotate(${finalTilt}deg)`;
-    // Counter-flip tooltip so text is always readable
-    f.tooltip.style.transform = `translateX(-50%) scaleX(${scaleXVal * -1})`;
+    // Tooltip: always centered horizontally, always unflipped regardless of fish direction
+    // scaleXVal is -1 or 1; multiplying by scaleXVal cancels the parent flip
+    f.tooltip.style.transform = `translateX(-50%) scaleX(${scaleXVal})`;
   });
 }
 
