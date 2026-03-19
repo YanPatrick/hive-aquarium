@@ -76,11 +76,20 @@
     .logo { font-size: 0.85rem; }
   }
 
-  .header-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .header-right {
+    display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+    height: 36px; /* anchor all children to same height */
+  }
+  /* All 3 right-side pills share the same height and flex centering */
+  .hive-balance, .user-pill, .btn-logout {
+    height: 36px; box-sizing: border-box;
+    display: inline-flex; align-items: center;
+  }
   .hive-balance {
     font-size: 0.75rem; color: var(--gold);
     background: rgba(240,192,64,0.1); border: 1px solid rgba(240,192,64,0.3);
-    padding: 5px 12px; border-radius: 20px; display: none; white-space: nowrap;
+    padding: 0 12px; border-radius: 20px; white-space: nowrap;
+    gap: 5px; display: none;
   }
   .btn {
     cursor: pointer; border: none; border-radius: 8px;
@@ -95,16 +104,39 @@
   .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 30px rgba(0,170,255,0.5); }
   .btn-logout {
     background: rgba(255,80,80,0.15); color: #ff8080;
-    border: 1px solid rgba(255,80,80,0.3); padding: 6px 14px; font-size: 0.8rem;
+    border: 1px solid rgba(255,80,80,0.3); padding: 0 14px; font-size: 0.8rem;
+    display: none; border-radius: 8px;
   }
   .btn-logout:hover { background: rgba(255,80,80,0.25); }
   .user-pill {
-    display: none; align-items: center; gap: 8px;
+    display: none; gap: 8px;
     background: rgba(0,212,255,0.08); border: 1px solid var(--border);
-    border-radius: 24px; padding: 5px 14px; cursor: pointer;
+    border-radius: 24px; padding: 0 14px; cursor: pointer;
   }
-  .user-avatar { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--glow); object-fit: cover; }
+  .user-avatar { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--glow); object-fit: cover; }
   .user-name { font-size: 0.8rem; color: var(--glow); font-weight: 500; }
+
+  /* Fish HUD — now lives in the header next to the logo */
+  #fish-hud {
+    display: none; align-items: center; gap: 6px;
+    background: rgba(0,30,70,0.7); border: 1px solid var(--border);
+    border-radius: 20px; padding: 0 14px; height: 36px;
+    font-size: 0.78rem; color: var(--text-dim);
+    white-space: nowrap; backdrop-filter: blur(4px);
+  }
+  #fish-hud .fish-icon { display: flex; align-items: center; }
+  #fish-hud .fish-count-text { color: var(--glow); font-weight: 600; }
+  #fish-hud .fish-sep { color: var(--text-dim); opacity: 0.5; margin: 0 1px; }
+  #fish-hud .fish-total { color: var(--text-dim); font-size: 0.72rem; }
+  /* Mini XP bar inside hud */
+  #fish-hud .fish-bar-wrap {
+    width: 48px; height: 4px; background: rgba(0,212,255,0.12);
+    border-radius: 2px; overflow: hidden; flex-shrink: 0;
+  }
+  #fish-hud .fish-bar-fill {
+    height: 100%; background: linear-gradient(90deg,#0055aa,#00aaff);
+    border-radius: 2px; transition: width 0.5s ease;
+  }
 
   #aquarium {
     position: relative; width: 100%;
@@ -379,15 +411,6 @@
   #toast .toast-title { font-weight: 600; color: var(--glow); margin-bottom: 2px; }
   #toast.error .toast-title { color: #ff8080; }
 
-  #fish-hud {
-    position: fixed; bottom: 32px; left: 24px; z-index: 90;
-    background: rgba(2,18,38,0.85); border: 1px solid var(--border);
-    border-radius: 14px; padding: 10px 18px; font-size: 0.8rem;
-    color: var(--text-dim); display: none;
-    backdrop-filter: blur(4px);
-  }
-  #fish-hud span { color: var(--glow); font-weight: 600; }
-
   .modal-overlay {
     position: fixed; inset: 0; z-index: 150;
     background: rgba(0,5,15,0.82); backdrop-filter: blur(8px);
@@ -511,6 +534,9 @@
   .wallet-section-title { font-size: 0.78rem; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px; }
   .wallet-link { display: inline-flex; align-items: center; gap: 6px; color: var(--glow); font-size: 0.82rem; text-decoration: none; border: 1px solid var(--border); border-radius: 8px; padding: 8px 16px; transition: all 0.2s; }
   .wallet-link:hover { border-color: var(--glow); background: rgba(0,212,255,0.06); }
+  /* HP progress bar */
+  .hp-bar-track { background: rgba(0,212,255,0.1); border-radius: 4px; height: 8px; margin-top: 8px; overflow: hidden; width: 100%; }
+  .hp-bar-fill { height: 100%; background: linear-gradient(90deg,#0055aa,#00aaff); border-radius: 4px; transition: width 0.7s ease; width: 0%; }
 
   #edit-overlay {
     position: fixed; inset: 0; z-index: 140;
@@ -659,9 +685,18 @@
 
 <!-- HEADER -->
 <header>
-  <div class="logo">
-    <img id="hive-header-logo" src="hive-logo.png" width="22" height="19" style="display:inline-block;vertical-align:middle;margin-right:6px;image-rendering:crisp-edges;" alt="HIVE"/>
-    Hive <span>Aquarium</span>
+  <div style="display:flex;align-items:center;gap:12px;flex-shrink:0">
+    <div class="logo">
+      <img id="hive-header-logo" src="hive-logo.png" width="22" height="19" style="display:inline-block;vertical-align:middle;margin-right:6px;image-rendering:crisp-edges;" alt="HIVE"/>
+      Hive <span>Aquarium</span>
+    </div>
+    <!-- Fish counter lives here, next to the logo -->
+    <div id="fish-hud">
+      <span class="fish-icon"><img src="hive-logo.png" width="13" height="11" style="image-rendering:crisp-edges;vertical-align:middle" alt=""/></span>
+      <span class="fish-count-text"><span id="fish-count">0</span><span class="fish-sep">/</span><span id="fish-total">—</span></span>
+      <span class="fish-total">peixes</span>
+      <div class="fish-bar-wrap"><div class="fish-bar-fill" id="fish-bar-fill" style="width:0%"></div></div>
+    </div>
   </div>
   <nav class="nav-tabs" id="nav-tabs" style="display:none">
     <button class="nav-tab" onclick="openShop()" id="tab-shop">
@@ -671,7 +706,7 @@
       <span class="tab-icon">✏️</span><span class="tab-label">Edição</span>
     </button>
     <button class="nav-tab" onclick="openWallet()" id="tab-wallet">
-      <span class="tab-icon">👛</span><span class="tab-label">Carteira</span>
+      <span class="tab-icon">💳</span><span class="tab-label">Carteira</span>
     </button>
     <button class="nav-tab" onclick="openSettings()" id="tab-settings">
       <span class="tab-icon">⚙️</span><span class="tab-label">Configurações</span>
@@ -683,7 +718,7 @@
       <img class="user-avatar" id="user-avatar" src="" alt="">
       <span class="user-name" id="user-name-display">@username</span>
     </div>
-    <button class="btn btn-logout" id="logout-btn" style="display:none" onclick="logout()">Sair</button>
+    <button class="btn btn-logout" id="logout-btn" onclick="logout()">Sair</button>
   </div>
 </header>
 
@@ -727,8 +762,6 @@
 </div>
 
 <!-- FISH HUD -->
-<div id="fish-hud">🐠 <span id="fish-count">0</span> peixes no aquário</div>
-
 <!-- SHOP MODAL -->
 <div id="shop-overlay" class="modal-overlay">
   <div class="modal-panel wide">
@@ -763,7 +796,7 @@
   <div class="modal-panel narrow">
     <div class="modal-top">
       <div>
-        <div class="modal-title">👛 Carteira</div>
+        <div class="modal-title">💳 Carteira</div>
         <div class="modal-subtitle">Seus saldos na blockchain Hive</div>
       </div>
       <button class="close-btn" onclick="closeWallet()">✕</button>
@@ -1263,7 +1296,7 @@ function getDecorSlotsForHP(hp) {
   for (let i = 0; i < tiers.length; i++) {
     if (hp >= tiers[i].hp) { current = tiers[i]; nextTier = tiers[i+1]||null; }
   }
-  return { slots: current, nextTier };
+  return { slots: current, nextTier, currentTierHp: current.hp };
 }
 
 // ── STATE ──
@@ -1915,8 +1948,26 @@ function renderMyFish() {
 }
 
 function updateHUD() {
-  document.getElementById('fish-count').textContent = fishElements.length;
-  document.getElementById('fish-hud').style.display = currentUser ? 'block' : 'none';
+  const hud = document.getElementById('fish-hud');
+  const countEl = document.getElementById('fish-count');
+  const totalEl = document.getElementById('fish-total');
+  const barEl   = document.getElementById('fish-bar-fill');
+
+  const count = fishElements.length;
+  countEl.textContent = count;
+
+  // Compute total fish slots from HP
+  const hp = getHPFromAccount();
+  const { slots } = getSlotsForHP(hp);
+  const total = slots.common + slots.rare + slots.epic + slots.legendary;
+  totalEl.textContent = total || '—';
+
+  // Update mini progress bar
+  if (barEl && total > 0) {
+    barEl.style.width = Math.min(100, Math.round((count / total) * 100)) + '%';
+  }
+
+  hud.style.display = currentUser ? 'flex' : 'none';
 }
 
 // ── LOAD FISH FROM CHAIN ──
@@ -1998,8 +2049,8 @@ async function afterLogin(username) {
   document.getElementById('login-overlay').style.display = 'none';
   document.getElementById('user-pill').style.display = 'flex';
   document.getElementById('user-name-display').textContent = '@' + username;
-  document.getElementById('logout-btn').style.display = 'block';
-  document.getElementById('fish-hud').style.display = 'block';
+  document.getElementById('logout-btn').style.display = 'flex';
+  document.getElementById('fish-hud').style.display = 'flex';
   document.getElementById('nav-tabs').style.display = 'flex';
   document.getElementById('user-avatar').src = `https://images.hive.blog/u/${username}/avatar`;
   loadBalance(username);
@@ -2025,7 +2076,7 @@ async function loadBalance(username) {
     if (data.result && data.result[0]) {
       const acc = data.result[0];
       document.getElementById('hive-balance').innerHTML = hiveLogo(14) + ' ' + acc.balance;
-      document.getElementById('hive-balance').style.display = 'block';
+      document.getElementById('hive-balance').style.display = 'inline-flex';
       window._accountData = { hiveAmt: parseFloat(acc.balance), hbdAmt: parseFloat(acc.hbd_balance), raw: acc };
     }
   } catch(e) {}
@@ -2037,7 +2088,7 @@ function logout() {
   document.getElementById('user-pill').style.display = 'none';
   document.getElementById('logout-btn').style.display = 'none';
   document.getElementById('hive-balance').style.display = 'none';
-  document.getElementById('fish-hud').style.display = 'none';
+  document.getElementById('fish-hud').style.display = 'none'  // hidden;
   document.getElementById('nav-tabs').style.display = 'none';
   document.getElementById('empty-state').style.display = 'block';
   closeShop(); closeWallet(); closeSettings(); closeEdit();
@@ -2274,10 +2325,15 @@ function openWallet() {
     document.getElementById('wc-hp-cur-label').textContent = `${hp.toLocaleString()} HP`;
     if (nextTier) {
       const pct = Math.min(100, Math.max(0, ((hp - currentTierHp) / (nextTier.hp - currentTierHp)) * 100));
-      document.getElementById('wc-hp-bar').style.width = pct + '%';
+      // rAF ensures the bar transition fires after the modal is visible
+      requestAnimationFrame(() => {
+        document.getElementById('wc-hp-bar').style.width = pct + '%';
+      });
       document.getElementById('wc-hp-next-label').textContent = `próx. nível: ${nextTier.hp.toLocaleString()} HP`;
     } else {
-      document.getElementById('wc-hp-bar').style.width = '100%';
+      requestAnimationFrame(() => {
+        document.getElementById('wc-hp-bar').style.width = '100%';
+      });
       document.getElementById('wc-hp-next-label').textContent = '★ Nível máximo!';
     }
   }
