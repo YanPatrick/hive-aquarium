@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hive Aquarium</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Raleway:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --deep: #020d1a;
+    --abyss: #010810;
+    --water1: #0a2a4a;
+    --water2: #0d3b6e;
+    --water3: #1a5c9a;
+    --glow: #00d4ff;
+    --glow2: #00ffcc;
+    --gold: #f0c040;
+    --coral: #ff6b6b;
+    --sand: #c8a96e;
+    --text: #cce8ff;
+    --text-dim: #6a9bc0;
+    --panel: rgba(2, 18, 38, 0.92);
+    --border: rgba(0, 212, 255, 0.2);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Raleway', sans-serif;
+    background: var(--abyss);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 32px;
+    background: linear-gradient(180deg, rgba(1,8,16,0.98) 0%, transparent 100%);
+    border-bottom: 1px solid var(--border);
+  }
+  .logo {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 1.4rem;
+    color: var(--glow);
+    text-shadow: 0 0 20px rgba(0,212,255,0.6);
+    letter-spacing: 2px;
+  }
+  .logo span { color: var(--gold); }
+  .header-right { display: flex; align-items: center; gap: 16px; }
+  .hive-balance {
+    font-size: 0.8rem; color: var(--gold);
+    background: rgba(240,192,64,0.1);
+    border: 1px solid rgba(240,192,64,0.3);
+    padding: 6px 14px; border-radius: 20px;
+    display: none;
+  }
+  .btn {
+    cursor: pointer; border: none; border-radius: 8px;
+    font-family: 'Raleway', sans-serif; font-weight: 500;
+    transition: all 0.3s ease; letter-spacing: 0.5px;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #0066cc, #00aaff);
+    color: #fff; padding: 10px 24px; font-size: 0.9rem;
+    box-shadow: 0 0 20px rgba(0,170,255,0.3);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 30px rgba(0,170,255,0.5); }
+  .btn-logout {
+    background: rgba(255,80,80,0.15); color: #ff8080;
+    border: 1px solid rgba(255,80,80,0.3); padding: 8px 16px; font-size: 0.85rem;
+  }
+  .btn-logout:hover { background: rgba(255,80,80,0.25); }
+  .user-pill {
+    display: none; align-items: center; gap: 8px;
+    background: rgba(0,212,255,0.08); border: 1px solid var(--border);
+    border-radius: 24px; padding: 6px 16px;
+  }
+  .user-avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 2px solid var(--glow); object-fit: cover;
+  }
+  .user-name { font-size: 0.85rem; color: var(--glow); font-weight: 500; }
+
+  /* ── AQUARIUM ── */
+  #aquarium {
+    position: relative; width: 100%; height: 100vh;
+    background: linear-gradient(180deg,
+      #020d1a 0%, #051830 10%, #082040 25%, #0a2a55 50%,
+      #0d3060 70%, #0a2545 85%, #051020 100%);
+    overflow: hidden;
+  }
+
+  /* Light rays */
+  .rays {
+    position: absolute; top: 0; left: 0; right: 0; height: 60%;
+    background: repeating-linear-gradient(
+      -15deg,
+      transparent 0%, transparent 8%,
+      rgba(0,160,255,0.025) 8%, rgba(0,160,255,0.025) 12%
+    );
+    animation: rayMove 8s linear infinite;
+    pointer-events: none;
+  }
+  @keyframes rayMove { 0%{transform:translateX(-5%)} 100%{transform:translateX(5%)} }
+
+  /* Caustics overlay */
+  .caustics {
+    position: absolute; inset: 0; pointer-events: none; opacity: 0.06;
+    background: radial-gradient(ellipse 200px 80px at 20% 20%, rgba(0,212,255,1) 0%, transparent 70%),
+                radial-gradient(ellipse 150px 60px at 60% 15%, rgba(0,212,255,1) 0%, transparent 70%),
+                radial-gradient(ellipse 180px 70px at 80% 25%, rgba(0,212,255,1) 0%, transparent 70%);
+    animation: causticShift 6s ease-in-out infinite alternate;
+  }
+  @keyframes causticShift {
+    0% { transform: scale(1) translateX(0); }
+    100% { transform: scale(1.05) translateX(20px); }
+  }
+
+  /* Sand bottom */
+  .sand-bottom {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 120px;
+    background: linear-gradient(180deg, transparent 0%, #1a1008 30%, #0d0a05 100%);
+  }
+  .sand-top {
+    position: absolute; bottom: 95px; left: 0; right: 0; height: 30px;
+    background: linear-gradient(180deg, transparent, rgba(180,140,70,0.2));
+    border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  }
+
+  /* Corals */
+  .coral-svg {
+    position: absolute; bottom: 90px;
+    filter: drop-shadow(0 0 8px rgba(255,100,100,0.4));
+    animation: coralSway 4s ease-in-out infinite;
+  }
+  @keyframes coralSway {
+    0%,100%{transform:rotate(-2deg) scaleX(1)}
+    50%{transform:rotate(2deg) scaleX(0.98)}
+  }
+
+  /* Seaweed */
+  .seaweed {
+    position: absolute; bottom: 90px;
+    width: 8px; border-radius: 4px;
+    transform-origin: bottom center;
+    animation: weedSway 3s ease-in-out infinite;
+  }
+  @keyframes weedSway {
+    0%,100%{transform:rotate(-8deg) skewX(-3deg)}
+    50%{transform:rotate(8deg) skewX(3deg)}
+  }
+
+  /* Bubbles */
+  .bubble {
+    position: absolute;
+    background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.4), rgba(0,180,255,0.1));
+    border: 1px solid rgba(150,220,255,0.5);
+    border-radius: 50%;
+    animation: bubbleRise linear infinite;
+    pointer-events: none;
+  }
+  @keyframes bubbleRise {
+    0%  { transform: translateY(0) translateX(0) scale(0.8); opacity: 0; }
+    10% { opacity: 0.7; }
+    90% { opacity: 0.4; }
+    100%{ transform: translateY(-110vh) translateX(var(--drift)) scale(1.1); opacity: 0; }
+  }
+
+  /* Particles */
+  .particle {
+    position: absolute; width: 2px; height: 2px;
+    background: rgba(200,230,255,0.4); border-radius: 50%;
+    animation: drift linear infinite;
+    pointer-events: none;
+  }
+  @keyframes drift {
+    0%  { transform: translateY(0) translateX(0); opacity: 0; }
+    20% { opacity: 0.6; }
+    80% { opacity: 0.3; }
+    100%{ transform: translateY(-30px) translateX(var(--hdrift)); opacity: 0; }
+  }
+
+  /* ── FISH ── */
+  .fish {
+    position: absolute;
+    cursor: pointer;
+    transition: filter 0.3s;
+    animation: fishSwim linear infinite;
+    will-change: transform;
+  }
+  .fish:hover { filter: brightness(1.4) drop-shadow(0 0 12px rgba(0,212,255,0.8)); }
+  .fish svg { display: block; }
+  @keyframes fishSwim {
+    0%   { transform: translateX(0) translateY(0); }
+    25%  { transform: translateX(var(--tx1)) translateY(var(--ty1)); }
+    50%  { transform: translateX(var(--tx2)) translateY(var(--ty2)); }
+    75%  { transform: translateX(var(--tx3)) translateY(var(--ty3)); }
+    100% { transform: translateX(0) translateY(0); }
+  }
+
+  /* Fish tooltip */
+  .fish-tooltip {
+    position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+    background: rgba(2,18,38,0.95); border: 1px solid var(--border);
+    border-radius: 8px; padding: 6px 12px; white-space: nowrap;
+    font-size: 0.75rem; color: var(--glow); pointer-events: none;
+    opacity: 0; transition: opacity 0.2s;
+  }
+  .fish:hover .fish-tooltip { opacity: 1; }
+
+  /* Empty state */
+  #empty-state {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    text-align: center; pointer-events: none;
+  }
+  #empty-state h2 {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 1.6rem; color: rgba(0,212,255,0.3);
+    text-shadow: 0 0 30px rgba(0,212,255,0.2);
+    margin-bottom: 12px;
+  }
+  #empty-state p { color: rgba(100,160,200,0.4); font-size: 0.9rem; }
+
+  /* ── LOGIN OVERLAY ── */
+  #login-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(ellipse at center, rgba(1,15,35,0.97) 0%, rgba(0,5,15,0.99) 100%);
+  }
+  .login-card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 20px; padding: 48px 56px; text-align: center;
+    box-shadow: 0 0 80px rgba(0,80,160,0.3), inset 0 1px 0 rgba(0,212,255,0.1);
+    max-width: 440px; width: 90%;
+    animation: cardIn 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+  @keyframes cardIn {
+    from { opacity:0; transform:translateY(30px) scale(0.95); }
+    to   { opacity:1; transform:translateY(0) scale(1); }
+  }
+  .login-icon {
+    width: 80px; height: 80px; margin: 0 auto 24px;
+    background: radial-gradient(circle, rgba(0,120,255,0.2), transparent);
+    border: 2px solid rgba(0,212,255,0.3); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.2rem;
+  }
+  .login-card h1 {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 1.8rem; color: var(--glow);
+    text-shadow: 0 0 30px rgba(0,212,255,0.5);
+    margin-bottom: 8px;
+  }
+  .login-card h1 span { color: var(--gold); }
+  .login-card p { color: var(--text-dim); font-size: 0.9rem; line-height: 1.6; margin-bottom: 32px; }
+  .login-input-wrap { position: relative; margin-bottom: 16px; }
+  .login-input {
+    width: 100%; background: rgba(0,30,60,0.8); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 18px; color: var(--text);
+    font-family: 'Raleway', sans-serif; font-size: 0.95rem; outline: none;
+    transition: border-color 0.3s;
+  }
+  .login-input:focus { border-color: var(--glow); box-shadow: 0 0 15px rgba(0,212,255,0.15); }
+  .login-input::placeholder { color: var(--text-dim); }
+  .btn-keychain {
+    width: 100%; padding: 15px;
+    background: linear-gradient(135deg, #0055aa, #0088ff);
+    color: #fff; font-size: 1rem; border-radius: 10px;
+    box-shadow: 0 4px 30px rgba(0,136,255,0.35);
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .btn-keychain:hover { transform: translateY(-2px); box-shadow: 0 8px 40px rgba(0,136,255,0.5); }
+  .keychain-icon { font-size: 1.3rem; }
+  .login-note {
+    margin-top: 20px; font-size: 0.75rem; color: var(--text-dim); line-height: 1.5;
+  }
+  .login-note a { color: var(--glow); text-decoration: none; }
+  #login-error {
+    color: #ff6b6b; font-size: 0.82rem; margin-top: 10px;
+    background: rgba(255,80,80,0.08); border: 1px solid rgba(255,80,80,0.2);
+    border-radius: 8px; padding: 8px 12px; display: none;
+  }
+
+  /* ── SHOP ── */
+  #shop-btn {
+    position: fixed; right: 24px; bottom: 32px; z-index: 90;
+    width: 60px; height: 60px; border-radius: 50%;
+    background: linear-gradient(135deg, #005599, #0088cc);
+    color: #fff; font-size: 1.6rem; cursor: pointer; border: none;
+    box-shadow: 0 0 30px rgba(0,136,204,0.5);
+    transition: all 0.3s; display: none; align-items: center; justify-content: center;
+  }
+  #shop-btn:hover { transform: scale(1.1) rotate(10deg); box-shadow: 0 0 50px rgba(0,136,204,0.7); }
+  #shop-btn-label {
+    position: fixed; right: 92px; bottom: 46px; z-index: 90;
+    background: rgba(2,18,38,0.9); border: 1px solid var(--border);
+    border-radius: 20px; padding: 6px 14px; font-size: 0.8rem;
+    color: var(--glow); display: none; pointer-events: none;
+  }
+
+  #shop-overlay {
+    position: fixed; inset: 0; z-index: 150;
+    background: rgba(0,5,15,0.85); backdrop-filter: blur(6px);
+    display: none; align-items: center; justify-content: center;
+  }
+  #shop-overlay.open { display: flex; }
+  .shop-panel {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 20px; width: 92%; max-width: 820px;
+    max-height: 88vh; overflow-y: auto;
+    box-shadow: 0 0 100px rgba(0,80,160,0.4);
+    animation: cardIn 0.4s ease both;
+  }
+  .shop-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 24px 32px; border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; background: var(--panel); z-index: 2;
+  }
+  .shop-header h2 {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 1.3rem; color: var(--glow);
+  }
+  .shop-header p { font-size: 0.8rem; color: var(--text-dim); margin-top: 2px; }
+  .close-btn {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(255,80,80,0.1); border: 1px solid rgba(255,80,80,0.2);
+    color: #ff8080; font-size: 1.2rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+  }
+  .close-btn:hover { background: rgba(255,80,80,0.25); }
+  .shop-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px; padding: 28px 32px;
+  }
+  .fish-card {
+    background: rgba(0,20,50,0.6); border: 1px solid rgba(0,100,200,0.2);
+    border-radius: 14px; padding: 20px; text-align: center;
+    transition: all 0.3s; cursor: pointer; position: relative;
+  }
+  .fish-card:hover {
+    border-color: var(--glow); transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0,212,255,0.2);
+  }
+  .fish-card-preview { height: 80px; display: flex; align-items: center; justify-content: center; }
+  .fish-card h3 { font-size: 1rem; color: var(--text); margin: 10px 0 4px; font-weight: 500; }
+  .fish-card .rarity {
+    font-size: 0.7rem; letter-spacing: 1px; text-transform: uppercase;
+    margin-bottom: 8px; font-weight: 500;
+  }
+  .rarity.common { color: #80b0e0; }
+  .rarity.rare { color: #a070ff; }
+  .rarity.legendary { color: var(--gold); }
+  .fish-card .desc { font-size: 0.78rem; color: var(--text-dim); line-height: 1.4; margin-bottom: 14px; }
+  .fish-card .price {
+    font-size: 1.1rem; color: var(--gold); font-weight: 500;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .fish-card .price-sub { font-size: 0.7rem; color: var(--text-dim); }
+  .owned-badge {
+    position: absolute; top: 10px; right: 10px;
+    background: rgba(0,200,100,0.2); border: 1px solid rgba(0,200,100,0.4);
+    border-radius: 10px; padding: 2px 8px; font-size: 0.65rem; color: #00cc88;
+  }
+  .btn-buy {
+    width: 100%; margin-top: 12px; padding: 10px;
+    background: linear-gradient(135deg, #004488, #0077cc);
+    color: #fff; border-radius: 8px; font-size: 0.85rem;
+    border: none; cursor: pointer; transition: all 0.3s;
+    font-family: 'Raleway', sans-serif;
+  }
+  .btn-buy:hover { background: linear-gradient(135deg, #005599, #0099ff); transform: translateY(-1px); }
+  .btn-buy:disabled { background: rgba(0,60,120,0.3); color: var(--text-dim); cursor: not-allowed; transform: none; }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed; bottom: 110px; right: 24px; z-index: 500;
+    background: rgba(0,30,60,0.97); border: 1px solid var(--glow);
+    border-radius: 12px; padding: 14px 20px; max-width: 320px;
+    box-shadow: 0 0 30px rgba(0,212,255,0.3);
+    transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    font-size: 0.88rem; line-height: 1.5;
+  }
+  #toast.show { transform: translateX(0); }
+  #toast.error { border-color: #ff6b6b; box-shadow: 0 0 30px rgba(255,80,80,0.3); }
+  #toast .toast-title { font-weight: 600; color: var(--glow); margin-bottom: 2px; }
+  #toast.error .toast-title { color: #ff8080; }
+
+  /* ── FISH COUNT HUD ── */
+  #fish-hud {
+    position: fixed; bottom: 32px; left: 24px; z-index: 90;
+    background: rgba(2,18,38,0.85); border: 1px solid var(--border);
+    border-radius: 14px; padding: 10px 18px; font-size: 0.8rem;
+    color: var(--text-dim); display: none;
+    backdrop-filter: blur(4px);
+  }
+  #fish-hud span { color: var(--glow); font-weight: 600; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(0,212,255,0.2); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">🐠 Hive <span>Aquarium</span></div>
+  <div class="header-right">
+    <div class="hive-balance" id="hive-balance">⚡ 0 HIVE</div>
+    <div class="user-pill" id="user-pill">
+      <img class="user-avatar" id="user-avatar" src="" alt="">
+      <span class="user-name" id="user-name-display">@username</span>
+    </div>
+    <button class="btn btn-logout" id="logout-btn" style="display:none" onclick="logout()">Sair</button>
+  </div>
+</header>
+
+<!-- LOGIN OVERLAY -->
+<div id="login-overlay">
+  <div class="login-card">
+    <div class="login-icon">🐠</div>
+    <h1>Hive <span>Aquarium</span></h1>
+    <p>Um aquário vivo na blockchain. Faça login com o Hive Keychain para coletar e cuidar dos seus peixes.</p>
+    <div class="login-input-wrap">
+      <input class="login-input" id="username-input" type="text" placeholder="Seu usuário Hive (sem @)" autocomplete="off" />
+    </div>
+    <button class="btn btn-keychain" onclick="loginWithKeychain()">
+      <span class="keychain-icon">🔑</span>
+      Entrar com Hive Keychain
+    </button>
+    <div id="login-error"></div>
+    <p class="login-note">
+      Não tem a extensão? <a href="https://hive-keychain.com" target="_blank">Baixar Hive Keychain →</a><br>
+      Sem conta Hive? <a href="https://signup.hive.io" target="_blank">Criar conta grátis →</a>
+    </p>
+  </div>
+</div>
+
+<!-- AQUARIUM -->
+<div id="aquarium">
+  <div class="rays"></div>
+  <div class="caustics"></div>
+  <div class="sand-bottom"></div>
+  <div class="sand-top"></div>
+  <div id="empty-state">
+    <h2>Aquário Vazio</h2>
+    <p>Visite a loja e compre seu primeiro peixe 🐟</p>
+  </div>
+  <!-- Corals & decorations injected by JS -->
+  <!-- Fish injected by JS -->
+</div>
+
+<!-- FISH HUD -->
+<div id="fish-hud">🐠 <span id="fish-count">0</span> peixes no aquário</div>
+
+<!-- SHOP BUTTON -->
+<div id="shop-btn-label">Loja de Peixes</div>
+<button id="shop-btn" onclick="openShop()" title="Loja">🛒</button>
+
+<!-- SHOP OVERLAY -->
+<div id="shop-overlay">
+  <div class="shop-panel">
+    <div class="shop-header">
+      <div>
+        <h2>🛒 Loja de Peixes</h2>
+        <p>Compre peixes com HIVE. Cada peixe fica salvo na blockchain para sempre.</p>
+      </div>
+      <button class="close-btn" onclick="closeShop()">✕</button>
+    </div>
+    <div class="shop-grid" id="shop-grid"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast">
+  <div class="toast-title" id="toast-title">Título</div>
+  <div id="toast-body">Mensagem</div>
+</div>
+
+<script>
+// ── HIVE API ──
+const HIVE_API = 'https://api.hive.blog';
+const SHOP_ACCOUNT = 'hive-aquarium'; // Conta da loja — troque para sua conta real
+const APP_ID = 'hive-aquarium/1.0';
+
+// ── FISH CATALOG ──
+const FISH_CATALOG = [
+  {
+    id: 'clownfish', name: 'Peixe-Palhaço', price: 1, rarity: 'common',
+    desc: 'O clássico peixe laranja e branco. Animado e curioso.',
+    memo: 'buy:clownfish',
+    svg: (s=1) => `<svg width="${70*s}" height="${45*s}" viewBox="0 0 70 45">
+      <ellipse cx="32" cy="22" rx="20" ry="13" fill="#ff6a00"/>
+      <ellipse cx="32" cy="22" rx="20" ry="13" fill="none" stroke="#e05000" stroke-width="1.5"/>
+      <ellipse cx="14" cy="22" rx="6" ry="9" fill="#ff6a00" stroke="#e05000" stroke-width="1"/>
+      <!-- white bars -->
+      <ellipse cx="22" cy="22" rx="3" ry="10" fill="white" opacity="0.85"/>
+      <ellipse cx="36" cy="22" rx="3" ry="10" fill="white" opacity="0.85"/>
+      <!-- tail -->
+      <path d="M52 22 L65 10 L65 34 Z" fill="#ff6a00" stroke="#e05000" stroke-width="1"/>
+      <!-- eye -->
+      <circle cx="14" cy="18" r="3" fill="white"/>
+      <circle cx="14" cy="18" r="1.5" fill="#111"/>
+      <circle cx="13.3" cy="17.3" r="0.5" fill="white"/>
+      <!-- fins -->
+      <path d="M25 12 Q30 5 38 10" stroke="#e05000" stroke-width="2" fill="none"/>
+      <path d="M25 32 Q30 40 38 35" stroke="#e05000" stroke-width="2" fill="none"/>
+    </svg>`
+  },
+  {
+    id: 'tang', name: 'Tang Azul', price: 2, rarity: 'common',
+    desc: 'Peixe azul vibrante com toque amarelo na cauda.',
+    memo: 'buy:tang',
+    svg: (s=1) => `<svg width="${70*s}" height="${50*s}" viewBox="0 0 70 50">
+      <ellipse cx="32" cy="25" rx="20" ry="14" fill="#1a6ee0"/>
+      <ellipse cx="14" cy="25" rx="7" ry="11" fill="#1a6ee0"/>
+      <path d="M52 25 L66 12 L66 38 Z" fill="#ffcc00"/>
+      <path d="M10 20 Q5 12 2 25 Q5 38 10 30 Z" fill="#1a6ee0"/>
+      <!-- stripe -->
+      <path d="M20 11 Q32 25 20 39" stroke="#0040a0" stroke-width="2.5" fill="none"/>
+      <!-- yellow accent -->
+      <path d="M46 15 Q55 25 46 35" stroke="#ffcc00" stroke-width="3" fill="none"/>
+      <!-- eye -->
+      <circle cx="14" cy="21" r="3" fill="white"/>
+      <circle cx="14" cy="21" r="1.5" fill="#111"/>
+      <circle cx="13.3" cy="20.3" r="0.5" fill="white"/>
+    </svg>`
+  },
+  {
+    id: 'angelfish', name: 'Peixe-Anjo', price: 3, rarity: 'rare',
+    desc: 'Elegante e majestoso. Nada lentamente em curvas graciosas.',
+    memo: 'buy:angelfish',
+    svg: (s=1) => `<svg width="${55*s}" height="${70*s}" viewBox="0 0 55 70">
+      <ellipse cx="27" cy="35" rx="14" ry="20" fill="#c8a0f0"/>
+      <!-- top fin -->
+      <path d="M20 15 Q27 0 34 15" fill="#a070e0" stroke="#8050c0" stroke-width="1"/>
+      <!-- bottom fin -->
+      <path d="M20 55 Q27 70 34 55" fill="#a070e0" stroke="#8050c0" stroke-width="1"/>
+      <!-- stripes -->
+      <path d="M22 16 Q20 35 22 54" stroke="#8050c0" stroke-width="2" fill="none" opacity="0.7"/>
+      <path d="M32 16 Q34 35 32 54" stroke="#8050c0" stroke-width="2" fill="none" opacity="0.7"/>
+      <!-- tail -->
+      <path d="M41 35 L55 22 L55 48 Z" fill="#a070e0"/>
+      <!-- eye -->
+      <circle cx="18" cy="28" r="3.5" fill="white"/>
+      <circle cx="18" cy="28" r="2" fill="#220044"/>
+      <circle cx="17" cy="27" r="0.7" fill="white"/>
+    </svg>`
+  },
+  {
+    id: 'jellyfish', name: 'Água-Viva', price: 4, rarity: 'rare',
+    desc: 'Flutuante e hipnótica. Brilha com luz própria nas profundezas.',
+    memo: 'buy:jellyfish',
+    svg: (s=1) => `<svg width="${55*s}" height="${70*s}" viewBox="0 0 55 70">
+      <defs>
+        <radialGradient id="jg" cx="50%" cy="40%" r="60%">
+          <stop offset="0%" stop-color="#d090ff" stop-opacity="0.9"/>
+          <stop offset="100%" stop-color="#6020a0" stop-opacity="0.7"/>
+        </radialGradient>
+      </defs>
+      <!-- dome -->
+      <path d="M5 30 Q5 5 27 5 Q49 5 49 30 Z" fill="url(#jg)"/>
+      <path d="M5 30 Q5 5 27 5 Q49 5 49 30" stroke="rgba(200,140,255,0.5)" stroke-width="1.5" fill="none"/>
+      <!-- inner dome highlight -->
+      <path d="M15 28 Q15 12 27 10 Q36 12 38 28" fill="rgba(255,255,255,0.12)"/>
+      <!-- tentacles -->
+      <line x1="14" y1="30" x2="10" y2="65" stroke="#c080ff" stroke-width="1.5" opacity="0.7"/>
+      <line x1="20" y1="30" x2="16" y2="68" stroke="#c080ff" stroke-width="1.5" opacity="0.7"/>
+      <line x1="27" y1="31" x2="27" y2="70" stroke="#c080ff" stroke-width="2" opacity="0.7"/>
+      <line x1="34" y1="30" x2="38" y2="68" stroke="#c080ff" stroke-width="1.5" opacity="0.7"/>
+      <line x1="40" y1="30" x2="44" y2="65" stroke="#c080ff" stroke-width="1.5" opacity="0.7"/>
+      <!-- glow dots -->
+      <circle cx="20" cy="18" r="2" fill="rgba(255,200,255,0.6)"/>
+      <circle cx="34" cy="15" r="1.5" fill="rgba(255,200,255,0.5)"/>
+    </svg>`
+  },
+  {
+    id: 'seahorse', name: 'Cavalo-Marinho', price: 5, rarity: 'rare',
+    desc: 'Misterioso e delicado. Flutua verticalmente com graça.',
+    memo: 'buy:seahorse',
+    svg: (s=1) => `<svg width="${40*s}" height="${75*s}" viewBox="0 0 40 75">
+      <!-- body -->
+      <path d="M20 12 Q30 12 30 22 Q30 32 22 35 Q28 40 28 50 Q28 62 20 65 Q12 62 12 50 Q12 40 18 35 Q10 32 10 22 Q10 12 20 12 Z" fill="#f0a030"/>
+      <!-- head -->
+      <circle cx="20" cy="10" r="8" fill="#f0a030"/>
+      <!-- snout -->
+      <path d="M20 8 Q35 10 36 14" stroke="#d08020" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <!-- fin -->
+      <path d="M30 28 Q40 25 38 32 Q36 38 28 33" fill="#e09025" opacity="0.7"/>
+      <!-- stripes -->
+      <path d="M12 22 Q20 22 28 22" stroke="#d08020" stroke-width="1" opacity="0.5"/>
+      <path d="M12 28 Q20 28 28 28" stroke="#d08020" stroke-width="1" opacity="0.5"/>
+      <path d="M14 42 Q20 42 26 42" stroke="#d08020" stroke-width="1" opacity="0.5"/>
+      <path d="M14 50 Q20 50 26 50" stroke="#d08020" stroke-width="1" opacity="0.5"/>
+      <!-- eye -->
+      <circle cx="24" cy="9" r="2.5" fill="white"/>
+      <circle cx="24" cy="9" r="1.3" fill="#111"/>
+      <circle cx="23.4" cy="8.4" r="0.4" fill="white"/>
+      <!-- crown spikes -->
+      <path d="M15 4 L16 0 M20 3 L20 0 M24 4 L25 0" stroke="#d08020" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>`
+  },
+  {
+    id: 'dragon', name: 'Peixe-Dragão', price: 10, rarity: 'legendary',
+    desc: 'Lendário das profundezas. Raridade extrema, brilho eterno.',
+    memo: 'buy:dragon',
+    svg: (s=1) => `<svg width="${90*s}" height="${55*s}" viewBox="0 0 90 55">
+      <defs>
+        <linearGradient id="dg" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#ff4400"/>
+          <stop offset="50%" stop-color="#ff8800"/>
+          <stop offset="100%" stop-color="#ffcc00"/>
+        </linearGradient>
+      </defs>
+      <!-- body -->
+      <ellipse cx="40" cy="27" rx="28" ry="16" fill="url(#dg)"/>
+      <ellipse cx="16" cy="27" rx="9" ry="13" fill="#ff5500"/>
+      <!-- scales pattern -->
+      <path d="M20 15 Q28 18 20 22" fill="rgba(255,100,0,0.3)" stroke="rgba(200,60,0,0.5)" stroke-width="0.5"/>
+      <path d="M30 13 Q38 16 30 20" fill="rgba(255,100,0,0.3)" stroke="rgba(200,60,0,0.5)" stroke-width="0.5"/>
+      <path d="M40 12 Q48 15 40 19" fill="rgba(255,100,0,0.3)" stroke="rgba(200,60,0,0.5)" stroke-width="0.5"/>
+      <path d="M50 14 Q58 17 50 21" fill="rgba(255,100,0,0.3)" stroke="rgba(200,60,0,0.5)" stroke-width="0.5"/>
+      <!-- top fin (spiky) -->
+      <path d="M20 11 L23 3 L27 11 L31 2 L35 11 L39 4 L43 11 L47 3 L51 11 L55 6 L59 14" fill="#cc3300" stroke="#aa2200" stroke-width="1"/>
+      <!-- bottom fin -->
+      <path d="M20 43 Q35 52 55 43" fill="#cc3300" opacity="0.7"/>
+      <!-- tail (forked) -->
+      <path d="M68 27 L85 12 L80 27 L85 42 Z" fill="#ff6600"/>
+      <path d="M68 27 L82 15 M68 27 L82 39" stroke="#cc4400" stroke-width="2"/>
+      <!-- horns -->
+      <path d="M12 14 L9 6 M14 12 L14 5" stroke="#ffaa00" stroke-width="2" stroke-linecap="round"/>
+      <!-- eye -->
+      <circle cx="12" cy="22" r="4" fill="#ffee00"/>
+      <circle cx="12" cy="22" r="2" fill="#660000"/>
+      <circle cx="11" cy="21" r="0.7" fill="white"/>
+      <!-- glow aura -->
+      <ellipse cx="40" cy="27" rx="30" ry="18" fill="none" stroke="rgba(255,180,0,0.2)" stroke-width="4"/>
+    </svg>`
+  }
+];
+
+// ── STATE ──
+let currentUser = null;
+let myFish = []; // [{id, name, boughtAt}]
+let fishElements = [];
+
+// ── INIT ──
+window.addEventListener('load', () => {
+  buildAquariumDecor();
+  spawnBubbles();
+  spawnParticles();
+  buildShopGrid();
+  // Check localStorage for quick re-login
+  const saved = localStorage.getItem('hive_aquarium_user');
+  if (saved) {
+    const { username } = JSON.parse(saved);
+    document.getElementById('username-input').value = username;
+  }
+});
+
+// ── DECORATIONS ──
+function buildAquariumDecor() {
+  const aq = document.getElementById('aquarium');
+  // Corals
+  const corals = [
+    { x: 4, color: '#ff5566', h: 90 },
+    { x: 12, color: '#ff3344', h: 70 },
+    { x: 78, color: '#ff6644', h: 80 },
+    { x: 88, color: '#ff4455', h: 100 },
+    { x: 50, color: '#ff7755', h: 60 },
+  ];
+  corals.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'coral-svg';
+    div.style.left = c.x + '%';
+    div.style.animationDelay = Math.random() * 3 + 's';
+    div.innerHTML = `<svg width="40" height="${c.h}" viewBox="0 0 40 ${c.h}">
+      <path d="M20 ${c.h} Q18 ${c.h*0.6} 10 ${c.h*0.4} Q5 ${c.h*0.2} 12 ${c.h*0.1}" stroke="${c.color}" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path d="M20 ${c.h} Q22 ${c.h*0.6} 30 ${c.h*0.4} Q35 ${c.h*0.2} 28 ${c.h*0.1}" stroke="${c.color}" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path d="M20 ${c.h} L20 ${c.h*0.3}" stroke="${c.color}" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <circle cx="12" cy="${c.h*0.1}" r="5" fill="${c.color}"/>
+      <circle cx="28" cy="${c.h*0.1}" r="5" fill="${c.color}"/>
+      <circle cx="20" cy="${c.h*0.3-8}" r="6" fill="${c.color}"/>
+    </svg>`;
+    aq.appendChild(div);
+  });
+
+  // Seaweeds
+  const weeds = [25, 35, 45, 65, 75, 92];
+  const weedColors = ['#2a8040', '#1a6030', '#3a9050'];
+  weeds.forEach((x, i) => {
+    const h = 60 + Math.random() * 60;
+    const div = document.createElement('div');
+    div.className = 'seaweed';
+    div.style.cssText = `left:${x}%;height:${h}px;background:linear-gradient(180deg,${weedColors[i%3]},#0a3015);animation-delay:${Math.random()*2}s;animation-duration:${2+Math.random()*2}s`;
+    aq.appendChild(div);
+  });
+
+  // Rocks
+  const rocksData = [{x:15,w:60,h:25},{x:55,w:80,h:30},{x:82,w:45,h:20}];
+  rocksData.forEach(r => {
+    const div = document.createElement('div');
+    div.style.cssText = `position:absolute;bottom:88px;left:${r.x}%;width:${r.w}px;height:${r.h}px;background:radial-gradient(ellipse,#2a2520,#151210);border-radius:50%;`;
+    aq.appendChild(div);
+  });
+}
+
+function spawnBubbles() {
+  const aq = document.getElementById('aquarium');
+  for (let i = 0; i < 20; i++) {
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    const size = 4 + Math.random() * 10;
+    const left = Math.random() * 100;
+    const dur = 6 + Math.random() * 10;
+    const delay = Math.random() * 12;
+    const drift = (Math.random() - 0.5) * 80;
+    b.style.cssText = `width:${size}px;height:${size}px;left:${left}%;bottom:${90+Math.random()*60}px;--drift:${drift}px;animation-duration:${dur}s;animation-delay:${delay}s`;
+    aq.appendChild(b);
+  }
+}
+
+function spawnParticles() {
+  const aq = document.getElementById('aquarium');
+  for (let i = 0; i < 40; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const left = Math.random() * 100;
+    const top = 10 + Math.random() * 70;
+    const dur = 8 + Math.random() * 14;
+    const delay = Math.random() * 15;
+    const drift = (Math.random() - 0.5) * 60;
+    p.style.cssText = `left:${left}%;top:${top}%;--hdrift:${drift}px;animation-duration:${dur}s;animation-delay:${delay}s`;
+    aq.appendChild(p);
+  }
+}
+
+// ── FISH IN AQUARIUM ──
+function spawnFish(fishId, opts = {}) {
+  const catalog = FISH_CATALOG.find(f => f.id === fishId);
+  if (!catalog) return;
+  const aq = document.getElementById('aquarium');
+
+  const fishEl = document.createElement('div');
+  fishEl.className = 'fish';
+  fishEl.dataset.id = fishId;
+
+  // Random position (avoid bottom 15% for sand)
+  const startX = 5 + Math.random() * 80;
+  const startY = 10 + Math.random() * 60;
+  const dur = 18 + Math.random() * 20;
+
+  // Random swim path offsets
+  const tx1 = (Math.random() - 0.5) * 200;
+  const ty1 = (Math.random() - 0.5) * 80;
+  const tx2 = (Math.random() - 0.5) * 300;
+  const ty2 = (Math.random() - 0.5) * 120;
+  const tx3 = (Math.random() - 0.5) * 150;
+  const ty3 = (Math.random() - 0.5) * 80;
+
+  const scale = 0.7 + Math.random() * 0.5;
+  const isLeft = Math.random() > 0.5;
+
+  fishEl.style.cssText = `
+    left:${startX}%;top:${startY}%;
+    --tx1:${tx1}px;--ty1:${ty1}px;
+    --tx2:${tx2}px;--ty2:${ty2}px;
+    --tx3:${tx3}px;--ty3:${ty3}px;
+    animation-duration:${dur}s;
+    animation-delay:-${Math.random() * dur}s;
+    transform:${isLeft ? 'scaleX(-1)' : ''};
+    z-index:10;
+  `;
+
+  fishEl.innerHTML = catalog.svg(scale) +
+    `<div class="fish-tooltip">${catalog.name} · ${opts.owner || currentUser}</div>`;
+
+  fishEl.addEventListener('click', () => {
+    showToast('🐠 ' + catalog.name, catalog.desc, false);
+  });
+
+  aq.appendChild(fishEl);
+  fishElements.push(fishEl);
+  updateHUD();
+}
+
+function clearFish() {
+  fishElements.forEach(el => el.remove());
+  fishElements = [];
+}
+
+function renderMyFish() {
+  clearFish();
+  const empty = document.getElementById('empty-state');
+  if (myFish.length === 0) {
+    empty.style.display = 'block';
+  } else {
+    empty.style.display = 'none';
+    myFish.forEach(f => spawnFish(f.id));
+  }
+  updateHUD();
+  updateShopOwned();
+}
+
+function updateHUD() {
+  const hud = document.getElementById('fish-hud');
+  document.getElementById('fish-count').textContent = fishElements.length;
+  hud.style.display = currentUser ? 'block' : 'none';
+}
+
+// ── BLOCKCHAIN: LOAD MY FISH ──
+async function loadMyFishFromChain(username) {
+  try {
+    const response = await fetch(HIVE_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0', method: 'condenser_api.get_account_history',
+        params: [username, -1, 500], id: 1
+      })
+    });
+    const data = await response.json();
+    const history = data.result || [];
+    const owned = {};
+    history.forEach(([, op]) => {
+      if (op.op[0] === 'custom_json' && op.op[1].id === APP_ID) {
+        try {
+          const json = JSON.parse(op.op[1].json);
+          if (json.action === 'add_fish' && json.fish_id) {
+            owned[json.fish_id] = { id: json.fish_id, ts: op.timestamp };
+          }
+          if (json.action === 'remove_fish' && json.fish_id) {
+            delete owned[json.fish_id];
+          }
+        } catch(e) {}
+      }
+    });
+    return Object.values(owned);
+  } catch(e) {
+    console.warn('Could not load fish from chain, using local cache:', e);
+    return [];
+  }
+}
+
+// ── LOGIN ──
+async function loginWithKeychain() {
+  const username = document.getElementById('username-input').value.trim().replace('@','');
+  const errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
+
+  if (!username) {
+    showLoginError('Digite seu usuário Hive.');
+    return;
+  }
+  if (!window.hive_keychain) {
+    showLoginError('Hive Keychain não encontrado. Instale a extensão primeiro.');
+    return;
+  }
+
+  showToast('🔑 Keychain', 'Aguardando assinatura...', false);
+
+  hive_keychain.requestSignBuffer(
+    username,
+    `Login no Hive Aquarium — ${Date.now()}`,
+    'Posting',
+    async (response) => {
+      if (response.success) {
+        currentUser = username;
+        localStorage.setItem('hive_aquarium_user', JSON.stringify({ username }));
+        await afterLogin(username);
+      } else {
+        showLoginError('Login cancelado ou erro: ' + (response.message || ''));
+      }
+    }
+  );
+}
+
+async function afterLogin(username) {
+  // Hide login overlay
+  document.getElementById('login-overlay').style.display = 'none';
+
+  // Show UI elements
+  document.getElementById('user-pill').style.display = 'flex';
+  document.getElementById('user-name-display').textContent = '@' + username;
+  document.getElementById('logout-btn').style.display = 'block';
+  document.getElementById('shop-btn').style.display = 'flex';
+  document.getElementById('shop-btn-label').style.display = 'block';
+  document.getElementById('fish-hud').style.display = 'block';
+
+  // Avatar
+  document.getElementById('user-avatar').src =
+    `https://images.hive.blog/u/${username}/avatar`;
+
+  // Load HIVE balance
+  loadBalance(username);
+
+  showToast('✅ Bem-vindo!', `Carregando seu aquário, @${username}...`, false);
+
+  // Load fish from blockchain
+  const fishFromChain = await loadMyFishFromChain(username);
+  myFish = fishFromChain;
+
+  // Fallback to localStorage if chain returned nothing
+  if (myFish.length === 0) {
+    const cached = localStorage.getItem(`fish_${username}`);
+    if (cached) myFish = JSON.parse(cached);
+  }
+
+  renderMyFish();
+
+  if (myFish.length > 0) {
+    showToast('🐠 Aquário carregado!', `${myFish.length} peixe(s) encontrado(s) na blockchain.`, false);
+  }
+}
+
+async function loadBalance(username) {
+  try {
+    const res = await fetch(HIVE_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0', method: 'condenser_api.get_accounts',
+        params: [[username]], id: 1
+      })
+    });
+    const data = await res.json();
+    if (data.result && data.result[0]) {
+      const bal = data.result[0].balance;
+      const balEl = document.getElementById('hive-balance');
+      balEl.textContent = '⚡ ' + bal;
+      balEl.style.display = 'block';
+    }
+  } catch(e) {}
+}
+
+function logout() {
+  currentUser = null;
+  myFish = [];
+  clearFish();
+  document.getElementById('login-overlay').style.display = 'flex';
+  document.getElementById('user-pill').style.display = 'none';
+  document.getElementById('logout-btn').style.display = 'none';
+  document.getElementById('shop-btn').style.display = 'none';
+  document.getElementById('shop-btn-label').style.display = 'none';
+  document.getElementById('hive-balance').style.display = 'none';
+  document.getElementById('fish-hud').style.display = 'none';
+  document.getElementById('empty-state').style.display = 'block';
+}
+
+function showLoginError(msg) {
+  const el = document.getElementById('login-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+// ── SHOP ──
+function buildShopGrid() {
+  const grid = document.getElementById('shop-grid');
+  grid.innerHTML = '';
+  FISH_CATALOG.forEach(fish => {
+    const card = document.createElement('div');
+    card.className = 'fish-card';
+    card.id = 'card-' + fish.id;
+    const alreadyOwned = myFish.some(f => f.id === fish.id);
+    card.innerHTML = `
+      ${alreadyOwned ? '<div class="owned-badge">✓ Seu</div>' : ''}
+      <div class="fish-card-preview">${fish.svg(0.9)}</div>
+      <h3>${fish.name}</h3>
+      <div class="rarity ${fish.rarity}">${fish.rarity === 'common' ? 'Comum' : fish.rarity === 'rare' ? 'Raro' : '★ Lendário'}</div>
+      <p class="desc">${fish.desc}</p>
+      <div class="price">🐝 ${fish.price} HIVE <span class="price-sub">&nbsp;($${(fish.price * 0.35).toFixed(2)})</span></div>
+      <button class="btn-buy" id="btn-${fish.id}" onclick="buyFish('${fish.id}')" ${alreadyOwned ? 'disabled' : ''}>
+        ${alreadyOwned ? '✓ Já no aquário' : '🛒 Comprar'}
+      </button>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function updateShopOwned() {
+  FISH_CATALOG.forEach(fish => {
+    const card = document.getElementById('card-' + fish.id);
+    const btn = document.getElementById('btn-' + fish.id);
+    if (!card || !btn) return;
+    const owned = myFish.some(f => f.id === fish.id);
+    btn.disabled = owned;
+    btn.textContent = owned ? '✓ Já no aquário' : '🛒 Comprar';
+    const existing = card.querySelector('.owned-badge');
+    if (owned && !existing) {
+      const badge = document.createElement('div');
+      badge.className = 'owned-badge';
+      badge.textContent = '✓ Seu';
+      card.insertBefore(badge, card.firstChild);
+    } else if (!owned && existing) {
+      existing.remove();
+    }
+  });
+}
+
+async function buyFish(fishId) {
+  if (!currentUser) return;
+  const catalog = FISH_CATALOG.find(f => f.id === fishId);
+  if (!catalog) return;
+  if (!window.hive_keychain) {
+    showToast('❌ Erro', 'Hive Keychain não encontrado.', true);
+    return;
+  }
+
+  const btn = document.getElementById('btn-' + fishId);
+  btn.disabled = true;
+  btn.textContent = '⏳ Aguardando...';
+
+  showToast('🔑 Keychain', `Confirme o pagamento de ${catalog.price} HIVE para comprar ${catalog.name}`, false);
+
+  // Step 1: Send HIVE to shop account
+  hive_keychain.requestTransfer(
+    currentUser,
+    SHOP_ACCOUNT,
+    catalog.price.toFixed(3),
+    'HIVE',
+    catalog.memo,
+    false,
+    async (txResponse) => {
+      if (!txResponse.success) {
+        showToast('❌ Cancelado', txResponse.message || 'Transação cancelada.', true);
+        btn.disabled = false;
+        btn.textContent = '🛒 Comprar';
+        return;
+      }
+
+      showToast('✅ Pagamento enviado!', `Registrando ${catalog.name} na blockchain...`, false);
+
+      // Step 2: Write custom_json to record fish ownership
+      const fishJson = JSON.stringify({
+        action: 'add_fish',
+        fish_id: fishId,
+        fish_name: catalog.name,
+        tx: txResponse.result?.id || 'unknown',
+        app: APP_ID
+      });
+
+      hive_keychain.requestCustomJson(
+        currentUser,
+        APP_ID,
+        'Posting',
+        fishJson,
+        `Hive Aquarium: Adicionar ${catalog.name}`,
+        (jsonResponse) => {
+          if (jsonResponse.success) {
+            // Add to local state
+            myFish.push({ id: fishId, name: catalog.name, boughtAt: new Date().toISOString() });
+            localStorage.setItem(`fish_${currentUser}`, JSON.stringify(myFish));
+            renderMyFish();
+            spawnFish(fishId);
+            showToast('🎉 ' + catalog.name + ' adquirido!', 'Seu novo peixe já está nadando no aquário!', false);
+            // Reload balance
+            loadBalance(currentUser);
+          } else {
+            // Payment went through but custom_json failed — still add locally
+            myFish.push({ id: fishId, name: catalog.name, boughtAt: new Date().toISOString() });
+            localStorage.setItem(`fish_${currentUser}`, JSON.stringify(myFish));
+            renderMyFish();
+            spawnFish(fishId);
+            showToast('⚠️ ' + catalog.name, 'Peixe adquirido! (registro on-chain pendente)', false);
+          }
+        }
+      );
+    }
+  );
+}
+
+function openShop() {
+  buildShopGrid();
+  document.getElementById('shop-overlay').classList.add('open');
+}
+function closeShop() {
+  document.getElementById('shop-overlay').classList.remove('open');
+}
+
+// ── TOAST ──
+let toastTimer;
+function showToast(title, body, isError) {
+  const toast = document.getElementById('toast');
+  document.getElementById('toast-title').textContent = title;
+  document.getElementById('toast-body').textContent = body;
+  toast.className = 'show' + (isError ? ' error' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { toast.className = ''; }, 4000);
+}
+
+// Close shop on overlay click
+document.getElementById('shop-overlay').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('shop-overlay')) closeShop();
+});
+
+// Enter key on username input
+document.getElementById('username-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') loginWithKeychain();
+});
+</script>
+</body>
+</html>
