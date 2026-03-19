@@ -130,30 +130,13 @@
     border-radius: 50% 50% 0 0 / 100% 100% 0 0;
   }
 
-  /* Corals */
-  .coral-svg {
-    position: absolute; bottom: 90px;
-    filter: drop-shadow(0 0 8px rgba(255,100,100,0.4));
-    animation: coralSway 4s ease-in-out infinite;
-  }
-  @keyframes coralSway {
-    0%,100%{transform:rotate(-2deg) scaleX(1)}
-    50%{transform:rotate(2deg) scaleX(0.98)}
+  /* Plants & corals sway */
+  @keyframes plantSway {
+    0%,100% { transform: rotate(-4deg) skewX(-1deg); }
+    50%     { transform: rotate(4deg)  skewX(1deg);  }
   }
 
-  /* Seaweed */
-  .seaweed {
-    position: absolute; bottom: 90px;
-    width: 8px; border-radius: 4px;
-    transform-origin: bottom center;
-    animation: weedSway 3s ease-in-out infinite;
-  }
-  @keyframes weedSway {
-    0%,100%{transform:rotate(-8deg) skewX(-3deg)}
-    50%{transform:rotate(8deg) skewX(3deg)}
-  }
-
-  /* Bubbles */
+  /* More bubbles */
   .bubble {
     position: absolute;
     background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.4), rgba(0,180,255,0.1));
@@ -193,9 +176,27 @@
   .fish:hover { filter: brightness(1.4) drop-shadow(0 0 12px rgba(0,212,255,0.8)); }
   .fish svg { display: block; transition: transform 0.4s ease; }
 
-  /* Rarity glow effects */
-  .fish.rare svg    { filter: drop-shadow(0 0 6px rgba(160,100,255,0.5)); }
-  .fish.legendary svg { filter: drop-shadow(0 0 12px rgba(255,180,0,0.7)); }
+  /* Rarity glow effects — color matches fish */
+  .fish.common svg { filter: none; }
+  .fish.rare svg {
+    filter: drop-shadow(0 0 5px var(--rare-glow, rgba(160,100,255,0.6)))
+            drop-shadow(0 0 12px var(--rare-glow, rgba(160,100,255,0.3)));
+    animation: rarePulse 2.5s ease-in-out infinite;
+  }
+  .fish.legendary svg {
+    filter: drop-shadow(0 0 10px var(--leg-glow, rgba(255,180,0,0.8)))
+            drop-shadow(0 0 25px var(--leg-glow, rgba(255,180,0,0.4)))
+            drop-shadow(0 0 50px var(--leg-glow, rgba(255,100,0,0.2)));
+    animation: legendPulse 1.8s ease-in-out infinite;
+  }
+  @keyframes rarePulse {
+    0%,100% { filter: drop-shadow(0 0 4px var(--rare-glow)) drop-shadow(0 0 10px var(--rare-glow)); }
+    50%     { filter: drop-shadow(0 0 8px var(--rare-glow)) drop-shadow(0 0 20px var(--rare-glow)); }
+  }
+  @keyframes legendPulse {
+    0%,100% { filter: drop-shadow(0 0 8px var(--leg-glow)) drop-shadow(0 0 20px var(--leg-glow)); }
+    50%     { filter: drop-shadow(0 0 16px var(--leg-glow)) drop-shadow(0 0 40px var(--leg-glow)) brightness(1.1); }
+  }
 
   /* Jellyfish specific bob */
   @keyframes jellybob {
@@ -754,61 +755,144 @@ window.addEventListener('load', () => {
 // ── DECORATIONS ──
 function buildAquariumDecor() {
   const aq = document.getElementById('aquarium');
-  // Corals
+
+  // ── PEBBLES / GRAVEL ──
+  const pebbleColors = ['#4a7a9b','#5b8fa8','#3d6b82','#6a9db5','#2d5a70','#4e8ca0','#7aafcb','#c8a96e','#b09060','#8a7050'];
+  for (let i = 0; i < 120; i++) {
+    const p = document.createElement('div');
+    const sz = 4 + Math.random() * 10;
+    const left = Math.random() * 100;
+    const bottom = 2 + Math.random() * 20;
+    const col = pebbleColors[Math.floor(Math.random() * pebbleColors.length)];
+    p.style.cssText = `position:absolute;bottom:${bottom}px;left:${left}%;width:${sz}px;height:${sz*0.65}px;background:${col};border-radius:50%;opacity:${0.6+Math.random()*0.4};`;
+    aq.appendChild(p);
+  }
+
+  // ── LOGS / DRIFTWOOD ──
+  const logs = [
+    { x: 18, w: 120, h: 18, rot: -8,  col: '#3d2810' },
+    { x: 55, w: 90,  h: 14, rot:  5,  col: '#4a3218' },
+    { x: 73, w: 70,  h: 12, rot: -4,  col: '#382508' },
+  ];
+  logs.forEach(l => {
+    const div = document.createElement('div');
+    div.style.cssText = `position:absolute;bottom:${88 + Math.random()*10}px;left:${l.x}%;width:${l.w}px;height:${l.h}px;background:linear-gradient(180deg,${l.col} 0%,#1a1008 100%);border-radius:${l.h/2}px;transform:rotate(${l.rot}deg);opacity:0.85;`;
+    // Log rings
+    div.innerHTML = `<div style="position:absolute;top:3px;left:${l.w*0.3}px;width:${l.h-6}px;height:${l.h-6}px;border-radius:50%;border:1.5px solid rgba(255,200,100,0.15);"></div>
+    <div style="position:absolute;top:5px;left:${l.w*0.3+2}px;width:${l.h-10}px;height:${l.h-10}px;border-radius:50%;border:1px solid rgba(255,200,100,0.1);"></div>`;
+    aq.appendChild(div);
+  });
+
+  // ── AQUATIC PLANTS (varied colors like the photo) ──
+  const plants = [
+    { x: 3,  color: '#cc2222', h: 130, name: 'red' },
+    { x: 8,  color: '#cc2222', h: 100, name: 'red2' },
+    { x: 18, color: '#1a88ee', h: 140, name: 'blue' },
+    { x: 24, color: '#22aa44', h: 120, name: 'green' },
+    { x: 32, color: '#2244ee', h: 150, name: 'indigo' },
+    { x: 40, color: '#22cc44', h: 110, name: 'green2' },
+    { x: 52, color: '#aa22dd', h: 130, name: 'purple' },
+    { x: 60, color: '#22cc88', h: 100, name: 'teal' },
+    { x: 70, color: '#ee44aa', h: 140, name: 'pink' },
+    { x: 78, color: '#22aa44', h: 125, name: 'green3' },
+    { x: 86, color: '#ee44aa', h: 115, name: 'pink2' },
+    { x: 93, color: '#1a88ee', h: 135, name: 'blue2' },
+  ];
+
+  plants.forEach((pl, i) => {
+    const div = document.createElement('div');
+    div.style.cssText = `position:absolute;bottom:88px;left:${pl.x}%;transform-origin:bottom center;animation:plantSway ${2.5+Math.random()*2}s ease-in-out infinite;animation-delay:${Math.random()*3}s;`;
+    div.innerHTML = buildPlantSVG(pl.color, pl.h);
+    aq.appendChild(div);
+  });
+
+  // ── CORALS ──
   const corals = [
-    { x: 4, color: '#ff5566', h: 90 },
-    { x: 12, color: '#ff3344', h: 70 },
-    { x: 78, color: '#ff6644', h: 80 },
-    { x: 88, color: '#ff4455', h: 100 },
-    { x: 50, color: '#ff7755', h: 60 },
+    { x: 44, color: '#ff5566', h: 70 },
+    { x: 63, color: '#ff3344', h: 55 },
+    { x: 48, color: '#ff7744', h: 50 },
   ];
   corals.forEach(c => {
     const div = document.createElement('div');
-    div.className = 'coral-svg';
-    div.style.left = c.x + '%';
-    div.style.animationDelay = Math.random() * 3 + 's';
-    div.innerHTML = `<svg width="40" height="${c.h}" viewBox="0 0 40 ${c.h}">
-      <path d="M20 ${c.h} Q18 ${c.h*0.6} 10 ${c.h*0.4} Q5 ${c.h*0.2} 12 ${c.h*0.1}" stroke="${c.color}" stroke-width="4" fill="none" stroke-linecap="round"/>
-      <path d="M20 ${c.h} Q22 ${c.h*0.6} 30 ${c.h*0.4} Q35 ${c.h*0.2} 28 ${c.h*0.1}" stroke="${c.color}" stroke-width="4" fill="none" stroke-linecap="round"/>
-      <path d="M20 ${c.h} L20 ${c.h*0.3}" stroke="${c.color}" stroke-width="5" fill="none" stroke-linecap="round"/>
-      <circle cx="12" cy="${c.h*0.1}" r="5" fill="${c.color}"/>
-      <circle cx="28" cy="${c.h*0.1}" r="5" fill="${c.color}"/>
-      <circle cx="20" cy="${c.h*0.3-8}" r="6" fill="${c.color}"/>
-    </svg>`;
+    div.style.cssText = `position:absolute;bottom:90px;left:${c.x}%;filter:drop-shadow(0 0 6px ${c.color}88);animation:plantSway ${3+Math.random()*2}s ease-in-out infinite;animation-delay:${Math.random()*2}s;`;
+    div.innerHTML = buildCoralSVG(c.color, c.h);
     aq.appendChild(div);
   });
 
-  // Seaweeds
-  const weeds = [25, 35, 45, 65, 75, 92];
-  const weedColors = ['#2a8040', '#1a6030', '#3a9050'];
-  weeds.forEach((x, i) => {
-    const h = 60 + Math.random() * 60;
-    const div = document.createElement('div');
-    div.className = 'seaweed';
-    div.style.cssText = `left:${x}%;height:${h}px;background:linear-gradient(180deg,${weedColors[i%3]},#0a3015);animation-delay:${Math.random()*2}s;animation-duration:${2+Math.random()*2}s`;
-    aq.appendChild(div);
-  });
+  // ── SAND/GRAVEL BASE ──
+  const sandBase = document.createElement('div');
+  sandBase.style.cssText = `position:absolute;bottom:0;left:0;right:0;height:90px;background:linear-gradient(180deg,transparent 0%,rgba(40,30,15,0.6) 30%,rgba(20,15,8,0.95) 100%);pointer-events:none;`;
+  aq.appendChild(sandBase);
+}
 
-  // Rocks
-  const rocksData = [{x:15,w:60,h:25},{x:55,w:80,h:30},{x:82,w:45,h:20}];
-  rocksData.forEach(r => {
-    const div = document.createElement('div');
-    div.style.cssText = `position:absolute;bottom:88px;left:${r.x}%;width:${r.w}px;height:${r.h}px;background:radial-gradient(ellipse,#2a2520,#151210);border-radius:50%;`;
-    aq.appendChild(div);
-  });
+function buildPlantSVG(color, h) {
+  const w = 32;
+  const mid = w / 2;
+  const dark = shadeColor(color, -40);
+  const light = shadeColor(color, 30);
+  // Build a plant with stem + alternating leaves
+  let leaves = '';
+  const numLeaves = 4 + Math.floor(h / 35);
+  for (let i = 0; i < numLeaves; i++) {
+    const y = h - 15 - i * (h * 0.7 / numLeaves);
+    const side = i % 2 === 0 ? 1 : -1;
+    const lw = 12 + Math.random() * 8;
+    const lh = 18 + Math.random() * 10;
+    const cx = mid + side * lw * 0.5;
+    leaves += `<ellipse cx="${cx}" cy="${y}" rx="${lw*0.5}" ry="${lh*0.35}" fill="${i%3===0?light:color}" opacity="${0.85+Math.random()*0.15}" transform="rotate(${side*25} ${cx} ${y})"/>`;
+    // Leaf vein
+    leaves += `<line x1="${mid}" y1="${y+4}" x2="${cx + side*lw*0.4}" y2="${y - lh*0.2}" stroke="${dark}" stroke-width="0.8" opacity="0.5"/>`;
+  }
+  // Top flourish
+  leaves += `<ellipse cx="${mid}" cy="8" rx="7" ry="12" fill="${light}" opacity="0.9"/>`;
+  leaves += `<ellipse cx="${mid-5}" cy="12" rx="5" ry="9" fill="${color}" opacity="0.8"/>`;
+  leaves += `<ellipse cx="${mid+5}" cy="12" rx="5" ry="9" fill="${color}" opacity="0.8"/>`;
+
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="overflow:visible">
+    <!-- stem -->
+    <path d="M${mid} ${h} Q${mid+3} ${h*0.6} ${mid-2} ${h*0.3} Q${mid+1} ${h*0.15} ${mid} 10"
+      stroke="${dark}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    ${leaves}
+  </svg>`;
+}
+
+function buildCoralSVG(color, h) {
+  const dark = shadeColor(color, -30);
+  return `<svg width="40" height="${h}" viewBox="0 0 40 ${h}" style="overflow:visible">
+    <path d="M20 ${h} Q18 ${h*0.55} 9 ${h*0.35} Q4 ${h*0.15} 11 ${h*0.08}" stroke="${color}" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+    <path d="M20 ${h} Q22 ${h*0.55} 31 ${h*0.35} Q36 ${h*0.15} 29 ${h*0.08}" stroke="${color}" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+    <path d="M20 ${h} L20 ${h*0.28}" stroke="${color}" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+    <path d="M20 ${h} Q16 ${h*0.7} 6 ${h*0.6}" stroke="${dark}" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M20 ${h} Q24 ${h*0.7} 34 ${h*0.6}" stroke="${dark}" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <circle cx="11" cy="${h*0.08}" r="5.5" fill="${color}"/>
+    <circle cx="29" cy="${h*0.08}" r="5.5" fill="${color}"/>
+    <circle cx="20" cy="${h*0.28-8}" r="6.5" fill="${color}"/>
+    <circle cx="6"  cy="${h*0.6}"   r="4"   fill="${color}" opacity="0.8"/>
+    <circle cx="34" cy="${h*0.6}"   r="4"   fill="${color}" opacity="0.8"/>
+  </svg>`;
+}
+
+function shadeColor(hex, pct) {
+  // Works with both hex (#rrggbb) and rgba strings — for rgba just return as-is slightly adjusted
+  if (hex.startsWith('rgba') || hex.startsWith('rgb')) return hex;
+  let r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  r = Math.max(0,Math.min(255, r + Math.round(pct * 2.55)));
+  g = Math.max(0,Math.min(255, g + Math.round(pct * 2.55)));
+  b = Math.max(0,Math.min(255, b + Math.round(pct * 2.55)));
+  return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
 }
 
 function spawnBubbles() {
   const aq = document.getElementById('aquarium');
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 45; i++) {
     const b = document.createElement('div');
     b.className = 'bubble';
-    const size = 4 + Math.random() * 10;
+    const size = 3 + Math.random() * 12;
     const left = Math.random() * 100;
-    const dur = 6 + Math.random() * 10;
-    const delay = Math.random() * 12;
-    const drift = (Math.random() - 0.5) * 80;
-    b.style.cssText = `width:${size}px;height:${size}px;left:${left}%;bottom:${90+Math.random()*60}px;--drift:${drift}px;animation-duration:${dur}s;animation-delay:${delay}s`;
+    const dur = 5 + Math.random() * 10;
+    const delay = Math.random() * 15;
+    const drift = (Math.random() - 0.5) * 100;
+    b.style.cssText = `width:${size}px;height:${size}px;left:${left}%;bottom:${85+Math.random()*80}px;--drift:${drift}px;animation-duration:${dur}s;animation-delay:${delay}s`;
     aq.appendChild(b);
   }
 }
@@ -925,6 +1009,22 @@ function spawnFish(fishId, opts = {}) {
     spiralCenterX: startX,
     spiralCenterY: startY,
   };
+
+  // Glow colors per fish
+  const glowColors = {
+    clownfish:  'rgba(255,120,0,0.7)',
+    tang:       'rgba(30,140,255,0.7)',
+    angelfish:  'rgba(180,100,255,0.7)',
+    jellyfish:  'rgba(200,80,255,0.75)',
+    seahorse:   'rgba(240,160,40,0.7)',
+    dragon:     'rgba(255,160,0,0.85)',
+  };
+  const glowColor = glowColors[fishId] || 'rgba(0,212,255,0.6)';
+  if (catalog.rarity === 'rare') {
+    fishEl.style.setProperty('--rare-glow', glowColor);
+  } else if (catalog.rarity === 'legendary') {
+    fishEl.style.setProperty('--leg-glow', glowColor);
+  }
 
   fishInstances.push(instance);
   fishElements.push(fishEl);
@@ -1061,22 +1161,24 @@ function updateFish(dt) {
     const bobAmt = { common: 1.5, rare: 2.5, legendary: 3.5 }[f.rarity] || 2;
     const bobY = Math.sin(f.bobPhase) * bobAmt;
 
-    // Facing — SVGs draw facing RIGHT, so facing=1 means no flip
+    // Facing — SVGs are drawn facing LEFT (eye on left, tail on right)
+    // So to make fish swim RIGHT (positive vx): scaleX(-1) flips to face right
+    // facing= 1 → vx>0 → moving right → scaleX(-1) → looks right ✓
+    // facing=-1 → vx<0 → moving left → scaleX(1)  → looks left  ✓
     if (f.vx > 0.08)  f.facing =  1;
     if (f.vx < -0.08) f.facing = -1;
 
-    // Tilt: lean into vertical movement direction
+    const scaleXVal = f.facing === 1 ? -1 : 1;
+
+    // Tilt: lean into vertical movement
     const tiltDeg = Math.atan2(f.vy, Math.abs(f.vx)) * (180/Math.PI) * 0.4;
     const finalTilt = f.facing === 1 ? tiltDeg : -tiltDeg;
 
-    // Apply to container: translate + horizontal flip
-    // facing=1  → scaleX(1)  → fish faces right ✓
-    // facing=-1 → scaleX(-1) → fish faces left ✓
-    f.el.style.transform = `translate(${f.x}px, ${f.y + bobY}px) scaleX(${f.facing})`;
-
-    // SVG rotates with tilt, tooltip counter-flips to stay readable
+    // Translate to position, flip horizontally
+    f.el.style.transform = `translate(${f.x}px, ${f.y + bobY}px) scaleX(${scaleXVal})`;
     f.el.querySelector('svg').style.transform = `rotate(${finalTilt}deg)`;
-    f.tooltip.style.transform = `translateX(-50%) scaleX(${f.facing})`; // counter-flip tooltip
+    // Counter-flip tooltip so text is always readable
+    f.tooltip.style.transform = `translateX(-50%) scaleX(${scaleXVal * -1})`;
   });
 }
 
