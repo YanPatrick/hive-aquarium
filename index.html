@@ -875,9 +875,20 @@ function spawnFish(fishId, opts = {}) {
   fishEl.className = 'fish ' + catalog.rarity;
   fishEl.dataset.id = fishId;
 
-  const scale = 0.7 + Math.random() * 0.45;
-  fishEl.innerHTML = catalog.svg(scale) +
-    `<div class="fish-tooltip">${catalog.name} · ${opts.owner || currentUser}</div>`;
+  // Legendary dragon gets a much bigger scale to feel majestic
+  const baseScale = catalog.id === 'dragon' ? 1.6 + Math.random() * 0.4
+                  : catalog.rarity === 'legendary' ? 1.1 + Math.random() * 0.3
+                  : 0.7 + Math.random() * 0.45;
+
+  // Tooltip must NOT be inside the flipped container — put it as sibling with counter-flip
+  const svgHtml = catalog.svg(baseScale);
+  fishEl.innerHTML = svgHtml;
+
+  // Tooltip as separate element that always stays upright
+  const tooltip = document.createElement('div');
+  tooltip.className = 'fish-tooltip';
+  tooltip.textContent = `${catalog.name} · ${opts.owner || currentUser}`;
+  fishEl.appendChild(tooltip);
 
   fishEl.style.cssText = `left:0;top:0;z-index:10;position:absolute;`;
   fishEl.addEventListener('click', () => showToast('🐠 ' + catalog.name, catalog.desc, false));
@@ -886,30 +897,33 @@ function spawnFish(fishId, opts = {}) {
   const startX = 0.05 * w + Math.random() * 0.85 * w;
   const startY = 0.08 * h + Math.random() * 0.62 * h;
 
-  // Speed by rarity
-  const speeds = { common: 0.4, rare: 0.65, legendary: 1.1 };
+  // Speed by rarity — dragon is slower but powerful
+  const speeds = { common: 0.5, rare: 0.75, legendary: 0.9 };
   const spd = (speeds[catalog.rarity] || 0.5) * (0.8 + Math.random() * 0.5);
-  const angle = Math.random() * Math.PI * 2;
+
+  // Start moving RIGHT (positive vx) so fish faces correct direction immediately
+  const angle = (Math.random() - 0.5) * 0.6; // mostly horizontal, slight vertical variance
+  const startVx = Math.cos(angle) * spd * (Math.random() > 0.5 ? 1 : -1);
+  const startVy = Math.sin(angle) * spd * 0.4;
 
   const instance = {
     el: fishEl,
+    tooltip,
     fishId,
     rarity: catalog.rarity,
     x: startX, y: startY,
-    vx: Math.cos(angle) * spd,
-    vy: Math.sin(angle) * spd * 0.4,
-    facing: 1, // 1 = right, -1 = left
+    vx: startVx,
+    vy: startVy,
+    facing: startVx >= 0 ? 1 : -1,
     behavior: pickBehavior(catalog.rarity),
-    behaviorTimer: Math.random() * 300,
     behaviorTick: 0,
-    scale,
+    baseScale,
     bobPhase: Math.random() * Math.PI * 2,
-    wobble: 0,
-    wobbleDir: 1,
     dashCooldown: 0,
+    isDashing: false,
     spiralAngle: Math.random() * Math.PI * 2,
-    patrolDir: Math.random() > 0.5 ? 1 : -1,
-    idleTimer: 0,
+    spiralCenterX: startX,
+    spiralCenterY: startY,
   };
 
   fishInstances.push(instance);
@@ -922,7 +936,7 @@ function spawnFish(fishId, opts = {}) {
 function startFishLoop() {
   let last = performance.now();
   function loop(now) {
-    const dt = Math.min((now - last) / 16.67, 3); // normalize to ~60fps, cap at 3x
+    const dt = Math.min((now - last) / 16.67, 3);
     last = now;
     updateFish(dt);
     animFrameId = requestAnimationFrame(loop);
@@ -932,29 +946,29 @@ function startFishLoop() {
 
 function updateFish(dt) {
   const { w, h } = AQ_BOUNDS();
-  const FLOOR = h * 0.85; // sand level
+  const FLOOR = h * 0.83;
   const CEIL  = h * 0.07;
   const LEFT  = w * 0.01;
-  const RIGHT = w * 0.97;
+  const RIGHT = w * 0.96;
 
   fishInstances.forEach(f => {
     f.behaviorTick += dt;
-    f.bobPhase += 0.025 * dt;
+    f.bobPhase += 0.03 * dt;
     f.dashCooldown = Math.max(0, f.dashCooldown - dt);
 
     // ── Behavior logic ──
     switch (f.behavior) {
 
       case 'cruise':
-        // Smooth straight swim, occasional gentle vertical drift
-        f.vy += (Math.sin(f.bobPhase * 0.3) * 0.008) * dt;
-        f.vy *= 0.97;
+        // Gentle straight swim with subtle vertical sine wave
+        f.vy += Math.sin(f.bobPhase * 0.5) * 0.006 * dt;
+        f.vy *= 0.96;
         break;
 
       case 'wander': {
-        // Slow random steering
-        const turn = (Math.random() - 0.5) * 0.04 * dt;
-        const spd = Math.sqrt(f.vx*f.vx + f.vy*f.vy);
+        // Gradual random steering — small turn each frame
+        const turn = (Math.random() - 0.5) * 0.05 * dt;
+        const spd = Math.sqrt(f.vx*f.vx + f.vy*f.vy) || 0.4;
         const ang = Math.atan2(f.vy, f.vx) + turn;
         f.vx = Math.cos(ang) * spd;
         f.vy = Math.sin(ang) * spd * 0.5;
@@ -962,89 +976,107 @@ function updateFish(dt) {
       }
 
       case 'zigzag':
-        // Sharp direction changes on a timer
-        if (f.behaviorTick > 60 + Math.random() * 80) {
-          f.vy = (Math.random() - 0.5) * 1.2;
+        // Periodic vertical direction flip
+        if (f.behaviorTick > 50 + Math.random() * 70) {
+          f.vy = (Math.random() > 0.5 ? 1 : -1) * (0.4 + Math.random() * 0.8);
           f.behaviorTick = 0;
         }
         break;
 
       case 'patrol':
-        // Horizontal patrol, turns around at edges automatically
-        f.vy *= 0.92;
-        if (f.x > RIGHT - 60) { f.vx = -Math.abs(f.vx); }
-        if (f.x < LEFT  + 60) { f.vx =  Math.abs(f.vx); }
+        // Pure horizontal patrol — damp vertical, bounce at walls
+        f.vy *= 0.88;
+        // Ensure minimum horizontal speed
+        if (Math.abs(f.vx) < 0.3) f.vx = 0.3 * (f.facing);
         break;
 
       case 'spiral': {
-        // Circular motion
-        f.spiralAngle += 0.012 * dt;
-        const r = 80;
-        const spd2 = Math.sqrt(f.vx*f.vx + f.vy*f.vy) || 0.8;
-        f.vx = Math.cos(f.spiralAngle) * spd2;
-        f.vy = Math.sin(f.spiralAngle) * spd2 * 0.45;
+        // True circular orbit — update center occasionally
+        if (f.behaviorTick < 2) {
+          f.spiralCenterX = f.x;
+          f.spiralCenterY = f.y;
+        }
+        f.spiralAngle += 0.018 * dt;
+        const radius = 70 + (f.baseScale * 20);
+        const targetX = f.spiralCenterX + Math.cos(f.spiralAngle) * radius;
+        const targetY = f.spiralCenterY + Math.sin(f.spiralAngle) * radius * 0.5;
+        // Steer toward target
+        f.vx += (targetX - f.x) * 0.012 * dt;
+        f.vy += (targetY - f.y) * 0.012 * dt;
+        f.vx *= 0.92;
+        f.vy *= 0.92;
         break;
       }
 
-      case 'dash':
-        // Bursts of speed then glides
-        if (f.dashCooldown === 0 && f.behaviorTick > 120) {
-          const boost = 4 + Math.random() * 3;
-          f.vx *= boost;
-          f.vy *= 0.5;
-          f.dashCooldown = 80 + Math.random() * 60;
+      case 'dash': {
+        // Wait, then burst forward, then glide to a stop
+        if (!f.isDashing && f.dashCooldown === 0 && f.behaviorTick > 80) {
+          // Fire the dash
+          const dashDir = f.facing; // dash in whichever way fish is facing
+          f.vx = dashDir * (3.5 + Math.random() * 2.5);
+          f.vy = (Math.random() - 0.5) * 0.8;
+          f.isDashing = true;
+          f.dashCooldown = 120 + Math.random() * 80;
           f.behaviorTick = 0;
         }
-        // Slow down after dash
-        if (f.dashCooldown > 0) {
-          f.vx *= 0.975;
+        if (f.isDashing) {
+          f.vx *= 0.962; // decelerate
+          f.vy *= 0.95;
+          if (Math.abs(f.vx) < 0.5) f.isDashing = false;
         }
         break;
+      }
     }
 
-    // Behavior change on timer (random interval per rarity)
-    const changeEvery = { common: 500, rare: 380, legendary: 250 };
-    if (f.behaviorTick > (changeEvery[f.rarity] || 400) + Math.random() * 200) {
+    // Auto-change behavior
+    const changeEvery = { common: 400, rare: 300, legendary: 200 };
+    if (f.behaviorTick > (changeEvery[f.rarity] || 350) + Math.random() * 150) {
       f.behavior = pickBehavior(f.rarity);
       f.behaviorTick = 0;
     }
 
-    // Speed cap by rarity
-    const maxSpeeds = { common: 1.2, rare: 1.8, legendary: 3.5 };
+    // Speed cap
+    const maxSpeeds = { common: 1.4, rare: 2.0, legendary: 4.5 };
     const maxSpd = maxSpeeds[f.rarity] || 1.5;
     const curSpd = Math.sqrt(f.vx*f.vx + f.vy*f.vy);
     if (curSpd > maxSpd) { f.vx = (f.vx/curSpd)*maxSpd; f.vy = (f.vy/curSpd)*maxSpd; }
 
-    // Min speed (don't let fish completely stop)
-    const minSpd = 0.15;
-    if (curSpd < minSpd && curSpd > 0) { f.vx = (f.vx/curSpd)*minSpd; f.vy = (f.vy/curSpd)*minSpd; }
-    if (curSpd === 0) { f.vx = minSpd; }
+    // Min horizontal speed — fish should always be swimming
+    const minHSpd = 0.2;
+    if (Math.abs(f.vx) < minHSpd) {
+      f.vx = minHSpd * (f.vx >= 0 ? 1 : -1);
+    }
 
     // Move
     f.x += f.vx * dt;
     f.y += f.vy * dt;
 
-    // Bounce off walls smoothly
-    if (f.x < LEFT)  { f.x = LEFT;  f.vx =  Math.abs(f.vx) * 0.8; }
-    if (f.x > RIGHT) { f.x = RIGHT; f.vx = -Math.abs(f.vx) * 0.8; }
+    // Bounce off walls
+    if (f.x < LEFT)  { f.x = LEFT;  f.vx =  Math.abs(f.vx) * 0.85; }
+    if (f.x > RIGHT) { f.x = RIGHT; f.vx = -Math.abs(f.vx) * 0.85; }
     if (f.y < CEIL)  { f.y = CEIL;  f.vy =  Math.abs(f.vy) * 0.7; }
     if (f.y > FLOOR) { f.y = FLOOR; f.vy = -Math.abs(f.vy) * 0.7; }
 
-    // Bob (vertical sine wave on top of position)
-    const bobAmt = { common: 1.5, rare: 2.5, legendary: 4 }[f.rarity] || 2;
+    // Bob
+    const bobAmt = { common: 1.5, rare: 2.5, legendary: 3.5 }[f.rarity] || 2;
     const bobY = Math.sin(f.bobPhase) * bobAmt;
 
-    // Facing: flip when changing horizontal direction
-    if (f.vx > 0.05)  f.facing =  1;
-    if (f.vx < -0.05) f.facing = -1;
+    // Facing — SVGs draw facing RIGHT, so facing=1 means no flip
+    if (f.vx > 0.08)  f.facing =  1;
+    if (f.vx < -0.08) f.facing = -1;
 
-    // Tilt: lean slightly in direction of vertical movement
-    const tilt = Math.atan2(f.vy, Math.abs(f.vx)) * (180/Math.PI) * 0.35;
-    const flipTilt = f.facing === -1 ? -tilt : tilt;
+    // Tilt: lean into vertical movement direction
+    const tiltDeg = Math.atan2(f.vy, Math.abs(f.vx)) * (180/Math.PI) * 0.4;
+    const finalTilt = f.facing === 1 ? tiltDeg : -tiltDeg;
 
-    // Apply transform
+    // Apply to container: translate + horizontal flip
+    // facing=1  → scaleX(1)  → fish faces right ✓
+    // facing=-1 → scaleX(-1) → fish faces left ✓
     f.el.style.transform = `translate(${f.x}px, ${f.y + bobY}px) scaleX(${f.facing})`;
-    f.el.querySelector('svg').style.transform = `rotate(${flipTilt}deg)`;
+
+    // SVG rotates with tilt, tooltip counter-flips to stay readable
+    f.el.querySelector('svg').style.transform = `rotate(${finalTilt}deg)`;
+    f.tooltip.style.transform = `translateX(-50%) scaleX(${f.facing})`; // counter-flip tooltip
   });
 }
 
