@@ -582,7 +582,8 @@
     display: flex; align-items: center; justify-content: center;
     transition: all 0.2s; pointer-events: all; flex-shrink: 0;
   }
-  .edit-btn-icon:hover { background: rgba(0,100,200,0.4); border-color: #a0c4ff; transform: scale(1.1); } background: rgba(0,212,255,0.06); color: var(--glow); font-size: 0.78rem; cursor: pointer; font-family: 'Raleway', sans-serif; transition: all 0.2s; pointer-events: all; }
+  .edit-btn-icon:hover { background: rgba(0,100,200,0.4); border-color: #a0c4ff; transform: scale(1.1); }
+  .edit-btn { padding: 7px 14px; border-radius: 8px; border: 1px solid var(--border); background: rgba(0,212,255,0.06); color: var(--glow); font-size: 0.78rem; cursor: pointer; font-family: 'Raleway', sans-serif; transition: all 0.2s; pointer-events: all; }
   .edit-btn:hover { background: rgba(0,212,255,0.14); }
   .edit-btn.save { background: linear-gradient(135deg,#004488,#0077cc); border-color: transparent; color:#fff; }
   .edit-btn.save:hover { background: linear-gradient(135deg,#005599,#0099ff); }
@@ -878,8 +879,8 @@
   <div id="edit-toolbar">
     <span class="edit-toolbar-label">✏️ MODO EDIÇÃO</span>
     <button class="edit-btn save" onclick="saveEdit()">💾 Salvar</button>
-    <button class="edit-btn-icon" onclick="openHowToPlay()" title="Como Funciona">?</button>
     <button class="edit-btn" onclick="closeEdit()" style="color:#ff8080;border-color:rgba(255,80,80,0.3)">✕ Fechar</button>
+    <button class="edit-btn-icon" onclick="openHowToPlay()" title="Como Funciona">?</button>
   </div>
   <div id="fish-slots-area">
     <div class="fish-slots-label">Slots de Peixes — clique para equipar / remover</div>
