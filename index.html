@@ -160,6 +160,7 @@
     );
     animation: rayMove 18s linear infinite;
     pointer-events: none;
+    will-change: transform;
   }
   @keyframes rayMove {
     0%   { transform: translateX(0); }
@@ -175,6 +176,7 @@
   }
   .caustic-layer {
     position: absolute; inset: 0; pointer-events: none;
+    will-change: transform;
     background:
       radial-gradient(ellipse 180px 60px at 15% 12%, rgba(0,200,255,0.05) 0%, transparent 70%),
       radial-gradient(ellipse 130px 50px at 45% 8%,  rgba(0,220,255,0.04) 0%, transparent 70%),
@@ -184,6 +186,7 @@
   }
   .caustic-layer2 {
     position: absolute; inset: 0; pointer-events: none;
+    will-change: transform;
     background:
       radial-gradient(ellipse 120px 45px at 30% 22%, rgba(0,230,255,0.035) 0%, transparent 70%),
       radial-gradient(ellipse 150px 50px at 60% 14%, rgba(0,200,255,0.04) 0%, transparent 70%),
@@ -198,6 +201,10 @@
     0%   { transform: translateX(0) translateY(0) scale(1.02); }
     100% { transform: translateX(-20px) translateY(12px) scale(0.98); }
   }
+
+  /* Bubbles and particles: GPU layer */
+  .bubble { will-change: transform, opacity; }
+  .particle { will-change: transform, opacity; }
 
   .sand-bottom {
     position: absolute; bottom: 0; left: 0; right: 0; height: 120px;
@@ -246,6 +253,7 @@
     position: absolute;
     cursor: pointer;
     will-change: transform;
+    contain: layout style paint; /* isolate fish layers for better compositing */
     transition: filter 0.3s;
   }
   .fish:hover { filter: brightness(1.4) drop-shadow(0 0 12px rgba(0,212,255,0.8)); }
@@ -1459,7 +1467,8 @@ function shadeColor(hex, pct) {
 
 function spawnBubbles() {
   const aq = document.getElementById('aquarium');
-  for (let i = 0; i < 45; i++) {
+  const isMobile = window.innerWidth < 900;
+for (let i = 0; i < (isMobile ? 20 : 35); i++) {
     const b = document.createElement('div');
     b.className = 'bubble';
     const size = 3 + Math.random() * 12;
@@ -1474,7 +1483,7 @@ function spawnBubbles() {
 
 function spawnParticles() {
   const aq = document.getElementById('aquarium');
-  for (let i = 0; i < 40; i++) {
+  for (let i = 0; i < (isMobile ? 15 : 28); i++) {
     const p = document.createElement('div');
     p.className = 'particle';
     const left = Math.random() * 100;
@@ -1487,12 +1496,37 @@ function spawnParticles() {
   }
 }
 
+// ── ADAPTIVE PERFORMANCE ──
+// Measure actual FPS for first 3 seconds and reduce quality if too low
+let _perfFrames = 0, _perfStart = performance.now(), _perfChecked = false;
+function checkPerformance() {
+  if (_perfChecked) return;
+  _perfFrames++;
+  const elapsed = performance.now() - _perfStart;
+  if (elapsed > 3000) {
+    _perfChecked = true;
+    const fps = (_perfFrames / elapsed) * 1000;
+    console.log(`[HA] Measured FPS: ${fps.toFixed(1)}`);
+    if (fps < 35 && appSettings.quality !== 'high') {
+      // Low-end device: reduce bubble/particle count and disable caustics
+      document.querySelector('.caustic-layer2')?.remove();
+      const bubbles = document.querySelectorAll('.bubble');
+      bubbles.forEach((b, i) => { if (i > 15) b.remove(); });
+      const particles = document.querySelectorAll('.particle');
+      particles.forEach((p, i) => { if (i > 10) p.remove(); });
+      console.log('[HA] Low-end device detected, reduced visual quality');
+    }
+  }
+  if (!_perfChecked) requestAnimationFrame(checkPerformance);
+}
+requestAnimationFrame(checkPerformance);
+
 // ── FISH MOVEMENT ENGINE ──
 let fishInstances = [];
 let animFrameId = null;
 
 const AQ_BOUNDS = () => {
-  const aq = document.getElementById('aquarium');
+  const aq = getAquariumEl();
   return { w: aq.clientWidth, h: aq.clientHeight };
 };
 
@@ -1531,7 +1565,7 @@ function spawnFish(fishId, opts = {}) {
   tooltip.textContent = `${catalog.name} · ${opts.owner || currentUser}`;
   fishEl.appendChild(tooltip);
 
-  fishEl.style.cssText = `left:0;top:0;z-index:10;position:absolute;`;
+  fishEl.style.cssText = `left:0;top:0;z-index:10;position:absolute;will-change:transform;`;
  fishEl.addEventListener('click', () => showToast(catalog.name, catalog.desc, false));
   aq.appendChild(fishEl);
 
@@ -1584,10 +1618,18 @@ function spawnFish(fishId, opts = {}) {
 
 function startFishLoop() {
   let last = performance.now();
+  let skipFrame = false;
   function loop(now) {
-    const dt = Math.min((now - last) / 16.67, 3);
-    last = now;
-    updateFish(dt);
+    const elapsed = now - last;
+    // On very slow devices (< 25fps), skip every other frame to reduce JS load
+    if (elapsed < 40 || !skipFrame) {
+      const dt = Math.min(elapsed / 16.67, 3);
+      last = now;
+      updateFish(dt);
+      skipFrame = false;
+    } else {
+      skipFrame = true;
+    }
     animFrameId = requestAnimationFrame(loop);
   }
   animFrameId = requestAnimationFrame(loop);
@@ -1714,8 +1756,13 @@ function clearFish() {
 // ── SPECIAL ANIMATIONS ──
 const SPECIAL_INTERVAL = 1800;
 
+let _aquariumElCache = null;
+function getAquariumEl() {
+  if (!_aquariumElCache) _aquariumElCache = document.getElementById('aquarium');
+  return _aquariumElCache;
+}
 function tickSpecialAnimation(f, dt) {
-  const aq = document.getElementById('aquarium');
+  const aq = getAquariumEl();
   f.specialParticles = f.specialParticles.filter(p => {
     p.life -= dt;
     if (p.life <= 0) { p.el.remove(); return false; }
