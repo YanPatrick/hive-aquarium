@@ -146,6 +146,7 @@
       #020d1a 0%, #051830 10%, #082040 25%, #0a2a55 50%,
       #0d3060 70%, #0a2545 85%, #051020 100%);
     overflow: hidden;
+    clip-path: inset(0); /* force CSS filters like drop-shadow to stay inside */
   }
 
   .rays {
@@ -487,7 +488,7 @@
     transition: all 0.2s; background: transparent; text-transform: uppercase;
   }
   .rarity-filter.all { color: var(--text-dim); border-color: rgba(255,255,255,0.1); }
-  .rarity-filter.common { color: #80b0e0; border-color: rgba(128,176,224,0.2); }
+  .rarity-filter.common { color: #8899aa; border-color: rgba(128,176,224,0.2); }
   .rarity-filter.rare   { color: #60ccff; border-color: rgba(96,204,255,0.2); }
   .rarity-filter.epic   { color: #cc80ff; border-color: rgba(204,128,255,0.2); }
   .rarity-filter.legendary { color: var(--gold); border-color: rgba(240,192,64,0.2); }
@@ -519,6 +520,10 @@
   .fish-card h3 { font-size: 0.85rem; color: var(--text); margin: 5px 0 2px; font-weight: 500; line-height: 1.2;
     max-height: 2.4em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; flex-shrink: 0; width: 100%; }
   .fish-card .rarity { font-size: 0.6rem; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 3px; font-weight: 600; flex-shrink: 0; }
+  .fish-card .rarity.common    { color: #8899aa; }
+  .fish-card .rarity.rare      { color: #60ccff; }
+  .fish-card .rarity.epic      { color: #cc80ff; }
+  .fish-card .rarity.legendary { color: var(--gold); }
   .fish-card .desc { font-size: 0.7rem; color: var(--text-dim); line-height: 1.3; margin-bottom: 6px;
     flex: 1; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; width: 100%; }
   .fish-card .price { font-size: 0.9rem; color: var(--gold); font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 4px; flex-shrink: 0; }
@@ -568,7 +573,16 @@
   .edit-toolbar-label { font-size: 0.72rem; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; }
   .slot-info { font-size: 0.78rem; color: var(--glow); background: rgba(0,212,255,0.08); border: 1px solid var(--border); border-radius: 8px; padding: 5px 12px; }
   .slot-info strong { color: var(--gold); }
-  .edit-btn { padding: 7px 14px; border-radius: 8px; border: 1px solid var(--border); background: rgba(0,212,255,0.06); color: var(--glow); font-size: 0.78rem; cursor: pointer; font-family: 'Raleway', sans-serif; transition: all 0.2s; pointer-events: all; }
+  .edit-btn-icon {
+    width: 32px; height: 32px; border-radius: 50%;
+    border: 2px solid rgba(100,180,255,0.5);
+    background: rgba(0,100,200,0.2);
+    color: #a0c4ff; font-size: 1rem; font-weight: 700;
+    cursor: pointer; font-family: 'Raleway', sans-serif;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; pointer-events: all; flex-shrink: 0;
+  }
+  .edit-btn-icon:hover { background: rgba(0,100,200,0.4); border-color: #a0c4ff; transform: scale(1.1); } background: rgba(0,212,255,0.06); color: var(--glow); font-size: 0.78rem; cursor: pointer; font-family: 'Raleway', sans-serif; transition: all 0.2s; pointer-events: all; }
   .edit-btn:hover { background: rgba(0,212,255,0.14); }
   .edit-btn.save { background: linear-gradient(135deg,#004488,#0077cc); border-color: transparent; color:#fff; }
   .edit-btn.save:hover { background: linear-gradient(135deg,#005599,#0099ff); }
@@ -635,7 +649,7 @@
   .decor-eq-slot .slot-empty-label { font-size: 0.62rem; color: rgba(0,212,255,0.5); font-weight:500; }
 
   #item-picker {
-    position: fixed; inset: 0; z-index: 200;
+    position: fixed; inset: 0; z-index: 300;
     background: rgba(0,5,15,0.88); backdrop-filter: blur(8px);
     display: none; align-items: center; justify-content: center;
     animation: fadeIn 0.2s ease;
@@ -863,14 +877,12 @@
 <div id="edit-overlay">
   <div id="edit-toolbar">
     <span class="edit-toolbar-label">✏️ MODO EDIÇÃO</span>
-    <div class="slot-info" id="edit-slot-summary">Carregando slots...</div>
-    <div class="slot-info" id="edit-hp-info">HP: —</div>
     <button class="edit-btn save" onclick="saveEdit()">💾 Salvar</button>
-    <button class="edit-btn" onclick="openHowToPlay()" style="color:#a0c4ff;border-color:rgba(100,180,255,0.3)">? Como Funciona</button>
+    <button class="edit-btn-icon" onclick="openHowToPlay()" title="Como Funciona">?</button>
     <button class="edit-btn" onclick="closeEdit()" style="color:#ff8080;border-color:rgba(255,80,80,0.3)">✕ Fechar</button>
   </div>
   <div id="fish-slots-area">
-    <div class="fish-slots-label">🐠 Slots de Peixes — clique para equipar / remover</div>
+    <div class="fish-slots-label">Slots de Peixes — clique para equipar / remover</div>
   </div>
   <div class="edit-slots-area" id="edit-slots-area"></div>
 </div>
@@ -1333,8 +1345,21 @@ window.addEventListener('load', () => {
   spawnParticles();
   fetchHivePrice();
   setInterval(fetchHivePrice, 60000);
+
+  // Apply all saved settings immediately on startup
   const s = JSON.parse(localStorage.getItem('hive_aquarium_settings') || '{}');
-  if (s.particles === false) document.querySelectorAll('.bubble,.particle').forEach(el => el.style.display='none');
+  if (s.particles === false) {
+    document.querySelectorAll('.bubble,.particle').forEach(el => el.style.display='none');
+  }
+  if (s.rays === false) {
+    const raysEl = document.querySelector('.rays');
+    if (raysEl) raysEl.style.display = 'none';
+  }
+  // Sync appSettings with what's stored (ensures loaded state matches UI)
+  if (Object.keys(s).length > 0) {
+    appSettings = { ...appSettings, ...s };
+  }
+
   const saved = localStorage.getItem('hive_aquarium_user');
   if (saved) {
     const { username } = JSON.parse(saved);
@@ -1953,6 +1978,7 @@ function renderMyFish() {
       const layout = JSON.parse(savedLayout);
       equippedFish  = layout.fish  || [];
       equippedDecor = layout.decor || [];
+      window._decorPositions = layout.decorPositions || [];
       toSpawn = equippedFish.filter(id => id !== null);
     } catch(e) { toSpawn = myFish.map(f => f.id); }
   } else {
@@ -2117,13 +2143,31 @@ async function afterLogin(username) {
 
 async function loadBalance(username) {
   try {
-    const res = await fetch(HIVE_API, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ jsonrpc:'2.0', method:'condenser_api.get_accounts', params:[[username]], id:1 }) });
-    const data = await res.json();
-    if (data.result && data.result[0]) {
-      const acc = data.result[0];
+    // Fetch account + dynamic global properties in parallel for accurate HP
+    const [accRes, dynRes] = await Promise.all([
+      fetch(HIVE_API, { method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ jsonrpc:'2.0', method:'condenser_api.get_accounts', params:[[username]], id:1 }) }),
+      fetch(HIVE_API, { method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ jsonrpc:'2.0', method:'condenser_api.get_dynamic_global_properties', params:[], id:2 }) })
+    ]);
+    const accData = await accRes.json();
+    const dynData = await dynRes.json();
+    if (accData.result && accData.result[0]) {
+      const acc = accData.result[0];
+      // Calculate hive_per_mvests from global properties for accurate HP
+      let hivePerMvests = 500; // fallback ~500 HIVE per MVests (approximate)
+      if (dynData.result) {
+        const dyn = dynData.result;
+        const totalVests = parseFloat(dyn.total_vesting_shares);
+        const totalHive  = parseFloat(dyn.total_vesting_fund_hive || dyn.total_vesting_fund_steem || '0');
+        if (totalVests > 0 && totalHive > 0) {
+          hivePerMvests = (totalHive / totalVests) * 1e6;
+        }
+      }
+      window._hivePerMvests = hivePerMvests;
+      window._accountData = { hiveAmt: parseFloat(acc.balance), hbdAmt: parseFloat(acc.hbd_balance), raw: acc };
       document.getElementById('hive-balance').innerHTML = hiveLogo(14) + ' ' + acc.balance;
       document.getElementById('hive-balance').style.display = 'inline-flex';
-      window._accountData = { hiveAmt: parseFloat(acc.balance), hbdAmt: parseFloat(acc.hbd_balance), raw: acc };
     }
   } catch(e) {}
 }
@@ -2178,10 +2222,14 @@ function getSlotsForHP(hp) {
 function getHPFromAccount() {
   const acc = window._accountData?.raw;
   if (!acc) return 0;
-  const rawVests = parseFloat(acc.vesting_shares);
+  const rawVests  = parseFloat(acc.vesting_shares);
   const delegated = parseFloat(acc.delegated_vesting_shares);
   const received  = parseFloat(acc.received_vesting_shares);
-  return Math.round((rawVests - delegated + received) / 2000);
+  const ownVests  = rawVests - delegated + received;
+  // Use the real conversion ratio fetched from dynamic_global_properties
+  // hivePerMvests = HIVE per million vests; divide ownVests by 1e6 to get MVests
+  const hivePerMvests = window._hivePerMvests || 500;
+  return Math.round((ownVests / 1e6) * hivePerMvests);
 }
 
 // ── SHOP ──
@@ -2244,7 +2292,7 @@ function renderShopGrid() {
       const card = document.createElement('div');
       card.className = 'fish-card'; card.id = 'card-' + decor.id;
       const owned = myDecor.some(d => d.id === decor.id);
-      const rl = { common:'Comum', rare:'✦ Raro', epic:'✦✦ Épico', legendary:'★ Lendário' }[decor.rarity];
+      const rl = { common:'Comum', rare:'Raro', epic:'Épico', legendary:'Lendário' }[decor.rarity];
       card.innerHTML = `${owned?'<div class="owned-badge">✓ Seu</div>':''}
         <div class="fish-card-preview">${decor.svg(0.75)}</div>
         <h3>${decor.name}</h3>
@@ -2270,7 +2318,7 @@ function renderShopGrid() {
     const card = document.createElement('div');
     card.className = 'fish-card'; card.id = 'card-' + fish.id;
     const owned = myFish.some(f => f.id === fish.id);
-    const rl = { common:'Comum', rare:'✦ Raro', epic:'✦✦ Épico', legendary:'★ Lendário' }[fish.rarity];
+    const rl = { common:'Comum', rare:'Raro', epic:'Épico', legendary:'Lendário' }[fish.rarity];
     card.innerHTML = `${owned?'<div class="owned-badge">✓ Seu</div>':''}
       <div class="fish-card-preview">${fish.svg(0.9)}</div>
       <h3>${fish.name}</h3>
@@ -2395,7 +2443,7 @@ function _renderWalletData() {
       bar.style.width = pct + '%';
     }));
   } else {
-    document.getElementById('wc-hp-next-label').textContent = '★ Nível máximo!';
+    document.getElementById('wc-hp-next-label').textContent = 'Nível máximo!';
     bar.style.width = '100%';
   }
 }
@@ -2426,10 +2474,6 @@ function renderEditSlots() {
   const { slots } = getSlotsForHP(hp);
   const totalFishSlots = slots.common + slots.rare + slots.epic + slots.legendary;
 
-  document.getElementById('edit-hp-info').textContent = `HP: ${hp.toLocaleString()}`;
-  document.getElementById('edit-slot-summary').innerHTML =
-    `Slots: <strong>${slots.common}</strong>C · <strong>${slots.rare}</strong>R · <strong>${slots.epic}</strong>E · <strong>${slots.legendary}</strong>L`;
-
   while (equippedFish.length < totalFishSlots) equippedFish.push(null);
   equippedFish = equippedFish.slice(0, totalFishSlots);
 
@@ -2459,7 +2503,7 @@ function renderEditSlots() {
         <div class="slot-name">${catalog.name}</div>`;
     } else {
       el.innerHTML = `<div class="slot-rarity-dot" style="background:${def.color}"></div>
-        <div class="slot-empty-label">+ Equipar<br><span style="color:${def.color};font-size:0.56rem">${def.rarity==='legendary'?'★ Lend.':def.rarity==='epic'?'✦✦ Épico':def.rarity==='rare'?'✦ Raro':'Comum'}</span></div>`;
+        <div class="slot-empty-label">+ Equipar<br><span style="color:${def.color};font-size:0.56rem">${def.rarity==='legendary'?'Lend.':def.rarity==='epic'?'Épico':def.rarity==='rare'?'Raro':'Comum'}</span></div>`;
     }
     el.onclick = (e) => { if (e.target.classList.contains('slot-remove-btn')) return; openPicker(i, 'fish', def.rarity); };
     fishArea.appendChild(el);
@@ -2473,7 +2517,7 @@ function renderEditSlots() {
   equippedDecor = equippedDecor.slice(0, totalDecorSlots);
 
   function getRarityColor(rarity) {
-    return { common:'#80b0e0', rare:'#60ccff', epic:'#cc80ff', legendary:'#f0c040' }[rarity] || '#80b0e0';
+    return { common:'#8899aa', rare:'#60ccff', epic:'#cc80ff', legendary:'#f0c040' }[rarity] || '#80b0e0';
   }
   function countEquippedByRarity(rarity) {
     return equippedDecor.filter(id => {
@@ -2533,7 +2577,7 @@ function unequipFish(slotIndex, event) {
 function openPicker(slotIndex, type, slotRarity) {
   pickerSlotIndex = slotIndex; pickerSlotType = type;
   document.getElementById('picker-title').textContent = 'Escolher Peixe';
-  document.getElementById('picker-subtitle').textContent = `Slot ${slotRarity==='legendary'?'★ Lendário':slotRarity==='epic'?'✦✦ Épico':slotRarity==='rare'?'✦ Raro':'Comum'} — apenas seus peixes comprados`;
+  document.getElementById('picker-subtitle').textContent = `Slot ${slotRarity==='legendary'?'Lendário':slotRarity==='epic'?'Épico':slotRarity==='rare'?'Raro':'Comum'} — apenas seus peixes comprados`;
   buildPickerGrid(slotRarity);
   document.getElementById('item-picker').classList.add('open');
 }
@@ -2554,7 +2598,8 @@ function buildPickerGrid(slotRarity) {
   const otherOwnedFish = FISH_CATALOG.filter(fish => ownedIds.includes(fish.id) && fish.rarity !== slotRarity);
   if (matchingFish.length === 0) {
     const rarityLabel = { common:'Comuns', rare:'Raros', epic:'Épicos', legendary:'Lendários' }[slotRarity];
-    const rc = { common:'#80b0e0', rare:'#60ccff', epic:'#cc80ff', legendary:'#f0c040' }[slotRarity];
+    const rarityColors = { common:'#8899aa', rare:'#60ccff', epic:'#cc80ff', legendary:'#f0c040' };
+  const rc = { common:'#8899aa', rare:'#60ccff', epic:'#cc80ff', legendary:'#f0c040' }[slotRarity];
     grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:30px 20px"><div style="font-size:2rem;margin-bottom:10px">🔍</div><div style="color:${rc}">Nenhum peixe ${rarityLabel}</div><button class="edit-btn" style="margin-top:14px;pointer-events:all" onclick="closePicker();closeEdit();openShop()">Ir à Loja →</button></div>`;
     if (otherOwnedFish.length > 0) {
       const divider = document.createElement('div');
@@ -2575,8 +2620,8 @@ function appendPickerCard(grid, fish, dimmed, isEquipped) {
   const card = document.createElement('div');
   card.className = 'picker-card' + (isEquipped ? ' equipped' : '');
   if (dimmed) card.style.opacity = '0.35';
-  const rl = { common:'Comum', rare:'✦ Raro', epic:'✦✦ Épico', legendary:'★ Lendário' }[fish.rarity];
-  const rc = { common:'#80b0e0', rare:'#60ccff', epic:'#cc80ff', legendary:'#f0c040' }[fish.rarity];
+  const rl = { common:'Comum', rare:'Raro', epic:'Épico', legendary:'Lendário' }[fish.rarity];
+  const rc = { common:'#8899aa', rare:'#60ccff', epic:'#cc80ff', legendary:'#f0c040' }[fish.rarity];
   card.innerHTML = `<div class="pc-preview">${fish.svg(0.65)}</div><div class="pc-name">${fish.name}</div><div class="pc-rarity" style="color:${rc}">${rl}</div>`;
   if (dimmed) { card.title = 'Raridade incompatível'; card.style.cursor = 'not-allowed'; }
  else if (isEquipped) card.onclick = () => showToast('Já equipado', `${fish.name} já está em outro slot.`, false);
@@ -2599,7 +2644,9 @@ function applyEquippedToAquarium() {
 function unequipDecor(slotIndex, event) {
   event.stopPropagation();
   equippedDecor[slotIndex] = null;
-  saveEquippedLayout(); renderEditSlots(); renderEquippedDecorInAquarium();
+  saveEquippedLayout();
+  renderEditSlots();
+  requestAnimationFrame(() => renderEquippedDecorInAquarium());
 }
 
 function openDecorPicker(slotIndex) {
@@ -2634,7 +2681,7 @@ function buildDecorPickerGrid() {
     const d = DECOR_CATALOG.find(x => x.id === id);
     if (d) used[d.rarity] = (used[d.rarity] || 0) + 1;
   });
-  const rc = { common:'#80b0e0', rare:'#60ccff', epic:'#cc80ff', legendary:'#f0c040' };
+  const rc = { common:'#8899aa', rare:'#60ccff', epic:'#cc80ff', legendary:'#f0c040' };
   const rl = { common:'Comum', rare:'Raro', epic:'Épico', legendary:'Lendário' };
 
   // Rarity counter header inside picker
@@ -2674,7 +2721,10 @@ function buildDecorPickerGrid() {
         // Remove previous item from this slot's rarity count if different rarity
         const prev = equippedDecor[pickerSlotIndex];
         equippedDecor[pickerSlotIndex] = d.id;
-        saveEquippedLayout(); closePicker(); renderEditSlots(); renderEquippedDecorInAquarium();
+        closePicker();
+        renderEditSlots();
+        // rAF: wait for DOM to update slot positions before measuring and saving
+        requestAnimationFrame(() => { saveEquippedLayout(); renderEquippedDecorInAquarium(); });
         showToast('Equipado!', `${d.name} adicionada ao aquário.`, false);
       };
     }
@@ -2685,20 +2735,44 @@ function buildDecorPickerGrid() {
 function renderEquippedDecorInAquarium() {
   const aq = document.getElementById('aquarium');
   aq.querySelectorAll('.live-decor').forEach(el => el.remove());
-  const equipped = equippedDecor.filter(id => id !== null);
-  if (equipped.length === 0) return;
-  const W = aq.clientWidth, H = aq.clientHeight;
+  if (equippedDecor.every(id => !id)) return;
+
+  const aqRect = aq.getBoundingClientRect();
+  const W = aqRect.width;
+  const H = aq.clientHeight;
   const floorH = window._floorH || Math.round(H * 0.10);
   const bottomY = floorH * 0.95;
-  const total = equipped.length;
-  equipped.forEach((decorId, i) => {
+
+  // Get all slot elements in order
+  const slotEls = document.getElementById('edit-slots-area')?.querySelectorAll('.decor-eq-slot');
+
+  equippedDecor.forEach((decorId, i) => {
+    if (!decorId) return;
     const catalog = DECOR_CATALOG.find(d => d.id === decorId);
     if (!catalog) return;
-    const xPct = 3 + (i / Math.max(total - 1, 1)) * 94;
+
+    // Calculate X position from the slot's actual DOM position
+    let xPct;
+    if (slotEls && slotEls[i]) {
+      const slotRect = slotEls[i].getBoundingClientRect();
+      const slotCenterX = slotRect.left + slotRect.width / 2 - aqRect.left;
+      xPct = (slotCenterX / W) * 100;
+      xPct = Math.max(2, Math.min(97, xPct));
+    } else if (window._decorPositions && window._decorPositions[i] !== undefined) {
+      // Use saved positions from last edit session
+      xPct = window._decorPositions[i];
+    } else {
+      // Final fallback: distribute evenly using slot index out of total slots
+      const totalSlots = equippedDecor.length;
+      xPct = 3 + (i / Math.max(totalSlots - 1, 1)) * 94;
+      xPct = Math.max(2, Math.min(97, xPct));
+    }
+
     const div = document.createElement('div');
     div.className = 'live-decor';
     div.dataset.decorId = decorId;
-    div.style.cssText = `position:absolute;bottom:${bottomY}px;left:${xPct}%;transform-origin:bottom center;animation:plantSway ${2.5+Math.random()*2}s ease-in-out infinite;animation-delay:${Math.random()*3}s;z-index:4;filter:drop-shadow(0 0 5px ${catalog.color}66);`;
+    div.dataset.slotIndex = i;
+    div.style.cssText = `position:absolute;bottom:${bottomY}px;left:${xPct}%;transform:translateX(-50%);transform-origin:bottom center;animation:plantSway ${2.5+Math.random()*2}s ease-in-out infinite;animation-delay:${Math.random()*3}s;z-index:4;filter:drop-shadow(0 0 5px ${catalog.color}66);`;
     div.innerHTML = catalog.svg(1);
     aq.appendChild(div);
   });
@@ -2706,7 +2780,24 @@ function renderEquippedDecorInAquarium() {
 
 function saveEquippedLayout() {
   if (!currentUser) return;
-  localStorage.setItem(`layout_${currentUser}`, JSON.stringify({ fish: equippedFish, decor: equippedDecor }));
+  // Store the X% position of each slot for use when edit overlay is closed
+  const slotEls = document.getElementById('edit-slots-area')?.querySelectorAll('.decor-eq-slot');
+  const aq = document.getElementById('aquarium');
+  const aqRect = aq?.getBoundingClientRect();
+  const positions = [];
+  if (slotEls && aqRect) {
+    slotEls.forEach(el => {
+      const r = el.getBoundingClientRect();
+      const xPct = ((r.left + r.width/2 - aqRect.left) / aqRect.width) * 100;
+      positions.push(Math.max(2, Math.min(97, xPct)));
+    });
+  }
+  localStorage.setItem(`layout_${currentUser}`, JSON.stringify({
+    fish: equippedFish,
+    decor: equippedDecor,
+    decorPositions: positions
+  }));
+  window._decorPositions = positions;
 }
 
 function saveEdit() {
@@ -2810,7 +2901,7 @@ document.getElementById('username-input').addEventListener('keydown', e => {
           <thead>
             <tr style="border-bottom:1px solid rgba(0,212,255,0.2)">
               <th style="text-align:left;padding:4px 6px;color:var(--text-dim)">HP</th>
-              <th style="text-align:center;padding:4px;color:#80b0e0">C</th>
+              <th style="text-align:center;padding:4px;color:#8899aa">C</th>
               <th style="text-align:center;padding:4px;color:#60ccff">R</th>
               <th style="text-align:center;padding:4px;color:#cc80ff">E</th>
               <th style="text-align:center;padding:4px;color:#f0c040">L</th>
@@ -2828,7 +2919,7 @@ document.getElementById('username-input').addEventListener('keydown', e => {
             <tr style="border-bottom:1px solid rgba(0,212,255,0.06);background:rgba(240,192,64,0.05)"><td style="padding:3px 6px">10.000</td><td style="text-align:center">4</td><td style="text-align:center">2</td><td style="text-align:center">1</td><td style="text-align:center;color:#f0c040"><b>1</b></td><td style="text-align:center;color:var(--glow)">8</td><td style="padding:3px 6px;color:#f0c040;font-size:0.7rem">1ª Lendária!</td></tr>
             <tr style="border-bottom:1px solid rgba(0,212,255,0.06)"><td style="padding:3px 6px;color:var(--text-dim)">13.000–50.000</td><td style="text-align:center;color:var(--text-dim)" colspan="4"><i>progressão gradual</i></td><td style="text-align:center;color:var(--glow)">9–15</td><td style="padding:3px 6px"></td></tr>
             <tr style="border-bottom:1px solid rgba(0,212,255,0.06);background:rgba(240,192,64,0.05)"><td style="padding:3px 6px">75.000</td><td style="text-align:center">7</td><td style="text-align:center">5</td><td style="text-align:center">3</td><td style="text-align:center;color:#f0c040"><b>2</b></td><td style="text-align:center;color:var(--glow)">17</td><td style="padding:3px 6px;color:#f0c040;font-size:0.7rem">2ª Lendária!</td></tr>
-            <tr style="background:rgba(0,212,255,0.05)"><td style="padding:3px 6px">100.000</td><td style="text-align:center;color:#80b0e0"><b>8</b></td><td style="text-align:center;color:#60ccff"><b>6</b></td><td style="text-align:center;color:#cc80ff"><b>4</b></td><td style="text-align:center;color:#f0c040"><b>2</b></td><td style="text-align:center;color:var(--glow)"><b>20</b></td><td style="padding:3px 6px;color:var(--glow);font-size:0.7rem">Máximo!</td></tr>
+            <tr style="background:rgba(0,212,255,0.05)"><td style="padding:3px 6px">100.000</td><td style="text-align:center;color:#8899aa"><b>8</b></td><td style="text-align:center;color:#60ccff"><b>6</b></td><td style="text-align:center;color:#cc80ff"><b>4</b></td><td style="text-align:center;color:#f0c040"><b>2</b></td><td style="text-align:center;color:var(--glow)"><b>20</b></td><td style="padding:3px 6px;color:var(--glow);font-size:0.7rem">Máximo!</td></tr>
           </tbody>
         </table>
         <div style="font-size:0.68rem;color:var(--text-dim);margin-top:5px">C=Comum · R=Raro · E=Épico · L=Lendário</div>
@@ -2845,7 +2936,7 @@ document.getElementById('username-input').addEventListener('keydown', e => {
           <thead>
             <tr style="border-bottom:1px solid rgba(0,212,255,0.2)">
               <th style="text-align:left;padding:4px 6px;color:var(--text-dim)">HP</th>
-              <th style="text-align:center;padding:4px;color:#80b0e0">C</th>
+              <th style="text-align:center;padding:4px;color:#8899aa">C</th>
               <th style="text-align:center;padding:4px;color:#60ccff">R</th>
               <th style="text-align:center;padding:4px;color:#cc80ff">E</th>
               <th style="text-align:center;padding:4px;color:#f0c040">L</th>
@@ -2868,7 +2959,7 @@ document.getElementById('username-input').addEventListener('keydown', e => {
             <tr style="border-bottom:1px solid rgba(0,212,255,0.06)"><td style="padding:3px 6px">40.000</td><td style="text-align:center">6</td><td style="text-align:center">4</td><td style="text-align:center">2</td><td style="text-align:center">1</td><td style="text-align:center;color:var(--glow)">13</td><td style="padding:3px 6px"></td></tr>
             <tr style="border-bottom:1px solid rgba(0,212,255,0.06)"><td style="padding:3px 6px">50.000</td><td style="text-align:center">6</td><td style="text-align:center">4</td><td style="text-align:center">3</td><td style="text-align:center">1</td><td style="text-align:center;color:var(--glow)">14</td><td style="padding:3px 6px"></td></tr>
             <tr style="border-bottom:1px solid rgba(0,212,255,0.06)"><td style="padding:3px 6px">62.000</td><td style="text-align:center">6</td><td style="text-align:center">4</td><td style="text-align:center">4</td><td style="text-align:center">1</td><td style="text-align:center;color:var(--glow)">15</td><td style="padding:3px 6px;color:var(--text-dim);font-size:0.7rem">Max épicos</td></tr>
-            <tr style="background:rgba(0,212,255,0.05)"><td style="padding:3px 6px">75.000</td><td style="text-align:center;color:#80b0e0"><b>6</b></td><td style="text-align:center;color:#60ccff"><b>4</b></td><td style="text-align:center;color:#cc80ff"><b>4</b></td><td style="text-align:center;color:#f0c040"><b>2</b></td><td style="text-align:center;color:var(--glow)"><b>16</b></td><td style="padding:3px 6px;color:var(--glow);font-size:0.7rem">Máximo!</td></tr>
+            <tr style="background:rgba(0,212,255,0.05)"><td style="padding:3px 6px">75.000</td><td style="text-align:center;color:#8899aa"><b>6</b></td><td style="text-align:center;color:#60ccff"><b>4</b></td><td style="text-align:center;color:#cc80ff"><b>4</b></td><td style="text-align:center;color:#f0c040"><b>2</b></td><td style="text-align:center;color:var(--glow)"><b>16</b></td><td style="padding:3px 6px;color:var(--glow);font-size:0.7rem">Máximo!</td></tr>
           </tbody>
         </table>
         <div style="font-size:0.68rem;color:var(--text-dim);margin-top:5px">C=Comum · R=Raro · E=Épico · L=Lendário</div>
@@ -2877,7 +2968,7 @@ document.getElementById('username-input').addEventListener('keydown', e => {
       <div style="margin-bottom:8px">
         <div style="color:var(--glow);font-weight:600;margin-bottom:6px;font-size:0.88rem">Raridades</div>
         <div style="display:flex;flex-direction:column;gap:5px">
-          <span><b style="color:#80b0e0">Comum</b> — peixes e decorações básicos, menor custo</span>
+          <span><b style="color:#8899aa">Comum</b> — peixes e decorações básicos, menor custo</span>
           <span><b style="color:#60ccff">Raro</b> — visuais e animações diferenciados</span>
           <span><b style="color:#cc80ff">Épico</b> — efeitos especiais únicos e brilho especial</span>
           <span><b style="color:#f0c040">Lendário</b> — raridade máxima, glow pulsante e animações exclusivas</span>
