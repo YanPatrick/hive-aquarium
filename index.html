@@ -253,7 +253,7 @@
     position: absolute;
     cursor: pointer;
     will-change: transform;
-    contain: layout style paint; /* isolate fish layers for better compositing */
+    /* Note: contain:paint removed — it clips SVG overflow at element boundary */
     transition: filter 0.3s;
   }
   .fish:hover { filter: brightness(1.4) drop-shadow(0 0 12px rgba(0,212,255,0.8)); }
@@ -1348,31 +1348,53 @@ let equippedDecor = [];
 let fishElements = [];
 
 // ── INIT ──
+// ── APPLY SETTINGS ──
+// Called on page load AND after every login to ensure consistency
+function applyAllSettings() {
+  const raysEl = document.querySelector('.rays');
+  if (raysEl) raysEl.style.display = appSettings.rays !== false ? '' : 'none';
+
+  document.querySelectorAll('.bubble,.particle').forEach(el => {
+    el.style.display = appSettings.particles !== false ? '' : 'none';
+  });
+
+  if (appSettings.special === false) {
+    fishInstances.forEach(f => { f.specialActive = false; f.specialTimer = 0; });
+  }
+
+  // Sync checkboxes if settings panel exists
+  const ts = document.getElementById('toggle-special');
+  const tp = document.getElementById('toggle-particles');
+  const tr = document.getElementById('toggle-rays');
+  if (ts) ts.checked = appSettings.special !== false;
+  if (tp) tp.checked = appSettings.particles !== false;
+  if (tr) tr.checked = appSettings.rays !== false;
+  ['low','high'].forEach(q => document.getElementById('q-'+q)?.classList.toggle('active', appSettings.quality === q));
+}
+
 window.addEventListener('load', () => {
+  // Apply settings FIRST (before spawning anything, to avoid flash)
+  const saved = localStorage.getItem('hive_aquarium_settings');
+  if (saved) {
+    try { appSettings = { ...appSettings, ...JSON.parse(saved) }; } catch(e) {}
+  }
+
   buildAquariumDecor();
   spawnBubbles();
   spawnParticles();
+
+  // Apply visual settings immediately after spawning
+  applyAllSettings();
+
   fetchHivePrice();
   setInterval(fetchHivePrice, 60000);
 
-  // Apply all saved settings immediately on startup
-  const s = JSON.parse(localStorage.getItem('hive_aquarium_settings') || '{}');
-  if (s.particles === false) {
-    document.querySelectorAll('.bubble,.particle').forEach(el => el.style.display='none');
-  }
-  if (s.rays === false) {
-    const raysEl = document.querySelector('.rays');
-    if (raysEl) raysEl.style.display = 'none';
-  }
-  // Sync appSettings with what's stored (ensures loaded state matches UI)
-  if (Object.keys(s).length > 0) {
-    appSettings = { ...appSettings, ...s };
-  }
-
-  const saved = localStorage.getItem('hive_aquarium_user');
-  if (saved) {
-    const { username } = JSON.parse(saved);
-    document.getElementById('username-input').value = username;
+  const savedUser = localStorage.getItem('hive_aquarium_user');
+  if (savedUser) {
+    try {
+      const { username } = JSON.parse(savedUser);
+      document.getElementById('username-input').value = username;
+    } catch(e) {}
   }
 });
 
@@ -1780,7 +1802,7 @@ function tickSpecialAnimation(f, dt) {
     return true;
   });
 
-  if (!f.specialActive && f.specialTimer > SPECIAL_INTERVAL) {
+  if (!f.specialActive && appSettings.special !== false && f.specialTimer > SPECIAL_INTERVAL) {
     f.specialTimer = 0;
     f.specialActive = true;
     f.specialPhase = 0;
@@ -2187,6 +2209,8 @@ async function afterLogin(username) {
   else showToast('Aquário vazio', 'Visite a Loja para começar!', false);
 
   renderMyFish();
+  // Re-apply settings after login (fish and particles are now in DOM)
+  applyAllSettings();
 }
 
 async function loadBalance(username) {
@@ -2859,11 +2883,9 @@ let appSettings = JSON.parse(localStorage.getItem('hive_aquarium_settings')||'{"
 
 function openSettings() {
   setActiveTab('tab-settings');
-  document.getElementById('toggle-special').checked   = appSettings.special !== false;
-  document.getElementById('toggle-particles').checked = appSettings.particles !== false;
-  document.getElementById('toggle-rays').checked      = appSettings.rays !== false;
+  // Always sync UI with current appSettings state
+  applyAllSettings();
   document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent.trim().includes(appSettings.lang==='pt'?'PT':'EN')));
-  ['low','high'].forEach(q => document.getElementById('q-'+q)?.classList.toggle('active', appSettings.quality===q));
   document.getElementById('settings-overlay').classList.add('open');
 }
 function closeSettings() { document.getElementById('settings-overlay').classList.remove('open'); setActiveTab(null); }
@@ -2873,17 +2895,17 @@ function setLang(lang, btn) {
   appSettings.lang = lang; saveSettings();
   document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
- showToast('Idioma', lang==='pt'?'Português selecionado':'English selected', false);
+  showToast('Idioma', lang==='pt'?'Português selecionado':'English selected', false);
 }
 function toggleSpecialAnims(on) {
   appSettings.special = on; saveSettings();
   if (!on) fishInstances.forEach(f => { f.specialActive=false; f.specialTimer=0; });
- showToast(on?'Efeitos especiais ON':'Efeitos especiais OFF','',false);
+  showToast(on?'Efeitos especiais ON':'Efeitos especiais OFF','',false);
 }
 function toggleParticles(on) {
   appSettings.particles = on; saveSettings();
-  document.querySelectorAll('.bubble, .particle').forEach(el => { el.style.display = on?'':'none'; });
- showToast(on?'Particulas ON':'Particulas OFF','',false);
+  document.querySelectorAll('.bubble,.particle').forEach(el => { el.style.display = on?'':'none'; });
+  showToast(on?'Particulas ON':'Particulas OFF','',false);
 }
 function toggleRays(on) {
   appSettings.rays = on; saveSettings();
