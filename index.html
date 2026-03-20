@@ -594,10 +594,14 @@
   }
 
   .edit-slots-area {
-    position: absolute; bottom: 110px; left: 0; right: 0;
-    display: flex; align-items: flex-end; justify-content: center;
-    gap: 8px; padding: 0 20px; flex-wrap: wrap;
+    position: absolute; bottom: 10px; left: 0; right: 0;
+    display: flex; align-items: center; justify-content: space-evenly;
+    gap: 4px; padding: 0 12px; flex-wrap: nowrap;
     z-index: 5; pointer-events: all;
+    overflow-x: auto;
+  }
+  @media(max-width:700px) {
+    .edit-slots-area { flex-wrap: wrap; justify-content: center; bottom: 4px; }
   }
 
   .eq-slot {
@@ -626,9 +630,9 @@
   }
   .eq-slot.occupied:hover .slot-remove-btn { display: flex; }
 
-  /* Decor slots — larger, free rarity placement */
-  .decor-eq-slot { width: 76px; min-height: 90px; }
-  .decor-eq-slot .slot-empty-label { font-size: 0.68rem; color: rgba(0,212,255,0.5); font-weight:500; }
+  /* Decor slots — sized to fit 16 across full width */
+  .decor-eq-slot { width: 68px; min-height: 82px; }
+  .decor-eq-slot .slot-empty-label { font-size: 0.62rem; color: rgba(0,212,255,0.5); font-weight:500; }
 
   #item-picker {
     position: fixed; inset: 0; z-index: 200;
@@ -1987,57 +1991,69 @@ function updateHUD() {
 }
 
 // ── LOAD FISH FROM CHAIN ──
-async function loadMyFishFromChain(username) {
-  const validFishIds = new Set(FISH_CATALOG.map(f => f.id));
-  const owned = {};
+// ── UNIFIED INVENTORY LOADER (fish + decor from blockchain) ──
+async function loadInventoryFromChain(username) {
+  const validFishIds  = new Set(FISH_CATALOG.map(f => f.id));
+  const validDecorIds = new Set(DECOR_CATALOG.map(d => d.id));
+  const ownedFish  = {};
+  const ownedDecor = {};
+
+  // Helper: parse a transfer op for the user
+  function parseBuyMemo(from, to, memo) {
+    if (from !== username || to !== SHOP_ACCOUNT) return;
+    const m = (memo || '').trim().toLowerCase();
+    if (!m.startsWith('buy:')) return;
+    const id = m.slice(4).trim();
+    if (validFishIds.has(id)  && !ownedFish[id])  ownedFish[id]  = { id, source:'transfer' };
+    if (validDecorIds.has(id) && !ownedDecor[id]) ownedDecor[id] = { id, source:'transfer' };
+  }
+
+  // ── STRATEGY 1: Scan shop account history (most reliable) ──
   try {
     const batchSize = 500;
     let lastSeq = -1;
-    let pagesScanned = 0;
-    const maxPages = 4;
-    while (pagesScanned < maxPages) {
-      const res = await fetch(HIVE_API, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ jsonrpc:'2.0', method:'condenser_api.get_account_history', params:[SHOP_ACCOUNT, lastSeq, batchSize], id:1 }) });
+    for (let page = 0; page < 6; page++) { // up to 3000 ops
+      const res = await fetch(HIVE_API, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ jsonrpc:'2.0', method:'condenser_api.get_account_history', params:[SHOP_ACCOUNT, lastSeq, batchSize], id:1 })
+      });
       const data = await res.json();
       const ops = data.result || [];
       if (ops.length === 0) break;
       ops.forEach(([seq, op]) => {
-        if (op.op[0]==='transfer' && op.op[1].from===username && op.op[1].to===SHOP_ACCOUNT) {
-          const memo = (op.op[1].memo||'').trim().toLowerCase();
-          if (memo.startsWith('buy:')) {
-            const fishId = memo.slice(4).trim();
-            if (validFishIds.has(fishId) && !owned[fishId]) owned[fishId] = { id:fishId, ts:op.timestamp, source:'transfer' };
-          }
-        }
+        if (op.op[0] === 'transfer') parseBuyMemo(op.op[1].from, op.op[1].to, op.op[1].memo);
       });
       if (ops.length < batchSize) break;
       lastSeq = ops[0][0] - 1;
       if (lastSeq <= 0) break;
-      pagesScanned++;
     }
-  } catch(e) {}
+  } catch(e) { console.warn('[HA] Shop scan failed:', e); }
+
+  // ── STRATEGY 2: Scan user's own history (catches custom_json + older transfers) ──
   try {
-    const res = await fetch(HIVE_API, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ jsonrpc:'2.0', method:'condenser_api.get_account_history', params:[username,-1,1000], id:1 }) });
+    const res = await fetch(HIVE_API, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ jsonrpc:'2.0', method:'condenser_api.get_account_history', params:[username, -1, 1000], id:1 })
+    });
     const data = await res.json();
-    (data.result||[]).forEach(([,op]) => {
-      if (op.op[0]==='transfer' && op.op[1].from===username && op.op[1].to===SHOP_ACCOUNT) {
-        const memo = (op.op[1].memo||'').trim().toLowerCase();
-        if (memo.startsWith('buy:')) {
-          const fishId = memo.slice(4).trim();
-          if (validFishIds.has(fishId) && !owned[fishId]) owned[fishId] = { id:fishId, ts:op.timestamp, source:'transfer_userside' };
-        }
-      }
-      if (op.op[0]==='custom_json' && op.op[1].id===APP_ID) {
+    (data.result || []).forEach(([, op]) => {
+      if (op.op[0] === 'transfer') parseBuyMemo(op.op[1].from, op.op[1].to, op.op[1].memo);
+      if (op.op[0] === 'custom_json' && op.op[1].id === APP_ID) {
         try {
-          const json = JSON.parse(op.op[1].json);
-          if (json.action==='add_fish' && json.fish_id && validFishIds.has(json.fish_id)) {
-            if (!owned[json.fish_id]) owned[json.fish_id] = { id:json.fish_id, ts:op.timestamp, source:'custom_json' };
-          }
-          if (json.action==='remove_fish' && json.fish_id) delete owned[json.fish_id];
+          const j = JSON.parse(op.op[1].json);
+          if (j.action === 'add_fish'  && validFishIds.has(j.fish_id)   && !ownedFish[j.fish_id])   ownedFish[j.fish_id]   = { id: j.fish_id,  source:'custom_json' };
+          if (j.action === 'add_decor' && validDecorIds.has(j.decor_id) && !ownedDecor[j.decor_id]) ownedDecor[j.decor_id] = { id: j.decor_id, source:'custom_json' };
+          if (j.action === 'remove_fish')  delete ownedFish[j.fish_id];
+          if (j.action === 'remove_decor') delete ownedDecor[j.decor_id];
         } catch(e) {}
       }
     });
-  } catch(e) {}
-  return Object.values(owned);
+  } catch(e) { console.warn('[HA] User scan failed:', e); }
+
+  const fish  = Object.values(ownedFish);
+  const decor = Object.values(ownedDecor);
+  console.log(`[HA] @${username}: ${fish.length} fish [${fish.map(f=>f.id).join(', ')}], ${decor.length} decor [${decor.map(d=>d.id).join(', ')}]`);
+  return { fish, decor };
 }
 
 // ── LOGIN ──
@@ -2070,18 +2086,32 @@ async function afterLogin(username) {
   document.getElementById('nav-tabs').style.display = 'flex';
   document.getElementById('user-avatar').src = `https://images.hive.blog/u/${username}/avatar`;
   loadBalance(username);
- showToast('Buscando...', `Verificando blockchain de @${username}...`, false);
-  const fishFromChain = await loadMyFishFromChain(username);
+
+  showToast('Buscando...', `Carregando inventário de @${username}...`, false);
+  const { fish: fishFromChain, decor: decorFromChain } = await loadInventoryFromChain(username);
+
+  // ── FISH ──
   if (fishFromChain.length > 0) {
     myFish = fishFromChain;
     localStorage.setItem(`fish_${username}`, JSON.stringify(myFish));
- showToast('Aquário carregado!', `${myFish.length} peixe(s) encontrado(s) na blockchain.`, false);
   } else {
     const cached = localStorage.getItem(`fish_${username}`);
     myFish = cached ? JSON.parse(cached) : [];
- if (myFish.length > 0) showToast('Cache local', `${myFish.length} peixe(s) carregados do cache.`, false);
- else showToast('Aquário vazio', 'Visite a Loja para comprar seus primeiros peixes!', false);
   }
+
+  // ── DECOR ──
+  if (decorFromChain.length > 0) {
+    myDecor = decorFromChain;
+    localStorage.setItem(`decor_${username}`, JSON.stringify(myDecor));
+  } else {
+    const cached = localStorage.getItem(`decor_${username}`);
+    myDecor = cached ? JSON.parse(cached) : [];
+  }
+
+  const total = myFish.length + myDecor.length;
+  if (total > 0) showToast('Inventário carregado!', `${myFish.length} peixe(s) · ${myDecor.length} decoração(ões).`, false);
+  else showToast('Aquário vazio', 'Visite a Loja para começar!', false);
+
   renderMyFish();
 }
 
@@ -2478,7 +2508,7 @@ function renderEditSlots() {
   if (oldCounter) oldCounter.remove();
   const counter = document.createElement('div');
   counter.id = 'decor-rarity-counter';
-  counter.style.cssText = 'position:absolute;bottom:48px;left:50%;transform:translateX(-50%);display:flex;gap:10px;font-size:0.68rem;pointer-events:none;background:rgba(0,10,30,0.8);border:1px solid rgba(0,212,255,0.15);border-radius:12px;padding:5px 14px;backdrop-filter:blur(4px);white-space:nowrap;z-index:6;';
+  counter.style.cssText = 'position:absolute;bottom:100px;left:50%;transform:translateX(-50%);display:flex;gap:10px;font-size:0.68rem;pointer-events:none;background:rgba(0,10,30,0.8);border:1px solid rgba(0,212,255,0.15);border-radius:12px;padding:5px 14px;backdrop-filter:blur(4px);white-space:nowrap;z-index:6;';
   const rarityDefs = [
     { key:'common',    label:'Comum',    color:'#80b0e0', max: dSlots.common    },
     { key:'rare',      label:'Raro',     color:'#60ccff', max: dSlots.rare      },
