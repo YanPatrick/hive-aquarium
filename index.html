@@ -617,14 +617,12 @@
   }
 
   .edit-slots-area {
-    position: absolute; bottom: 10px; left: 0; right: 0;
-    display: flex; align-items: center; justify-content: space-evenly;
-    gap: 4px; padding: 0 12px; flex-wrap: nowrap;
-    z-index: 5; pointer-events: all;
-    overflow-x: auto;
+    position: absolute; bottom: 10px; left: 0; right: 0; height: 95px;
+    pointer-events: none; /* slots are positioned individually */
+    z-index: 5;
   }
   @media(max-width:700px) {
-    .edit-slots-area { flex-wrap: wrap; justify-content: center; bottom: 4px; }
+    .edit-slots-area { height: auto; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; bottom: 4px; pointer-events: all; }
   }
 
   .eq-slot {
@@ -1402,14 +1400,20 @@ let resizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => {
+    // Invalidate cached aquarium element (size/position may have changed)
+    _aquariumElCache = null;
+
     const aq = document.getElementById('aquarium');
     const keep = new Set(['rays','caustic-layer','caustic-layer2','sand-bottom','sand-top','empty-state']);
     Array.from(aq.children).forEach(el => {
       const id = el.id || '';
       const cls = el.className || '';
-      if (!keep.has(id) && !cls.includes('fish') && !cls.includes('bubble') && !cls.includes('particle')) el.remove();
+      if (!keep.has(id) && !cls.includes('fish') && !cls.includes('bubble') && !cls.includes('particle') && !cls.includes('live-decor')) el.remove();
     });
     buildAquariumDecor();
+
+    // Re-render decorations at new positions after floor is rebuilt
+    requestAnimationFrame(() => renderEquippedDecorInAquarium());
   }, 300);
 });
 
@@ -2625,9 +2629,14 @@ function renderEditSlots() {
     const equippedId = equippedDecor[i] || null;
     const catalog = equippedId ? DECOR_CATALOG.find(d => d.id === equippedId) : null;
     const rc = catalog ? getRarityColor(catalog.rarity) : 'rgba(0,212,255,0.3)';
+
+    // Same X formula as renderEquippedDecorInAquarium — exact alignment
+    const xPct = totalDecorSlots === 1 ? 50 : 3 + (i / (totalDecorSlots - 1)) * 94;
+
     const el = document.createElement('div');
     el.className = 'eq-slot decor-eq-slot' + (catalog ? ' occupied' : '');
     el.style.borderColor = rc + (catalog ? 'cc' : '66');
+    el.style.cssText += `;position:absolute;left:${xPct}%;transform:translateX(-50%);bottom:0;pointer-events:all;`;
     if (catalog) {
       el.innerHTML = `
         <button class="slot-remove-btn" onclick="unequipDecor(${i},event)">✕</button>
@@ -2827,46 +2836,43 @@ function buildDecorPickerGrid() {
 }
 
 function renderEquippedDecorInAquarium() {
-  const aq = document.getElementById('aquarium');
+  const aq = getAquariumEl();
   aq.querySelectorAll('.live-decor').forEach(el => el.remove());
-  if (equippedDecor.every(id => !id)) return;
+  if (!equippedDecor.some(id => id)) return;
 
-  const aqRect = aq.getBoundingClientRect();
-  const W = aqRect.width;
   const H = aq.clientHeight;
   const floorH = window._floorH || Math.round(H * 0.10);
   const bottomY = floorH * 0.95;
 
-  // Get all slot elements in order
-  const slotEls = document.getElementById('edit-slots-area')?.querySelectorAll('.decor-eq-slot');
+  // Compute canonical X positions from slot count (same formula as saveEquippedLayout)
+  const { slots: dSlots } = getDecorSlotsForHP(getHPFromAccount());
+  const totalSlots = dSlots.common + dSlots.rare + dSlots.epic + dSlots.legendary || equippedDecor.length;
 
   equippedDecor.forEach((decorId, i) => {
     if (!decorId) return;
     const catalog = DECOR_CATALOG.find(d => d.id === decorId);
     if (!catalog) return;
 
-    // Calculate X position from the slot's actual DOM position
-    let xPct;
-    if (slotEls && slotEls[i]) {
-      const slotRect = slotEls[i].getBoundingClientRect();
-      const slotCenterX = slotRect.left + slotRect.width / 2 - aqRect.left;
-      xPct = (slotCenterX / W) * 100;
-      xPct = Math.max(2, Math.min(97, xPct));
-    } else if (window._decorPositions && window._decorPositions[i] !== undefined) {
-      // Use saved positions from last edit session
-      xPct = window._decorPositions[i];
-    } else {
-      // Final fallback: distribute evenly using slot index out of total slots
-      const totalSlots = equippedDecor.length;
-      xPct = 3 + (i / Math.max(totalSlots - 1, 1)) * 94;
-      xPct = Math.max(2, Math.min(97, xPct));
-    }
+    // Always compute from slot index ratio — consistent across all states
+    const xPct = totalSlots === 1
+      ? 50
+      : 3 + (i / (totalSlots - 1)) * 94;
 
     const div = document.createElement('div');
     div.className = 'live-decor';
     div.dataset.decorId = decorId;
     div.dataset.slotIndex = i;
-    div.style.cssText = `position:absolute;bottom:${bottomY}px;left:${xPct}%;transform:translateX(-50%);transform-origin:bottom center;animation:plantSway ${2.5+Math.random()*2}s ease-in-out infinite;animation-delay:${Math.random()*3}s;z-index:4;filter:drop-shadow(0 0 5px ${catalog.color}66);`;
+    div.style.cssText = [
+      `position:absolute`,
+      `bottom:${bottomY}px`,
+      `left:${xPct}%`,
+      `transform:translateX(-50%)`,
+      `transform-origin:bottom center`,
+      `animation:plantSway ${2.5 + Math.random() * 2}s ease-in-out infinite`,
+      `animation-delay:${Math.random() * 3}s`,
+      `z-index:4`,
+      `filter:drop-shadow(0 0 5px ${catalog.color}66)`
+    ].join(';');
     div.innerHTML = catalog.svg(1);
     aq.appendChild(div);
   });
@@ -2874,24 +2880,28 @@ function renderEquippedDecorInAquarium() {
 
 function saveEquippedLayout() {
   if (!currentUser) return;
-  // Store the X% position of each slot for use when edit overlay is closed
-  const slotEls = document.getElementById('edit-slots-area')?.querySelectorAll('.decor-eq-slot');
-  const aq = document.getElementById('aquarium');
-  const aqRect = aq?.getBoundingClientRect();
+
+  // Compute slot X positions as pure percentages based on total slot count
+  // This makes positions independent of DOM state (edit overlay open/closed, toolbar height, etc.)
+  const { slots: dSlots } = getDecorSlotsForHP(getHPFromAccount());
+  const totalSlots = dSlots.common + dSlots.rare + dSlots.epic + dSlots.legendary;
+
   const positions = [];
-  if (slotEls && aqRect) {
-    slotEls.forEach(el => {
-      const r = el.getBoundingClientRect();
-      const xPct = ((r.left + r.width/2 - aqRect.left) / aqRect.width) * 100;
-      positions.push(Math.max(2, Math.min(97, xPct)));
-    });
+  for (let i = 0; i < totalSlots; i++) {
+    // Evenly distribute slots from 3% to 97% of aquarium width
+    const xPct = totalSlots === 1
+      ? 50
+      : 3 + (i / (totalSlots - 1)) * 94;
+    positions.push(Math.round(xPct * 10) / 10);
   }
+
+  window._decorPositions = positions;
   localStorage.setItem(`layout_${currentUser}`, JSON.stringify({
     fish: equippedFish,
     decor: equippedDecor,
-    decorPositions: positions
+    decorPositions: positions,
+    totalSlots
   }));
-  window._decorPositions = positions;
 }
 
 function saveEdit() {
