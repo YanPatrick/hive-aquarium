@@ -1400,7 +1400,7 @@ let resizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => {
-    // Invalidate cached aquarium element (size/position may have changed)
+    // Invalidate cached aquarium element (size changed)
     _aquariumElCache = null;
 
     const aq = document.getElementById('aquarium');
@@ -1408,13 +1408,13 @@ window.addEventListener('resize', () => {
     Array.from(aq.children).forEach(el => {
       const id = el.id || '';
       const cls = el.className || '';
+      // Keep live-decor — they use % positioning and adapt automatically
       if (!keep.has(id) && !cls.includes('fish') && !cls.includes('bubble') && !cls.includes('particle') && !cls.includes('live-decor')) el.remove();
     });
     buildAquariumDecor();
-
-    // Re-render decorations at new positions after floor is rebuilt
+    // Re-render decor after floor height is recalculated (not strictly needed with % positioning, but keeps _floorH fresh)
     requestAnimationFrame(() => renderEquippedDecorInAquarium());
-  }, 300);
+  }, 350);
 });
 
 // ── DECORATIONS ──
@@ -2840,11 +2840,10 @@ function renderEquippedDecorInAquarium() {
   aq.querySelectorAll('.live-decor').forEach(el => el.remove());
   if (!equippedDecor.some(id => id)) return;
 
-  const H = aq.clientHeight;
-  const floorH = window._floorH || Math.round(H * 0.10);
-  const bottomY = floorH * 0.95;
+  // Use percentage bottom instead of pixels — stays correct during F11/resize transitions
+  // floorH ≈ 10% of H, so bottomY ≈ 9.5% of H
+  const BOTTOM_PCT = '9.5%';
 
-  // Compute canonical X positions from slot count (same formula as saveEquippedLayout)
   const { slots: dSlots } = getDecorSlotsForHP(getHPFromAccount());
   const totalSlots = dSlots.common + dSlots.rare + dSlots.epic + dSlots.legendary || equippedDecor.length;
 
@@ -2853,10 +2852,7 @@ function renderEquippedDecorInAquarium() {
     const catalog = DECOR_CATALOG.find(d => d.id === decorId);
     if (!catalog) return;
 
-    // Always compute from slot index ratio — consistent across all states
-    const xPct = totalSlots === 1
-      ? 50
-      : 3 + (i / (totalSlots - 1)) * 94;
+    const xPct = totalSlots === 1 ? 50 : 3 + (i / (totalSlots - 1)) * 94;
 
     const div = document.createElement('div');
     div.className = 'live-decor';
@@ -2864,7 +2860,7 @@ function renderEquippedDecorInAquarium() {
     div.dataset.slotIndex = i;
     div.style.cssText = [
       `position:absolute`,
-      `bottom:${bottomY}px`,
+      `bottom:${BOTTOM_PCT}`,
       `left:${xPct}%`,
       `transform:translateX(-50%)`,
       `transform-origin:bottom center`,
