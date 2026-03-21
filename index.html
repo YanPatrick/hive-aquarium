@@ -2481,41 +2481,63 @@ async function buyDecor(decorId) {
 // ── WALLET ──
 function openWallet() {
   setActiveTab('tab-wallet');
-  // Show overlay immediately with cached data, then refresh from chain
   document.getElementById('wallet-overlay').classList.add('open');
   const peakdLink = document.getElementById('peakd-wallet-link');
   if (peakdLink && currentUser) peakdLink.href = `https://peakd.com/@${currentUser}/wallet`;
-  _renderWalletData(); // render from cache instantly
-  // Refresh from blockchain in background
+
+  // Render text values instantly from cache (no bar animation yet)
+  _renderWalletData(false);
+
+  // Fetch fresh data, then render WITH bar animation
   if (currentUser) {
-    loadBalance(currentUser).then(() => _renderWalletData());
+    loadBalance(currentUser).then(() => _renderWalletData(true));
   }
 }
 
-function _renderWalletData() {
+function _renderWalletData(animateBar = true) {
   const hp = getHPFromAccount();
   const acc = window._accountData;
   if (!acc) return;
+
   document.getElementById('wc-hive').textContent = acc.hiveAmt.toFixed(3);
   document.getElementById('wc-hbd').textContent  = acc.hbdAmt.toFixed(3);
   document.getElementById('wc-hp').textContent   = hp.toLocaleString();
-  if (hiveUsdPrice) document.getElementById('wc-hive-usd').textContent = `≈ $${(acc.hiveAmt*hiveUsdPrice).toFixed(2)} USD`;
+
+  // USD — show if available, otherwise fetch and update later
+  if (hiveUsdPrice) {
+    document.getElementById('wc-hive-usd').textContent = `≈ $${(acc.hiveAmt * hiveUsdPrice).toFixed(2)} USD`;
+  } else {
+    document.getElementById('wc-hive-usd').textContent = '— USD';
+    // Try to get price if missing
+    fetchHivePrice().then(() => {
+      if (hiveUsdPrice) document.getElementById('wc-hive-usd').textContent = `≈ $${(acc.hiveAmt * hiveUsdPrice).toFixed(2)} USD`;
+    });
+  }
+
   const { slots, nextTier, currentTierHp } = getSlotsForHP(hp);
   document.getElementById('wc-hp-level').textContent = `Slots: ${slots.common}C · ${slots.rare}R · ${slots.epic}E · ${slots.legendary}L`;
   document.getElementById('wc-hp-cur-label').textContent = `${hp.toLocaleString()} HP`;
+
   const bar = document.getElementById('wc-hp-bar');
   if (nextTier) {
     const pct = Math.min(100, Math.max(0, ((hp - currentTierHp) / (nextTier.hp - currentTierHp)) * 100));
     document.getElementById('wc-hp-next-label').textContent = `próx. nível: ${nextTier.hp.toLocaleString()} HP`;
-    // Double rAF: first frame resets to 0, second frame applies real value → CSS transition fires reliably
-    bar.style.transition = 'none';
-    bar.style.width = '0%';
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      bar.style.transition = 'width 0.8s ease';
+    if (animateBar) {
+      // Animate only once — on the fresh data render
+      bar.style.transition = 'none';
+      bar.style.width = '0%';
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        bar.style.transition = 'width 0.8s ease';
+        bar.style.width = pct + '%';
+      }));
+    } else {
+      // Instant set for cache render (no animation, avoids double-fire)
+      bar.style.transition = 'none';
       bar.style.width = pct + '%';
-    }));
+    }
   } else {
     document.getElementById('wc-hp-next-label').textContent = 'Nível máximo!';
+    bar.style.transition = animateBar ? 'width 0.8s ease' : 'none';
     bar.style.width = '100%';
   }
 }
@@ -2981,14 +3003,21 @@ document.getElementById('username-input').addEventListener('keydown', e => {
           </thead>
           <tbody id="htp-fish-rows">
             <tr style="border-bottom:1px solid rgba(0,212,255,0.06)"><td style="padding:3px 6px">0</td><td style="text-align:center">2</td><td style="text-align:center">0</td><td style="text-align:center">0</td><td style="text-align:center">0</td><td style="text-align:center;color:var(--glow)">2</td><td style="padding:3px 6px;color:var(--text-dim);font-size:0.7rem">Estreante</td></tr>
-            <tr style="border-bottom:1px solid rgba(0,212,255,0.06)"><td style="padding:3px 6px">500</td><td style="text-align:center">2</td><td style="text-align:center">1</td><td style="text-align:center">0</td><td style="text-align:center">0</td><td style="text-align:center;color:var(--glow)">3</td><td style="padding:3px 6px"></td></tr>
-            <tr style="border-bottom:1px solid rgba(0,212,255,0.06)"><td style="padding:3px 6px">1.500</td><td style="text-align:center">3</td><td style="text-align:center">1</td><td style="text-align:center">0</td><td style="text-align:center">0</td><td style="text-align:center;color:var(--glow)">4</td><td style="padding:3px 6px"></td></tr>
-            <tr style="border-bottom:1px solid rgba(0,212,255,0.06)"><td style="padding:3px 6px">3.000</td><td style="text-align:center">3</td><td style="text-align:center">1</td><td style="text-align:center">1</td><td style="text-align:center">0</td><td style="text-align:center;color:var(--glow)">5</td><td style="padding:3px 6px"></td></tr>
-            <tr style="border-bottom:1px solid rgba(0,212,255,0.06)"><td style="padding:3px 6px">5.000</td><td style="text-align:center">3</td><td style="text-align:center">2</td><td style="text-align:center">1</td><td style="text-align:center">0</td><td style="text-align:center;color:var(--glow)">6</td><td style="padding:3px 6px"></td></tr>
-            <tr style="border-bottom:1px solid rgba(0,212,255,0.06)"><td style="padding:3px 6px">7.500</td><td style="text-align:center">4</td><td style="text-align:center">2</td><td style="text-align:center">1</td><td style="text-align:center">0</td><td style="text-align:center;color:var(--glow)">7</td><td style="padding:3px 6px"></td></tr>
+            <tr style="border-bottom:1px solid rgba(0,212,255,0.06)"><td style="padding:3px 6px">500</td><td style="text-align:center">2</td><td style="text-align:center">1</td><td style="text-align:center">0</td><td style="text-align:center">0</td><td style="text-align:center;color:var(--glow)">3</td><td></td></tr>
+            <tr style="border-bottom:1px solid rgba(0,212,255,0.06)"><td style="padding:3px 6px">1.500</td><td style="text-align:center">3</td><td style="text-align:center">1</td><td style="text-align:center">0</td><td style="text-align:center">0</td><td style="text-align:center;color:var(--glow)">4</td><td></td></tr>
+            <tr style="border-bottom:1px solid rgba(0,212,255,0.06)"><td style="padding:3px 6px">3.000</td><td style="text-align:center">3</td><td style="text-align:center">1</td><td style="text-align:center">1</td><td style="text-align:center">0</td><td style="text-align:center;color:var(--glow)">5</td><td></td></tr>
+            <tr style="border-bottom:1px solid rgba(0,212,255,0.06)"><td style="padding:3px 6px">5.000</td><td style="text-align:center">3</td><td style="text-align:center">2</td><td style="text-align:center">1</td><td style="text-align:center">0</td><td style="text-align:center;color:var(--glow)">6</td><td></td></tr>
+            <tr style="border-bottom:1px solid rgba(0,212,255,0.06)"><td style="padding:3px 6px">7.500</td><td style="text-align:center">4</td><td style="text-align:center">2</td><td style="text-align:center">1</td><td style="text-align:center">0</td><td style="text-align:center;color:var(--glow)">7</td><td></td></tr>
             <tr style="border-bottom:1px solid rgba(0,212,255,0.06);background:rgba(240,192,64,0.05)"><td style="padding:3px 6px">10.000</td><td style="text-align:center">4</td><td style="text-align:center">2</td><td style="text-align:center">1</td><td style="text-align:center;color:#f0c040"><b>1</b></td><td style="text-align:center;color:var(--glow)">8</td><td style="padding:3px 6px;color:#f0c040;font-size:0.7rem">1ª Lendária!</td></tr>
-            <tr style="border-bottom:1px solid rgba(0,212,255,0.06)"><td style="padding:3px 6px;color:var(--text-dim)">13.000–50.000</td><td style="text-align:center;color:var(--text-dim)" colspan="4"><i>progressão gradual</i></td><td style="text-align:center;color:var(--glow)">9–15</td><td style="padding:3px 6px"></td></tr>
+            <tr style="border-bottom:1px solid rgba(0,212,255,0.06)"><td style="padding:3px 6px">13.000</td><td style="text-align:center">4</td><td style="text-align:center">3</td><td style="text-align:center">2</td><td style="text-align:center">1</td><td style="text-align:center;color:var(--glow)">10</td><td></td></tr>
+            <tr style="border-bottom:1px solid rgba(0,212,255,0.06)"><td style="padding:3px 6px">16.000</td><td style="text-align:center">5</td><td style="text-align:center">3</td><td style="text-align:center">2</td><td style="text-align:center">1</td><td style="text-align:center;color:var(--glow)">11</td><td></td></tr>
+            <tr style="border-bottom:1px solid rgba(0,212,255,0.06)"><td style="padding:3px 6px">20.000</td><td style="text-align:center">5</td><td style="text-align:center">3</td><td style="text-align:center">3</td><td style="text-align:center">1</td><td style="text-align:center;color:var(--glow)">12</td><td></td></tr>
+            <tr style="border-bottom:1px solid rgba(0,212,255,0.06)"><td style="padding:3px 6px">25.000</td><td style="text-align:center">5</td><td style="text-align:center">4</td><td style="text-align:center">3</td><td style="text-align:center">1</td><td style="text-align:center;color:var(--glow)">13</td><td></td></tr>
+            <tr style="border-bottom:1px solid rgba(0,212,255,0.06)"><td style="padding:3px 6px">32.000</td><td style="text-align:center">6</td><td style="text-align:center">4</td><td style="text-align:center">3</td><td style="text-align:center">1</td><td style="text-align:center;color:var(--glow)">14</td><td></td></tr>
+            <tr style="border-bottom:1px solid rgba(0,212,255,0.06)"><td style="padding:3px 6px">40.000</td><td style="text-align:center">6</td><td style="text-align:center">4</td><td style="text-align:center">4</td><td style="text-align:center">1</td><td style="text-align:center;color:var(--glow)">15</td><td></td></tr>
+            <tr style="border-bottom:1px solid rgba(0,212,255,0.06)"><td style="padding:3px 6px">50.000</td><td style="text-align:center">6</td><td style="text-align:center">5</td><td style="text-align:center">4</td><td style="text-align:center">1</td><td style="text-align:center;color:var(--glow)">16</td><td></td></tr>
             <tr style="border-bottom:1px solid rgba(0,212,255,0.06);background:rgba(240,192,64,0.05)"><td style="padding:3px 6px">75.000</td><td style="text-align:center">7</td><td style="text-align:center">5</td><td style="text-align:center">3</td><td style="text-align:center;color:#f0c040"><b>2</b></td><td style="text-align:center;color:var(--glow)">17</td><td style="padding:3px 6px;color:#f0c040;font-size:0.7rem">2ª Lendária!</td></tr>
+            <tr style="border-bottom:1px solid rgba(0,212,255,0.06)"><td style="padding:3px 6px">88.000</td><td style="text-align:center">7</td><td style="text-align:center">6</td><td style="text-align:center">4</td><td style="text-align:center">2</td><td style="text-align:center;color:var(--glow)">19</td><td></td></tr>
             <tr style="background:rgba(0,212,255,0.05)"><td style="padding:3px 6px">100.000</td><td style="text-align:center;color:#8899aa"><b>8</b></td><td style="text-align:center;color:#60ccff"><b>6</b></td><td style="text-align:center;color:#cc80ff"><b>4</b></td><td style="text-align:center;color:#f0c040"><b>2</b></td><td style="text-align:center;color:var(--glow)"><b>20</b></td><td style="padding:3px 6px;color:var(--glow);font-size:0.7rem">Máximo!</td></tr>
           </tbody>
         </table>
