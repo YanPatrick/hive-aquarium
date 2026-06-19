@@ -26,11 +26,24 @@ declare global {
         displayTitle: string,
         callback: (response: { success: boolean; message?: string }) => void
       ): void
+      requestVote(
+        username: string,
+        author: string,
+        permlink: string,
+        weight: number,
+        callback: (response: { success: boolean; message?: string }) => void
+      ): void
+      requestBroadcast(
+        username: string,
+        operations: unknown[][],
+        key: string,
+        callback: (response: { success: boolean; message?: string }) => void
+      ): void
     }
   }
 }
 
-function waitForKeychain(timeout = 5000): Promise<NonNullable<Window['hive_keychain']>> {
+export function waitForKeychain(timeout = 5000): Promise<NonNullable<Window['hive_keychain']>> {
   return new Promise((resolve, reject) => {
     if (window.hive_keychain) { resolve(window.hive_keychain); return }
     const start = Date.now()
