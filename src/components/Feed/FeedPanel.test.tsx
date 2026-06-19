@@ -21,7 +21,14 @@ vi.mock('../../hooks/useHiveFeed', () => ({
   useTagFeed: vi.fn(() => EMPTY_FEED),
 }))
 vi.mock('../../hooks/useSnaps', () => ({
-  useSnaps: vi.fn(() => EMPTY_FEED),
+  useSnaps: vi.fn(() => ({ ...EMPTY_FEED, containerPermlink: null })),
+}))
+vi.mock('../../hooks/useInteractions', () => ({
+  useInteractions: () => ({
+    vote: vi.fn(),
+    comment: vi.fn(),
+    publishSnap: vi.fn(),
+  }),
 }))
 
 function wrap(ui: React.ReactNode) {
@@ -72,5 +79,14 @@ describe('FeedPanel', () => {
     useAppStore.setState({ user: null, myFish: [] })
     const { container } = wrap(<FeedPanel />)
     expect(container.firstChild).toBeNull()
+  })
+
+  it('shows snaps compose area when on Snaps tab', () => {
+    useAppStore.setState({
+      user: { username: 'alice', avatarUrl: '', hivePower: 0, hiveBalance: '' },
+      myFish: [], activeTab: 'snaps', activeTag: null,
+    })
+    wrap(<FeedPanel />)
+    expect(screen.getByPlaceholderText(/O que está acontecendo/i)).toBeTruthy()
   })
 })
