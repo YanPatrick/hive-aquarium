@@ -22,7 +22,7 @@ describe('useInteractions.vote', () => {
     vi.stubGlobal('hive_keychain', { requestVote, requestBroadcast: vi.fn() })
     const { result } = renderHook(() => useInteractions())
     await act(async () => { await result.current.vote('bob', 'my-post', 5000) })
-    expect(requestVote).toHaveBeenCalledWith('alice', 'bob', 'my-post', 5000, expect.any(Function))
+    expect(requestVote).toHaveBeenCalledWith('alice', 'my-post', 'bob', 5000, expect.any(Function))
   })
 
   it('returns true on successful vote', async () => {

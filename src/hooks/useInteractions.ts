@@ -22,7 +22,7 @@ export function useInteractions() {
     const keychain = await getKeychain()
     if (!keychain) return false
     return new Promise<boolean>((resolve) => {
-      keychain.requestVote(user.username, author, permlink, weight, (res) => {
+      keychain.requestVote(user.username, permlink, author, weight, (res) => {
         if (res.success) useToastStore.getState().show('Voto registrado!', `+1 em @${author}`)
         else useToastStore.getState().show('Erro ao votar', res.message ?? 'Tente novamente.', true)
         resolve(res.success)
