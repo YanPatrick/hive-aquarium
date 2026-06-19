@@ -15,10 +15,12 @@ export default function VoteSlider({ author, permlink, onClose, onVoted }: Props
 
   async function handleVote() {
     setVoting(true)
-    await vote(author, permlink, weight * 100)
+    const success = await vote(author, permlink, weight * 100)
     setVoting(false)
-    onVoted()
-    onClose()
+    if (success) {
+      onVoted()
+      onClose()
+    }
   }
 
   return (

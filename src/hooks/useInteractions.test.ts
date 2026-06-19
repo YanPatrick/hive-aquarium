@@ -25,6 +25,24 @@ describe('useInteractions.vote', () => {
     expect(requestVote).toHaveBeenCalledWith('alice', 'bob', 'my-post', 5000, expect.any(Function))
   })
 
+  it('returns true on successful vote', async () => {
+    const requestVote = vi.fn((_u, _a, _p, _w, cb) => cb({ success: true }))
+    vi.stubGlobal('hive_keychain', { requestVote, requestBroadcast: vi.fn() })
+    const { result } = renderHook(() => useInteractions())
+    let returnValue: boolean | undefined
+    await act(async () => { returnValue = await result.current.vote('bob', 'my-post', 5000) })
+    expect(returnValue).toBe(true)
+  })
+
+  it('returns false when Keychain rejects vote', async () => {
+    const requestVote = vi.fn((_u, _a, _p, _w, cb) => cb({ success: false, message: 'Cancelado' }))
+    vi.stubGlobal('hive_keychain', { requestVote, requestBroadcast: vi.fn() })
+    const { result } = renderHook(() => useInteractions())
+    let returnValue: boolean | undefined
+    await act(async () => { returnValue = await result.current.vote('bob', 'my-post', 5000) })
+    expect(returnValue).toBe(false)
+  })
+
   it('shows success toast after vote', async () => {
     const requestVote = vi.fn((_u, _a, _p, _w, cb) => cb({ success: true }))
     vi.stubGlobal('hive_keychain', { requestVote, requestBroadcast: vi.fn() })
@@ -37,8 +55,10 @@ describe('useInteractions.vote', () => {
   it('shows error toast when not logged in', async () => {
     useAppStore.setState({ user: null, myFish: [] })
     const { result } = renderHook(() => useInteractions())
-    await act(async () => { await result.current.vote('bob', 'my-post', 5000) })
+    let returnValue: boolean | undefined
+    await act(async () => { returnValue = await result.current.vote('bob', 'my-post', 5000) })
     expect(useToastStore.getState().isError).toBe(true)
+    expect(returnValue).toBe(false)
   })
 
   it('shows error toast when Keychain rejects vote', async () => {
@@ -62,6 +82,24 @@ describe('useInteractions.comment', () => {
       'Posting',
       expect.any(Function)
     )
+  })
+
+  it('returns true on successful comment', async () => {
+    const requestBroadcast = vi.fn((_u, _ops, _k, cb) => cb({ success: true }))
+    vi.stubGlobal('hive_keychain', { requestVote: vi.fn(), requestBroadcast })
+    const { result } = renderHook(() => useInteractions())
+    let returnValue: boolean | undefined
+    await act(async () => { returnValue = await result.current.comment('bob', 'my-post', 'Great post!') })
+    expect(returnValue).toBe(true)
+  })
+
+  it('returns false when Keychain rejects comment', async () => {
+    const requestBroadcast = vi.fn((_u, _ops, _k, cb) => cb({ success: false, message: 'Cancelado' }))
+    vi.stubGlobal('hive_keychain', { requestVote: vi.fn(), requestBroadcast })
+    const { result } = renderHook(() => useInteractions())
+    let returnValue: boolean | undefined
+    await act(async () => { returnValue = await result.current.comment('bob', 'my-post', 'Great post!') })
+    expect(returnValue).toBe(false)
   })
 
   it('sets parent_author and parent_permlink correctly', async () => {

@@ -22,10 +22,12 @@ export default function SnapCard({ post }: Props) {
   async function handleComment() {
     if (!commentBody.trim()) return
     setSending(true)
-    await comment(post.author, post.permlink, commentBody)
+    const success = await comment(post.author, post.permlink, commentBody)
     setSending(false)
-    setCommentBody('')
-    setShowComment(false)
+    if (success) {
+      setCommentBody('')
+      setShowComment(false)
+    }
   }
 
   return (

@@ -37,7 +37,19 @@ export default function FeedPanel() {
   const postFeed = isTagActive ? tagFeed : followingFeed
   const currentFeed = activeTab === 'posts' ? postFeed : snaps
 
-  const { posts, isLoading, isError, fetchNextPage, hasMore } = currentFeed
+  const { posts: rawPosts, isLoading, isError, fetchNextPage, hasMore } = currentFeed
+
+  const posts = (activeTab === 'snaps' && activeTag)
+    ? rawPosts.filter(post => {
+        try {
+          const meta = JSON.parse(post.json_metadata)
+          if (!Array.isArray(meta.tags)) return true
+          return meta.tags.includes(activeTag)
+        } catch {
+          return true
+        }
+      })
+    : rawPosts
 
   async function handlePublishSnap() {
     if (!snapBody.trim() || !snaps.containerPermlink) return

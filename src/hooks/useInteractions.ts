@@ -14,29 +14,29 @@ export function useInteractions() {
     }
   }
 
-  async function vote(author: string, permlink: string, weight: number) {
+  async function vote(author: string, permlink: string, weight: number): Promise<boolean> {
     if (!user) {
       useToastStore.getState().show('Login necessário', 'Faça login para interagir.', true)
-      return
+      return false
     }
     const keychain = await getKeychain()
-    if (!keychain) return
-    await new Promise<void>((resolve) => {
+    if (!keychain) return false
+    return new Promise<boolean>((resolve) => {
       keychain.requestVote(user.username, author, permlink, weight, (res) => {
         if (res.success) useToastStore.getState().show('Voto registrado!', `+1 em @${author}`)
         else useToastStore.getState().show('Erro ao votar', res.message ?? 'Tente novamente.', true)
-        resolve()
+        resolve(res.success)
       })
     })
   }
 
-  async function comment(parentAuthor: string, parentPermlink: string, body: string) {
+  async function comment(parentAuthor: string, parentPermlink: string, body: string): Promise<boolean> {
     if (!user) {
       useToastStore.getState().show('Login necessário', 'Faça login para interagir.', true)
-      return
+      return false
     }
     const keychain = await getKeychain()
-    if (!keychain) return
+    if (!keychain) return false
     const permlink = `re-${parentAuthor.replace(/\./g, '-')}-${Date.now()}`
     const op = ['comment', {
       parent_author: parentAuthor,
@@ -47,11 +47,11 @@ export function useInteractions() {
       body,
       json_metadata: JSON.stringify({ app: 'hive-aquarium/1.0' }),
     }]
-    await new Promise<void>((resolve) => {
+    return new Promise<boolean>((resolve) => {
       keychain.requestBroadcast(user.username, [op], 'Posting', (res) => {
         if (res.success) useToastStore.getState().show('Comentário publicado!', '')
         else useToastStore.getState().show('Erro ao comentar', res.message ?? 'Tente novamente.', true)
-        resolve()
+        resolve(res.success)
       })
     })
   }
