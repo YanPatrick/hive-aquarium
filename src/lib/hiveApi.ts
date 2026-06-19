@@ -71,3 +71,11 @@ export function getDiscussionsByCreated(
   }
   return rpc<HivePost[]>('condenser_api.get_discussions_by_created', [params])
 }
+
+export function getDiscussionsByBlog(author: string, limit = 10) {
+  return rpc<HivePost[]>('condenser_api.get_discussions_by_blog', [{ tag: author, limit }])
+}
+
+export function getContentReplies(author: string, permlink: string) {
+  return rpc<HivePost[]>('condenser_api.get_content_replies', [author, permlink])
+}
