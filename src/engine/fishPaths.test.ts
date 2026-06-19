@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { it, expect, vi } from 'vitest'
 import { FISH_DRAW_FNS } from './fishPaths'
 import type { SpecialState } from './behaviors'
 

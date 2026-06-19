@@ -20,7 +20,7 @@ describe('useKeychain', () => {
   }, 7000)
 
   it('calls requestSignBuffer with correct args', async () => {
-    const requestSignBuffer = vi.fn((user, msg, role, cb) => cb({ success: true }))
+    const requestSignBuffer = vi.fn((_user, _msg, _role, cb) => cb({ success: true }))
     vi.stubGlobal('hive_keychain', { requestSignBuffer })
     const { result } = renderHook(() => useKeychain())
     await act(async () => { await result.current.login('alice') })
@@ -33,7 +33,7 @@ describe('useKeychain', () => {
   })
 
   it('stores user in Zustand on success', async () => {
-    const requestSignBuffer = vi.fn((user, msg, role, cb) => cb({ success: true }))
+    const requestSignBuffer = vi.fn((_user, _msg, _role, cb) => cb({ success: true }))
     vi.stubGlobal('hive_keychain', { requestSignBuffer })
     const { result } = renderHook(() => useKeychain())
     await act(async () => { await result.current.login('alice') })
@@ -41,7 +41,7 @@ describe('useKeychain', () => {
   })
 
   it('sets error on keychain rejection', async () => {
-    const requestSignBuffer = vi.fn((user, msg, role, cb) => cb({ success: false, message: 'Rejeitado' }))
+    const requestSignBuffer = vi.fn((_user, _msg, _role, cb) => cb({ success: false, message: 'Rejeitado' }))
     vi.stubGlobal('hive_keychain', { requestSignBuffer })
     const { result } = renderHook(() => useKeychain())
     await act(async () => { await result.current.login('alice') })

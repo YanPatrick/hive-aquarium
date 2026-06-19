@@ -25,7 +25,7 @@ export function useShowToast() {
 
 export default function Toast() {
   const { title, body, isError, visible, hide } = useToastStore()
-  const timerRef = useRef<ReturnType<typeof setTimeout>>()
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   useEffect(() => {
     if (visible) {
