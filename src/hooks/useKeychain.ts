@@ -88,3 +88,21 @@ export function useKeychain() {
 
   return { login: loginWithKeychain, isLoading, error }
 }
+
+export function restoreSession(): string | null {
+  try {
+    const saved = localStorage.getItem('hive_aquarium_user')
+    if (!saved) return null
+    const { username } = JSON.parse(saved)
+    if (!username) return null
+    useAppStore.getState().login({
+      username,
+      avatarUrl: `https://images.hive.blog/u/${username}/avatar`,
+      hivePower: 0,
+      hiveBalance: '...',
+    })
+    return username
+  } catch {
+    return null
+  }
+}
