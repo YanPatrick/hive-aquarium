@@ -1,7 +1,16 @@
-import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, fireEvent } from '@testing-library/react'
 import PostCard from './PostCard'
 import type { HivePost } from '../../lib/hiveApi'
+import { useAppStore } from '../../store/appStore'
+
+vi.mock('../../hooks/useInteractions', () => ({
+  useInteractions: () => ({
+    vote: vi.fn(),
+    comment: vi.fn().mockResolvedValue(undefined),
+    publishSnap: vi.fn(),
+  }),
+}))
 
 const POST: HivePost = {
   author: 'alice', permlink: 'my-post', title: 'Hello World',
@@ -11,6 +20,12 @@ const POST: HivePost = {
   net_votes: 42, children: 5,
   pending_payout_value: '1.500 HBD',
 }
+
+beforeEach(() => {
+  useAppStore.setState({ user: { username: 'alice', avatarUrl: '', hivePower: 0, hiveBalance: '' }, myFish: [], activeTab: 'posts', activeTag: null })
+})
+
+afterEach(() => { vi.clearAllMocks() })
 
 describe('PostCard', () => {
   it('renders title', () => {
@@ -28,15 +43,28 @@ describe('PostCard', () => {
     expect(screen.getByText(/1\.500 HBD/)).toBeTruthy()
   })
 
-  it('link points to peakd', () => {
+  it('does not link to PeakD', () => {
     render(<PostCard post={POST} />)
-    const link = document.querySelector('a')!
-    expect(link.href).toContain('peakd.com/@alice/my-post')
+    expect(document.querySelector('a[href*="peakd.com"]')).toBeNull()
   })
 
   it('strips markdown from body excerpt', () => {
     render(<PostCard post={POST} />)
     const excerpt = screen.getByText(/This is the/)
     expect(excerpt.textContent).not.toContain('**')
+  })
+
+  it('shows vote slider when upvote button is clicked', () => {
+    render(<PostCard post={POST} />)
+    const voteBtn = screen.getByText(/▲ 42/)
+    fireEvent.click(voteBtn)
+    expect(screen.getByRole('slider')).toBeTruthy()
+  })
+
+  it('shows comment textarea when comment button is clicked', () => {
+    render(<PostCard post={POST} />)
+    const commentBtn = screen.getByText(/💬 5/)
+    fireEvent.click(commentBtn)
+    expect(screen.getByPlaceholderText('Escreva um comentário...')).toBeTruthy()
   })
 })
